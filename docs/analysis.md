@@ -31,7 +31,6 @@ sur les produits, comme :
 - Une description pour chaque article
 - Les prix dans les commerces à proximité
 - Peut savoir les commerces à proximité qui possède le produit.
-- Doit pouvoir marcher pour les produits des petits commerces
 - Possibilité de rajouter un produit dans le système s'il ne se retrouve pas. (Je ne suis pas 100% sûr de celui-ci)
 - Possibilité de faire un compte "Acheteur" ou "Commerce", car beaucoup de petits commerces ne possèdent pas de sites web. Ils pourront inclure les produits qu'ils ont en stock facilement.
 
