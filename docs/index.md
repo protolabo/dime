@@ -1,4 +1,4 @@
-# Projet IFT3150: Nom du projet
+# Projet IFT3150: Dime
 
 > **Thèmes**: Science de données, Génie logiciel  
 > **Superviseur**: Nom du supervisuer  
