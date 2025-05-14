@@ -49,20 +49,21 @@ sur les produits, comme :
 
 ## Recherche de solutions
 
-Toutes les applications nommées sont similaires à ce qui Dime va être. Elles sont toutes disponibles sur Android et IOS.
+Toutes les applications mentionnées sont similaires à ce que Dime vise à devenir. Elles sont toutes disponibles sur Android et iOS.
 
 ### [Yuka](https://yuka.io/)
 
+Cette application est centrée sur la qualité des produits alimentaires et cosmétiques. Après avoir scanné un produit, elle lui attribue une note sur 100 indiquant à quel point il est bon pour la santé. Une courte description explique ensuite pourquoi le produit a obtenu cette note. L’application affiche aussi les allergènes potentiels et propose des produits similaires, mais meilleurs pour la santé, si possible.
 
 ### [ShopSavvy](https://shopsavvy.com/about)
 
-L'application permet de scanner les produits, voir les prix de l'article en ligne, l'historique du prix de l'article et de ces promotions.
-On peut laisser des revues sur l'article et l'application donnent des suggestions pour l'article en question. On peut aussi chercher un article avec une barre de recherche.
-Si un produit nous intéresse, on peut "regarder" le produit et l'application donnera une notification s'il y a un changement de prix.
+Cette application permet de scanner des produits, de consulter leur prix en ligne, leur historique de prix et les promotions passées. Les utilisateurs peuvent laisser des avis sur les articles, et l’application suggère des produits similaires. Il est aussi possible de rechercher un produit à l’aide d’une barre de recherche. Si un produit nous intéresse, on peut l’ajouter à une liste de suivi, et l’application nous enverra une notification en cas de changement de prix.
 
-Par compte, le design de l'application laisse à désirer. Il est très facile de rendre cela plus attrayant pour les utilisateurs
+Cependant, le design de l’application laisse à désirer. Il serait facile de le rendre plus attrayant pour les utilisateurs.
 
-### Barcode Scanner
+
 
 ## Méthodologie
+
+Étude qualitative
 
