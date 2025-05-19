@@ -27,21 +27,21 @@ sur les produits, comme :
 ## Exigences
 
 ### Exigences fonctionnelles
-- Permettre de scanner des codes barres des articles et d'accéder à une page selon l'article
-- Une description pour chaque article
-- Les prix dans les commerces à proximité
-- Peut savoir les commerces à proximité qui possède le produit.
-- Possibilité de rajouter un produit dans le système s'il ne se retrouve pas. (Je ne suis pas 100% sûr de celui-ci)
-- Possibilité de faire un compte "Acheteur" ou "Commerce", car beaucoup de petits commerces ne possèdent pas de sites web. Ils pourront inclure les produits qu'ils ont en stock facilement.
+- Créer des codes QR pour les commerçants
+- Rentrer le prix de plusieurs articles avec le même code QR
+- Permettre de scanner des codes QR
+- Le prix de chaque article lié au code QR scanné (et possiblement une courte description de l'article sera accompagnée).
+- Les prix dans les commerces à proximité s'ils le possèdent.
+- Possibilité de faire un compte "Acheteur" ou "Commerce", car beaucoup de petits commerces ne possèdent pas de sites web. Ils pourront inclure les produits qu'ils ont en stock facilement (Le compte "Acheteur" ne sera pas obligatoire. Par compte, celui du commerçant le sera).
 
 
 ### Exigences non fonctionnelles
 - Frontend avec Flutter
 - Backend avec Express.js
 - Doit marcher sur Android et IOS
-- Pouvoir utiliser un API qui possède déjà une banque de produits (s'il existe)
-- Possibilité d'alertes selon les allergènes de l'utilisateur.
+- Pouvoir utiliser un API qui possède déjà une banque de produits (s'il existe) ([Google Lens/Google Cloud Vision](https://support.google.com/websearch/thread/301813986/is-there-a-api-for-google-lens?hl=en))
 - Priorité sur les commerces locaux que sur les grandes marques.
+- Possibilité d'alertes selon les allergènes de l'utilisateur.
 - Écrire des avis sur le produit.
 - Doit posséder un mode hors-connexion pour scanner les articles, sans WIFI.
 
@@ -64,5 +64,5 @@ Cependant, le design de l’application laisse à désirer. Il serait facile de 
 
 ## Méthodologie
 
-Étude qualitative
+Développement par itération
 

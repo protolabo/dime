@@ -38,7 +38,7 @@
 
 !!! abstract "Prochaines étapes"
     - Finaliser l'analyse selon la rencontre du 14 mai.
-        - Corriger les exigences.
+        - Corriger les exigences (si les exigences les plus importantes de la liste doit se retrouver les plus haut).
         - Trouver une 3e application pour les "solutions existantes".
         - Inclure la méthodologie du problème (Développement par itération).
     - Débuter le prototype sur Figma
