@@ -19,11 +19,35 @@
 
 !!! abstract "Prochaines étapes"
     - Démarrer l’analyse du problème
-    - Créer la structure de `etudes_preliminaires.md`
+    
 
 ---
 
 ## Semaine 2
+??? note "Débuter l'analyse du problème"
+    - [x] Description du problème du projet
+    - [x] Écrire les exigences
+        * [x] Exigence fonctionnelles
+        * [x] Exigences non fonctionnelles
+    - [x] Rechercher des solutions existantes du problème avec des applications deja existentes
+        * [x] Yuka
+        * [x] ShopSavvy
+        * [ ] une 3e application
+    - [ ] Citer la méthodologie du projet.
+
+
+!!! abstract "Prochaines étapes"
+    - Finaliser l'analyse selon la rencontre du 14 mai.
+        - Corriger les exigences.
+        - Trouver une 3e application pour les "solutions existantes".
+        - Inclure la méthodologie du problème (Développement par itération).
+    - Débuter le prototype sur Figma
+        - Côté commerçant
+            - Mettre en place le système de code qr pour les produits.
+        - Côté client
+            - Mettre en place le système de lecture du code qr et la lecture des prix d'articles.
+
+
 
 ## Semaine 3
 
