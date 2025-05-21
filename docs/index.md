@@ -1,8 +1,8 @@
 # Projet IFT3150: Dime
 
 > **Thèmes**: Science de données, Génie logiciel  
-> **Superviseur**: Nom du supervisuer  
-> **Collaborateurs:** Nom de(s) collaborateur(s) et partenaire(s)
+> **Superviseur**: Lafontant, Louis Edouard  
+> **Collaborateurs:** N/A
 
 ## Informations importantes
 
@@ -14,8 +14,8 @@
 
 ## Équipe
 
-- De-Webertho, Dieudonné: Responsable de...
-- Symenouh, Patrick: Responsable de...
+- De-Webertho, Dieudonné () : Responsable de...
+- Symenouh, Patrick (20190082) : Responsable de...
 
 ## Description du projet
 

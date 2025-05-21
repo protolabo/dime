@@ -60,6 +60,12 @@ Cette application permet de scanner des produits, de consulter leur prix en lign
 
 Cependant, le design de l’application laisse à désirer. Il serait facile de le rendre plus attrayant pour les utilisateurs.
 
+### [Google Lens](https://lens.google/)
+
+Google Lens est une application développée par Google qui permet de scanner des objets, codes-barres ou images pour obtenir rapidement des informations. Elle affiche le nom du produit, une courte description, un prix estimé et des liens pour l’acheter en ligne. Elle se distingue par sa capacité à reconnaître des éléments visuels même sans code-barres.
+
+Bien qu’elle soit rapide, précise et souvent intégrée aux appareils Android, elle reste peu axée sur les commerces locaux, n’offre pas toujours les meilleurs prix ni de recommandations personnalisées. D’où l’intérêt d’une application comme Dime, centrée sur les besoins concrets des consommateurs au quotidien.
+
 
 
 ## Méthodologie
