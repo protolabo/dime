@@ -29,7 +29,7 @@
     - [x] Écrire les exigences
         * [x] Exigence fonctionnelles
         * [x] Exigences non fonctionnelles
-    - [x] Rechercher des solutions existantes du problème avec des applications deja existentes
+    - [x] Rechercher des solutions existantes du problème avec des applications deja existantes
         * [x] Yuka
         * [x] ShopSavvy
         * [ ] une 3e application
@@ -50,6 +50,37 @@
 
 
 ## Semaine 3
+??? note "Compléter l'étude préliminaire"
+    - [x] Arranger les exigences en ordre croissant de priorité
+    - [x] Citer la méthodologie du projet
+    - [x] Trouver une 3e application pour la recherche de solutions existantes (Google Lens).
+
+
+??? note "Débuter le prototype Figma"
+    - [x] Fonctionnement général de l'application, peut importe le type de compte
+        * [x] Simulation de la page **Scan** pour scanner et voir la description d'un article ou d'une étagère.
+        * [x] Création de la barre de navigation avec **Settings**, **Scan** et **Recherche**
+    - [x] Coté compte commerçant
+        * [x] Création de la page **MyCommerce** dans la barre de navigation
+        * [x] Implementation du système pour créer un nouveau code barre d'article ou d'étagère.
+        * [x] Implémentation du système pour ajouter un produit dans une étagère
+
+!!! abstract "Prochaines étapes"
+    - Améliorer le prototype selon les idées énoncées lors de la rencontre du 14 mai.
+         - Changer l’emplacement des icônes de la nav (MyCommerce en premier en exemple).
+         - Dans MyCommerce, faire un tabulaire de shelf.
+         - Indiquer les items les plus populaires pour les clients.
+         - Faire attention à l’espace entre les éléments des listes pour ne pas avoir de problème lorsqu'on clique sur l'item.
+         - Écrire le nom du commerce dans le header de l'application
+         - Système de favori avec code barre de produit
+
+    - Débuter les diagrammes (UML, Classes, etc.)
+
+    - Note pour plus tard: La base de données de l'application va être centralisé
+         
+
+        
+
 
 ## Semaine 4
 
