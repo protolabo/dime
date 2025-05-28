@@ -73,12 +73,15 @@
          - Faire attention à l’espace entre les éléments des listes pour ne pas avoir de problème lorsqu'on clique sur l'item.
          - Écrire le nom du commerce dans le header de l'application
          - Système de favori avec code barre de produit
-
-    - Débuter les diagrammes (UML, Classes, etc.)
-
-    - Note pour plus tard: La base de données de l'application va être centralisé
+      - Débuter les diagrammes (UML, Classes, etc.)
          
-
+!!! info "Notes pour le futur"
+    - La base de données de l'application va être centralisé
+    - Le système de favori va prioriser:
+    - 1) Item pareille
+    - 2) Variante de l'item
+    - 3) Item similaire
+    - **On priorise les commerces favoris sur eux qui ne le sont pas.**
         
 
 
