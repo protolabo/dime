@@ -82,10 +82,39 @@
     - 2) Variante de l'item
     - 3) Item similaire
     - **On priorise les commerces favoris sur eux qui ne le sont pas.**
-        
+
+
 
 
 ## Semaine 4
+??? note "Améliorer le prototype."
+    - [x] Changement d'emplacement des icônes de la barre de navigation
+    - [x] Nom du commerce présent dans le header de l'application.
+    - [ ] **Pour les comptes de commerçant**
+        - [x] Tabulaire des étagères selon l'ordre antéchronologique de la dernière modification de l'étagère.
+        - [x] Tabulaire des items selon le niveau de popularité
+        - [x] Système pour scanner le code barre lors de la création d'un nouvel item.
+        - [x] Création de la page d'item.
+        - [x] Nouveau buton _Edit_ dans les pages d'items et d'étagères.
+    - [ ] **Pour les comptes de client**
+        - [x] Création de la page ** Mes Favoris**
+        - [ ] Création de la page d'un item et d'un commerce
+
+
+!!! abstract "Prochaines étapes"
+    - Améliorer le prototype selon les idées énoncées lors de la rencontre du 28 mai
+        - Garder un boutton QR code (Download/Print)
+        - Pour popularité, nb de click
+        - Mettre image article
+        - Mettre promotion dans nav 
+        - Setting mettre infos de compte
+        - Personnalisée les noms de magasin
+        - Ne pas se fier au client pour bar vode
+        - Mettre un historique 
+        - Alerte bar code du client au commercant
+    - Compléter la première version de modèle de données
+        
+
 
 ## Semaine 5
 
