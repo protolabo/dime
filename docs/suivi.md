@@ -83,19 +83,7 @@
     - 3) Item similaire
     - **On priorise les commerces favoris sur eux qui ne le sont pas.**
 
-!!! abstract "Prochaines étapes"
-    - Améliorer le prototype selon les idées énoncées lors de la rencontre du 28 mai
-        - Garder un boutton QR code (Download/Print)
-        - Pour popularité, nb de click
-        - Mettre image article
-        - Mettre promotion dans nav 
-        - Setting mettre infos de compte
-        - Personnalisée les noms de magasin
-        - Ne pas se fier au client pour bar vode
-        - Mettre un historique 
-        - Alerte bar code du client au commercant
-    - Compléter la première version de modèle de données
-        
+
 
 
 ## Semaine 4
@@ -113,7 +101,19 @@
         - [ ] Création de la page d'un item et d'un commerce
 
 
-
+!!! abstract "Prochaines étapes"
+    - Améliorer le prototype selon les idées énoncées lors de la rencontre du 28 mai
+        - Garder un boutton QR code (Download/Print)
+        - Pour popularité, nb de click
+        - Mettre image article
+        - Mettre promotion dans nav 
+        - Setting mettre infos de compte
+        - Personnalisée les noms de magasin
+        - Ne pas se fier au client pour bar vode
+        - Mettre un historique 
+        - Alerte bar code du client au commercant
+    - Compléter la première version de modèle de données
+        
 
 
 ## Semaine 5
