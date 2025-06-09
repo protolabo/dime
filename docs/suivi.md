@@ -103,20 +103,40 @@
 
 !!! abstract "Prochaines étapes"
     - Améliorer le prototype selon les idées énoncées lors de la rencontre du 28 mai
-        - Garder un boutton QR code (Download/Print)
+        - Garder un bouton QR code (Download/Print)
         - Pour popularité, nb de click
         - Mettre image article
         - Mettre promotion dans nav 
         - Setting mettre infos de compte
         - Personnalisée les noms de magasin
-        - Ne pas se fier au client pour bar vode
+        - Ne pas se fier au client pour barre code
         - Mettre un historique 
-        - Alerte bar code du client au commercant
+        - Alerte bar code du client au commerçant
     - Compléter la première version de modèle de données
         
 
 
 ## Semaine 5
+??? note "Améliorer le prototype."
+    - [x] Réunir les butons "**Download QR Code**" et "**Print QR Code**" en un seul.
+    - [x] Rajouter une image pour tous les articles.
+    - [x] Rajouter la section "**Promotions**" pour les **comptes commerçants**.
+    - [x] Personalisation des noms de commerces et d'items du côté des **comptes clients**.
+
+
+??? note "Première itération du modèle de donnnées."
+    - [x] Première ligne.
+
+
+!!! abstract "Prochaines étapes pour le prototype"
+    - Faire un niveau de connexion pour les employés du meme commerce
+    - Les employés ont tous un ID et non un email. L’email est réservé pour les commerçants et clients
+    - Review échelle 
+    - Une promo peut affecter plusieurs items (Changer l'ordre d)
+    - Mettre historique item
+    - Alerte des clients vers
+    - Faire système d’authentification 
+    - Finalise prototype
 
 ## Semaine 6
 
