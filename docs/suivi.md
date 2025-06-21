@@ -125,7 +125,7 @@
 
 
 ??? note "Première itération du modèle de donnnées."
-    - [x] Première ligne.
+    - [x] _To be completed_
 
 
 !!! abstract "Prochaines étapes pour le prototype"
@@ -141,6 +141,23 @@
 ## Semaine 6
 
 ## Semaine 7
+??? note "Finition du prototype"
+    - [ ] **Pour les comptes de commerçant**
+        - [x] Faire la différence entre les comptes de commerçants et les comptes de ces associés.
+        - [x] Création de la page "**My Team**" pour les commerçants avec lequel qu'ils peuvent voir les membres de leurs équipes et leurs activités dans l'application.
+    - [ ] **Pour les comptes de client**
+        - [x] Création de la page **Historic** avec lequel que les clients peuvent voir les articles qu'ils ont scannés avec l'application.
+       
+
+
+??? note "Amélioration du modèle de données"
+    - [x] _To be completed_
+
+
+!!! abstract "Début de l'implémentation (Première sprint)"
+    - Le premier sprint va être plus focus sur le côté client. Chaque sprint va durer 3 semaines.
+    - Pour la première semaine du premier sprint, compléter la page **Scan**, la fonction la plus importante de l'application.
+    - Créer le système de code qr pour les étagères et les items.
 
 ## Semaine 8
 
