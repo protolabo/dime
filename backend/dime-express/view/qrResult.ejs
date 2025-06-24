@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>QR generated</title></head>
+  <body>
+    <h1>QR-Code generated for <%= meta.name %></h1>
+
+    <img src="<%= dataUrl %>" alt="QR Code"><br>
+    <a href="/qr/<%= fileName %>" download>Download PNG</a><br><br>
+
+    <a href="/item/new">Generate another Item</a> |
+    <a href="/shelf/new">Generate another Shelf</a>
+  </body>
+</html>

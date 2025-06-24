@@ -1,0 +1,10 @@
+What do I gotta do for the scan:
+
+
+- Créer le système de code QR
+	- Item
+	- Étagère
+
+- Créer la page de scan
+	- Scanner l'article avec la caméra depuis la page
+	- Permettre de voir les détails de l'article scanné.

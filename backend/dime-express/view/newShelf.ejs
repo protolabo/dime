@@ -1,0 +1,14 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Create a new shelf</title></head>
+  <body>
+    <h1>Create a new shelf</h1>
+
+    <form action="/shelf/new" method="POST">
+      <label>Name <input name="shelfName" required></label><br>
+      <button type="submit">Generate QR-Code</button>
+    </form>
+
+    <p><a href="/item/new">→ Generate an item QR instead</a></p>
+  </body>
+</html>
