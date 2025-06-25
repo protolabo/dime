@@ -22,7 +22,7 @@ Cette architecture sépare bien les responsabilités, permet d’évoluer facile
 - Justifier les technologies et outils choisis.
 
 ## Modèles et diagrammes
-**Diagramme entité-relation** *(Dernière mise à jour : 04-jun-2025)* ![Diagramme entité-relation](images/Entity%20relationship.png)
+**Diagramme entité-relation** *(Dernière mise à jour : 21-jun-2025)* ![Diagramme entité-relation](images/Entity%20relationship.png)
 
 ## Prototype
 [Lien Figma du prototype](https://www.figma.com/design/j39w8enj4lyx9PlnpdWOzb/Dime?node-id=0-1&t=R44g9gxVfHPhjDI2-1)
