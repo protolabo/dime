@@ -11,14 +11,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Dime',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.orangeAccent,
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-      ),
       home: const ScanClientPage(), // ✅ Classe non changée
     );
   }

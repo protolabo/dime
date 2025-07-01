@@ -1,71 +1,83 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 
 class ScanClientPage extends StatelessWidget {
   const ScanClientPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF2D9),
-      body: Column(
-        children: [
-          Container(
-            color: const Color(0xFFFFEEC0),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const Icon(Icons.settings, color: Colors.black),
-                const SizedBox(width: 12),
+    final String nameCommerce =
+        'nameCommerce'; // Remplace ceci par une valeur dynamique venant du backend plus tard
 
-                // --------- localisation bien centrée ----------
-                const Icon(Icons.location_pin, color: Colors.red, size: 20),
-                const SizedBox(width: 6),
-                Flexible(
-                  child: Text.rich(
-                    TextSpan(
-                      style: const TextStyle(color: Colors.black, fontSize: 16),
+    return Scaffold(
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: AppBar(
+          automaticallyImplyLeading: false, // pas de bouton retour par défaut
+          backgroundColor: const Color(0xFFFFF2D9), // couleur beige
+          elevation: 0,
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Partie "Currently at"
+              GestureDetector(
+                onTap: () {
+                  print("Nom du commerce cliqué");
+                  // Tu peux afficher un modal ou autre ici
+                },
+                child: Row(
+                  children: [
+                    SvgPicture.asset(
+                      'assets/icons/address-icon.svg',
+                      height: 24,
+                      width: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const TextSpan(text: 'Currently at: '),
-                        TextSpan(
-                          text: 'nameCommerce',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        const Text(
+                          'Currently at:',
+                          style: TextStyle(fontSize: 12, color: Colors.black87),
+                        ),
+                        Text(
+                          nameCommerce,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
                         ),
                       ],
                     ),
-                  ),
+                  ],
                 ),
+              ),
 
-                // ----------------------------------------------
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.logout, color: Colors.black),
-                  onPressed: () {},
+              // Bouton logout
+              GestureDetector(
+                onTap: () {
+                  print("Logout cliqué");
+                  // Navigator.pushReplacement or clear session
+                },
+                child: SvgPicture.asset(
+                  'assets/icons/logout.svg',
+                  height: 28,
+                  width: 28,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const Expanded(child: Center(child: Icon(Icons.qr_code, size: 120))),
-        ],
+        ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: const Color(0xFFFFEEC0),
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        showSelectedLabels: true,
-        showUnselectedLabels: true,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star_border),
-            label: 'Favorite',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.qr_code_scanner),
-            label: 'Scan',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'Historic'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-        ],
+      body: MobileScanner(
+        onDetect: (BarcodeCapture capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          for (final barcode in barcodes) {
+            print('📦 QR détecté: ${barcode.rawValue}');
+          }
+        },
       ),
     );
   }
