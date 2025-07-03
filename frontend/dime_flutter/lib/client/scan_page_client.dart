@@ -1,29 +1,71 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-class ScanClientPage extends StatelessWidget {
+
+class ScanClientPage extends StatefulWidget {
   const ScanClientPage({super.key});
 
   @override
+  State<ScanClientPage> createState() => _ScanClientPageState();
+}
+
+class _ScanClientPageState extends State<ScanClientPage> {
+  Map<String, dynamic>? _currentItem;
+  final MobileScannerController _scanner = MobileScannerController();
+
+  String? _lastRaw;
+  DateTime _lastTime = DateTime.now();
+
+  void _onDetect(BarcodeCapture capture) {
+    for (final code in capture.barcodes) {
+      final raw = code.rawValue;
+      if (raw == null) continue;
+
+      final now = DateTime.now();
+      if (raw == _lastRaw && now.difference(_lastTime) < const Duration(seconds: 2)) {
+        continue;
+      }
+      _lastRaw = raw;
+      _lastTime = now;
+
+      try {
+        final data = jsonDecode(raw);
+        if (data['type'] == 'item') {
+          setState(() => _currentItem = data);
+        }
+      } catch (_) {
+        // invalid format, ignore
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final String nameCommerce =
-        'nameCommerce'; // Remplace ceci par une valeur dynamique venant du backend plus tard
+    const String nameCommerce = 'nameCommerce'; // Il faudra changer cette ligne avec un élément du backend.
 
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(70),
-        child: Header(nameCommerce),
+        child: Header(nameCommerce), // Header de l'app
       ),
-      body: MobileScanner(
-        onDetect: (BarcodeCapture capture) {
-          final List<Barcode> barcodes = capture.barcodes;
-          for (final barcode in barcodes) {
-            print('📦 QR détecté: ${barcode.rawValue}');
-          }
-        },
+      body: Stack(
+        children: [
+          MobileScanner(
+            controller: _scanner,
+            onDetect: _onDetect,
+          ),
+          if (_currentItem != null)
+            Positioned(
+              bottom: 40,
+              left: 20,
+              right: 20,
+              child: _buildItemCard(),
+            ),
+        ],
       ),
-      bottomNavigationBar: NavBar_Scanner(),
+      bottomNavigationBar: NavBar_Scanner(), // Bar de navigation
     );
   }
 
@@ -33,7 +75,7 @@ class ScanClientPage extends StatelessWidget {
       backgroundColor: const Color(0xFFFDF1DC),
       selectedItemColor: Colors.black,
       unselectedItemColor: Colors.black54,
-      selectedIconTheme: IconThemeData(size: 45), // Agrandit icône sélectionnée
+      selectedIconTheme: IconThemeData(size: 45), // Agrandit icône sélectionnée pour qu'il soit plus visible
       selectedLabelStyle: TextStyle(
         fontWeight: FontWeight.bold,
       ), // Texte plus visible
@@ -49,20 +91,18 @@ class ScanClientPage extends StatelessWidget {
       ],
     );
   }
-
   AppBar Header(String nameCommerce) {
     return AppBar(
-      automaticallyImplyLeading: false, // pas de bouton retour par défaut
-      backgroundColor: const Color(0xFFFFF2D9), // couleur beige
+      automaticallyImplyLeading: false,
+      backgroundColor: const Color(0xFFFFF2D9),
       elevation: 0,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Partie "Currently at"
+          // Section de quel commerce qu'on est
           GestureDetector(
             onTap: () {
               print("Nom du commerce cliqué");
-              // Tu peux afficher un modal ou autre ici
             },
             child: Row(
               children: [
@@ -97,13 +137,54 @@ class ScanClientPage extends StatelessWidget {
           GestureDetector(
             onTap: () {
               print("Logout cliqué");
-              // Navigator.pushReplacement or clear session
             },
             child: SvgPicture.asset(
               'assets/icons/logout.svg',
               height: 28,
               width: 28,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _currentItem!['name'] ?? 'Item inconnu',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '\$${(_currentItem!['price'] as num).toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.white),
+            onPressed: () => setState(() => _currentItem = null),
           ),
         ],
       ),
