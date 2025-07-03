@@ -160,8 +160,32 @@
     - Créer le système de code qr pour les étagères et les items.
 
 ## Semaine 8
+??? note "Début de l'implémentation"
+    - [x] Installation de Flutter pour le frontend ainsi que de Express.js avec Node.js pour le backend.
+    - [ ] **Pour le frontend**
+        - [x] Brouillon de la page **Scan**.
+    - [ ] **Pour le backend**
+        - [x] Installation des packages _ejs_, _qrcode_, _uuid_ et _nodemon_.
+        - [x] Implémentation d'un générateur de code QR.
+
+!!! abstract "Finir l'implémentation de la base de données"
+
+!!! abstract "Finir la page **Scan**"
+    - Faire la version propre et fonctionnelle de la page avec la caméra qui numérise les codes QR. 
 
 ## Semaine 9
+??? note "Avancement de la page **Scan**"
+    - [x] Tous les éléments les plus importants de la page **Scan** sont présentes et fonctionnelles:
+        - [x] Header
+        - [x] Caméra qui scanne les codes QR
+        - [x] Navigation bar
+
+!!! warning "Supabase est plus compliqué à utiliser qu'on le pensait être."
+    - !! À compléter
+
+
+!!! abstract "Améliorer la page **Scan**"
+    - Faire une fenêtre translucide avec les informations du produit scannée.
 
 ## Semaine 10
 
