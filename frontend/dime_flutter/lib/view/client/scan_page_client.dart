@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:dime_flutter/components/header.dart';
-import 'package:dime_flutter/components/navbar_scanner.dart';
-import 'package:dime_flutter/client/favorite_menu.dart';
+import 'package:dime_flutter/view/components/header.dart';
+import 'package:dime_flutter/view/components/navbar_scanner.dart';
+import 'package:dime_flutter/view/client/favorite_menu.dart';
 
 class ScanClientPage extends StatefulWidget {
   const ScanClientPage({super.key});

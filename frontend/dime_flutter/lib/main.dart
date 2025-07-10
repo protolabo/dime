@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'client/scan_page_client.dart'; //
+import 'view/client/scan_page_client.dart'; //
 
 void main() {
   runApp(const MyApp());

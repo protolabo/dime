@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 
 // ───── Composants réutilisés ─────
-import 'package:dime_flutter/components/header.dart';
-import 'package:dime_flutter/components/navbar_scanner.dart';
-import 'package:dime_flutter/client/scan_page_client.dart';
+import 'package:dime_flutter/view/components/header.dart';
+import 'package:dime_flutter/view/components/navbar_scanner.dart';
+import 'package:dime_flutter/view/client/scan_page_client.dart';
 
 class FavoriteMenuPage extends StatelessWidget {
   const FavoriteMenuPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const nameCommerce = 'nameCommerce'; // à brancher sur ton backend
+    const nameCommerce = 'nameCommerce'; // Pour le backend
 
     // Styles rapides pour les titres
     final bigTitleStyle = Theme.of(context).textTheme.headlineLarge?.copyWith(
