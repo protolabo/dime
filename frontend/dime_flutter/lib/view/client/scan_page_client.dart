@@ -108,7 +108,7 @@ class _ScanClientPageState extends State<ScanClientPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '\$${(_currentItem!['price'] as num).toStringAsFixed(2)}',
+                  '${(_currentItem!['price'] as num).toStringAsFixed(2)}\$',
                   style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
               ],
