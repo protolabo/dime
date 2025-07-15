@@ -19,8 +19,6 @@ class _ScanClientPageState extends State<ScanClientPage> {
   String? _lastRaw;
   DateTime _lastTime = DateTime.now();
 
-  // ─────────────────────────────────────────────────────────────
-
   void _onDetect(BarcodeCapture capture) {
     for (final code in capture.barcodes) {
       final raw = code.rawValue;
@@ -29,7 +27,7 @@ class _ScanClientPageState extends State<ScanClientPage> {
       final now = DateTime.now();
       if (raw == _lastRaw &&
           now.difference(_lastTime) < const Duration(seconds: 2)) {
-        continue; // évite les doublons rapides
+        continue;
       }
       _lastRaw = raw;
       _lastTime = now;
@@ -39,22 +37,16 @@ class _ScanClientPageState extends State<ScanClientPage> {
         if (data['type'] == 'item') {
           setState(() => _currentItem = data);
         }
-      } catch (_) {
-        // pas un JSON attendu : on ignore
-      }
+      } catch (_) {}
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    const nameCommerce = 'nameCommerce'; // à remplacer plus tard
-
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: Header(nameCommerce),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(70),
+        child: Header(null),
       ),
       body: Stack(
         children: [
@@ -82,8 +74,6 @@ class _ScanClientPageState extends State<ScanClientPage> {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // Fonction pour construire la carte d'un élément après avoir été scanné
   Widget _buildItemCard() {
     return Container(
       padding: const EdgeInsets.all(16),

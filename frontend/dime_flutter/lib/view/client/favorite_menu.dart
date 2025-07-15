@@ -5,14 +5,16 @@ import 'package:dime_flutter/view/components/header.dart';
 import 'package:dime_flutter/view/components/navbar_scanner.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 
-class FavoriteMenuPage extends StatelessWidget {
+class FavoriteMenuPage extends StatefulWidget {
   const FavoriteMenuPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    const nameCommerce = 'nameCommerce'; // Pour le backend
+  State<FavoriteMenuPage> createState() => _FavoriteMenuPageState();
+}
 
-    // Styles rapides pour les titres
+class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
+  @override
+  Widget build(BuildContext context) {
     final bigTitleStyle = Theme.of(context).textTheme.headlineLarge?.copyWith(
       fontWeight: FontWeight.bold,
       color: Colors.black,
@@ -24,54 +26,36 @@ class FavoriteMenuPage extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(70),
-        child: Header(nameCommerce),
+      appBar: const PreferredSize(
+        preferredSize: Size.fromHeight(70),
+        child: Header(null), // ← Header dynamique grâce à Supabase
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ───── Titre principal ─────
             Center(child: Text('Favorites', style: bigTitleStyle)),
             const SizedBox(height: 32),
 
-            // ───── Section « My favorite items » ─────
             Text('My favorite items', style: sectionTitleStyle),
             const SizedBox(height: 12),
-            // Remplace ceci par ton grid / carrousel
-            SizedBox(
-              height: 120,
-              child: Placeholder(), // à remplacer
-            ),
+            SizedBox(height: 120, child: Placeholder()),
             const SizedBox(height: 32),
 
-            // ───── Section « My favorite commerces » ─────
             Text('My favorite commerces', style: sectionTitleStyle),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 120,
-              child: Placeholder(), // à remplacer
-            ),
+            SizedBox(height: 120, child: Placeholder()),
             const SizedBox(height: 32),
 
-            // ───── Section « Recommended items » ─────
             Text('Recommended items', style: sectionTitleStyle),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 120,
-              child: Placeholder(), // à remplacer
-            ),
+            SizedBox(height: 120, child: Placeholder()),
             const SizedBox(height: 32),
 
-            // ───── Section « Recommended commerces » ─────
             Text('Recommended commerces', style: sectionTitleStyle),
             const SizedBox(height: 12),
-            SizedBox(
-              height: 120,
-              child: Placeholder(), // à remplacer
-            ),
+            SizedBox(height: 120, child: Placeholder()),
             const SizedBox(height: 32),
           ],
         ),
