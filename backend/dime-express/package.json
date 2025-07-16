@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "start": "concurrently \"nodemon index.js\" \"nodemon QR-CODE-GENERATOR/QR_Code.js\"",
+  "test": "echo \"Error: no test specified\" && exit 1"
   },
+
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -17,5 +19,8 @@
     "nodemon": "^3.1.10",
     "qrcode": "^1.5.4",
     "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
   }
 }
