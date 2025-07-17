@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const productRoutes = require('./database/routes/productRoutes');
-favoriteProductRoutes = require('./database/routes/favoriteProductRoutes');
+const favoriteProductRoutes = require('./database/routes/favoriteProductRoutes');
 
 const app = express();
 const port = process.env.PORT || 3001;
