@@ -17,7 +17,9 @@ class CreateItemViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final uri = Uri.parse('http://10.0.0.168:3000/item/new');
+      final uri = Uri.parse(
+        'http://10.0.0.168:3000/item/new',
+      ); // À changer selon ton PC
 
       final response = await http.post(
         uri,

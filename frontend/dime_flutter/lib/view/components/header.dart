@@ -27,7 +27,7 @@ class _HeaderState extends State<Header> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFFDF1DC), // ✅ couvre tout le fond
+      color: const Color(0xFFFDF1DC),
       child: SafeArea(
         bottom: false,
         child: Padding(

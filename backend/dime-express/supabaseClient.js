@@ -1,4 +1,4 @@
-// supabaseClient.js
+// Fichier pour connecter avec la base de données.
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = process.env.SUPABASE_URL;

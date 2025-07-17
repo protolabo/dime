@@ -1,10 +1,13 @@
 const express = require('express');
-const path    = require('path');
-const fs      = require('fs');
-const QRCode  = require('qrcode');
+const path = require('path');
+const fs = require('fs');
+const QRCode = require('qrcode');
 const { v4: uuidv4 } = require('uuid');
+require('dotenv').config();
+const supabase = require('../supabaseClient'); // ← Ajout ici
 
-const app  = express();
+
+const app = express();
 const port = process.env.PORT || 3000;
 
 /* ---------- MIDDLEWARE ---------- */
@@ -26,15 +29,14 @@ fs.mkdirSync(qrDir, { recursive: true });
 app.get('/', (_req, res) => res.redirect('/item/new'));
 
 /* === Formulaires === */
-app.get('/item/new', (_req, res)   => res.render('newItem'));
-app.get('/shelf/new', (_req, res)  => res.render('newShelf'));
+app.get('/item/new', (_req, res) => res.render('newItem'));
+app.get('/shelf/new', (_req, res) => res.render('newShelf'));
 
-/* === Soumissions === */
+/* === Soumission item === */
 app.post('/item/new', async (req, res, next) => {
   try {
     const { name, barcode, price, description } = req.body;
 
-    // payload encodé dans le QR (JSON minifié)
     const qrPayload = JSON.stringify({
       type: 'item',
       name,
@@ -46,16 +48,37 @@ app.post('/item/new', async (req, res, next) => {
     const fileName = `item-${uuidv4()}.png`;
     const filePath = path.join(qrDir, fileName);
 
-    // génère PNG + string base64
     await QRCode.toFile(filePath, qrPayload);
     const dataUrl = await QRCode.toDataURL(qrPayload);
 
+    const { data, error } = await supabase
+  .from('product')
+  .insert([{
+    name,
+    description,
+    category: 'default',
+    image_url: null,
+    qr_code: dataUrl,
+    created_by: 'admin'
+  }])                               // ← on a retiré bar_code et price
+  .select();
+
+
+  if (error) {
+    console.error(' Supabase insert error:', error);
+    throw error;
+  }
+
+    console.log(` The item "${name}" by "admin" has been successfully added to the database!`);
+
     res.render('qrResult', { dataUrl, fileName, meta: { name } });
+
   } catch (err) {
     next(err);
   }
 });
 
+/* === Soumission shelf === */
 app.post('/shelf/new', async (req, res, next) => {
   try {
     const { shelfName } = req.body;
