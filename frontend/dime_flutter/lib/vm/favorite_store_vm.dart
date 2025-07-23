@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'current_actor_vm.dart';
+import 'current_connected_client_vm.dart';
 import '../view/client/favorite_menu.dart';
 
 /// Représente un commerce (id + nom)
@@ -13,10 +13,12 @@ class Store {
 class FavoriteStoreService {
   static Future<List<Store>> fetchFavorites(int actorId) async {
     final supabase = Supabase.instance.client;
-    final data = await supabase
-        .from('favorite_store')
-        .select('store_id, store(name)')
-        .eq('actor_id', actorId) as List<dynamic>;
+    final data =
+        await supabase
+                .from('favorite_store')
+                .select('store_id, store(name)')
+                .eq('actor_id', actorId)
+            as List<dynamic>;
 
     return data.map((row) {
       return Store(

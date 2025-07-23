@@ -1,7 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'current_actor_vm.dart';
+import 'current_connected_client_vm.dart';
 import '../view/client/favorite_menu.dart'; // Pour le modèle Product
-
 
 /// Modèle Produit (id + nom)
 class Product {
@@ -9,6 +8,7 @@ class Product {
   final String name;
   Product(this.id, this.name);
 }
+
 /// Service qui charge les produits favoris pour un acteur donné.
 class FavoriteProductService {
   /// Récupère la liste des Product (id + name) depuis favorite_product

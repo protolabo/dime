@@ -1,13 +1,13 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Représente ton acteur (utilisateur) connecté
-class Actor {
+class Client {
   final int actorId;
   final String firstName;
   final String lastName;
   final String role;
 
-  Actor({
+  Client({
     required this.actorId,
     required this.firstName,
     required this.lastName,
@@ -20,7 +20,7 @@ class CurrentActorService {
   static const int _testActorId = 1;
 
   /// Charge l’acteur depuis la table `actor` et vérifie qu’il est client
-  static Future<Actor> getCurrentActor() async {
+  static Future<Client> getCurrentActor() async {
     final supabase = Supabase.instance.client;
 
     final response = await supabase
@@ -33,7 +33,7 @@ class CurrentActorService {
       throw Exception('Aucun acteur trouvé pour ID $_testActorId');
     }
 
-    final actor = Actor(
+    final actor = Client(
       actorId: response['actor_id'] as int,
       firstName: response['first_name'] as String,
       lastName: response['last_name'] as String,

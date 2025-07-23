@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-// Composants réutilisés
 import 'package:dime_flutter/view/components/header.dart';
 import 'package:dime_flutter/view/components/navbar_scanner.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/fenetre/fav-item-fenetre.dart';
 import 'package:dime_flutter/view/fenetre/fav_commerce_fenetre.dart';
-
-// Services MVVM
-import 'package:dime_flutter/vm/current_actor_vm.dart';
+import 'package:dime_flutter/vm/current_connected_client_vm.dart';
 import 'package:dime_flutter/vm/favorite_product_vm.dart'
     show Product, FavoriteProductService;
 import 'package:dime_flutter/vm/favorite_store_vm.dart'
@@ -23,7 +19,7 @@ class FavoriteMenuPage extends StatefulWidget {
 }
 
 class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
-  Actor? _actor;
+  Client? _client;
   List<Product> favoriteProducts = [];
   List<Store> favoriteStores = [];
   Map<int, bool> favoriteProductStates = {};
@@ -46,7 +42,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
       final stores = await FavoriteStoreService.fetchFavorites(actor.actorId);
 
       setState(() {
-        _actor = actor;
+        _client = actor;
         favoriteProducts = products;
         favoriteStores = stores;
         favoriteProductStates = {for (var p in products) p.id: true};
@@ -62,7 +58,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
   }
 
   Future<void> _persistDeletions() async {
-    if (_actor == null) return;
+    if (_client == null) return;
     final supabase = Supabase.instance.client;
 
     // Produits
@@ -71,7 +67,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
         await supabase
             .from('favorite_product')
             .delete()
-            .eq('actor_id', _actor!.actorId)
+            .eq('actor_id', _client!.actorId)
             .eq('product_id', e.key);
       }
     }
@@ -82,7 +78,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
         await supabase
             .from('favorite_store')
             .delete()
-            .eq('actor_id', _actor!.actorId)
+            .eq('actor_id', _client!.actorId)
             .eq('store_id', e.key);
       }
     }
