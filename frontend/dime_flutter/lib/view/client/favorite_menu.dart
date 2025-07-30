@@ -6,7 +6,9 @@ import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/fenetre/fav-item-fenetre.dart';
 import 'package:dime_flutter/view/fenetre/fav_commerce_fenetre.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
+import 'package:dime_flutter/view/client/store_page_customer.dart';
 import 'package:dime_flutter/vm/current_connected_client_vm.dart';
+import 'package:dime_flutter/view/client/search_page.dart';
 import 'package:dime_flutter/vm/favorite_product_vm.dart'
     show Product, FavoriteProductService;
 import 'package:dime_flutter/vm/favorite_store_vm.dart'
@@ -38,10 +40,10 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
     try {
       final actor = await CurrentActorService.getCurrentActor();
 
-      final products =
-      await FavoriteProductService.fetchFavorites(actor.actorId);
-      final stores =
-      await FavoriteStoreService.fetchFavorites(actor.actorId);
+      final products = await FavoriteProductService.fetchFavorites(
+        actor.actorId,
+      );
+      final stores = await FavoriteStoreService.fetchFavorites(actor.actorId);
 
       setState(() {
         _client = actor;
@@ -95,9 +97,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_error != null) {
@@ -150,11 +150,11 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                         ),
                         child: FavItemFenetre(
                           name: product.name,
-                          isFavorite:
-                          favoriteProductStates[product.id] ?? true,
+                          isFavorite: favoriteProductStates[product.id] ?? true,
                           onFavoriteChanged: (fav) {
-                            setState(() =>
-                            favoriteProductStates[product.id] = fav);
+                            setState(
+                              () => favoriteProductStates[product.id] = fav,
+                            );
                           },
                         ),
                       );
@@ -190,13 +190,21 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
                     itemBuilder: (ctx, i) {
                       final store = favoriteStores[i];
-                      return FavCommerceFenetre(
-                        name: store.name,
-                        isFavorite: favoriteStoreStates[store.id] ?? true,
-                        onFavoriteChanged: (fav) {
-                          setState(() =>
-                          favoriteStoreStates[store.id] = fav);
-                        },
+                      return InkWell(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                StorePageCustomer(storeId: store.id),
+                          ),
+                        ),
+                        child: FavCommerceFenetre(
+                          name: store.name,
+                          isFavorite: favoriteStoreStates[store.id] ?? true,
+                          onFavoriteChanged: (fav) {
+                            setState(() => favoriteStoreStates[store.id] = fav);
+                          },
+                        ),
                       );
                     },
                   ),
@@ -217,6 +225,11 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ScanClientPage()),
+            );
+          } else if (i == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SearchPage()),
             );
           }
           // i == 2: historique

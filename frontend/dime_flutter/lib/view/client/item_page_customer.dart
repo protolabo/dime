@@ -6,10 +6,18 @@ import 'package:dime_flutter/view/components/navbar_scanner.dart';
 import 'package:dime_flutter/vm/item_page_vm.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
+import 'package:dime_flutter/view/client/store_page_customer.dart';
+import 'package:dime_flutter/view/client/search_page.dart';
 
 class ItemPageCustomer extends StatelessWidget {
   final int productId;
-  const ItemPageCustomer({super.key, required this.productId});
+  final String? locatedStoreName; // optionnel
+
+  const ItemPageCustomer({
+    super.key,
+    required this.productId,
+    this.locatedStoreName,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -23,27 +31,21 @@ class ItemPageCustomer extends StatelessWidget {
             );
           }
           if (vm.error != null) {
-            return Scaffold(
-              appBar: const Header(null),
-              body: Center(child: Text('Erreur : ${vm.error}')),
-            );
+            return Scaffold(body: Center(child: Text(vm.error!)));
           }
 
-          final prod = vm.product!;
-
           return Scaffold(
-            backgroundColor: const Color(0xFFFDF1DC),
-            appBar: const Header(null),
+            appBar: Header(vm.currentStoreName),
             body: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ---------- Image + Nom + Cœur ----------
+                  /* ---------- Image + Nom + Cœur + Prix minimal ---------- */
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Encadré photo
+                      /* mini-mock image */
                       Container(
                         width: 80,
                         height: 80,
@@ -54,61 +56,128 @@ class ItemPageCustomer extends StatelessWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Text('picture item', style: TextStyle(fontSize: 10)),
+                            Text(
+                              'picture item',
+                              style: TextStyle(fontSize: 10),
+                            ),
                             Icon(Icons.photo_camera, size: 18),
                           ],
                         ),
                       ),
                       const SizedBox(width: 16),
+                      /* nom + barcode + store où tu l’as scanné */
                       Expanded(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Text(
-                                prod['name'] ?? '',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Poppins',
+                            Text(
+                              vm.productName,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              vm.barCode.isNotEmpty
+                                  ? 'Barcode: ${vm.barCode}'
+                                  : 'Barcode non disponible',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            if (locatedStoreName != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  children: [
+                                    const Text(
+                                      'Located at: ',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    InkWell(
+                                      borderRadius: BorderRadius.circular(4),
+                                      onTap: () {
+                                        // on cherche l’id correspondant dans la liste déjà chargée
+                                        final match = vm.storesWithPrice
+                                            .firstWhere(
+                                              (e) =>
+                                                  e['store_name'] ==
+                                                  locatedStoreName,
+                                              orElse: () => {},
+                                            );
+                                        if (match.isNotEmpty) {
+                                          final int storeId =
+                                              match['store_id'] as int;
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => StorePageCustomer(
+                                                storeId: storeId,
+                                              ),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Impossible de trouver ce magasin.',
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      },
+                                      child: Text(
+                                        locatedStoreName!,
+                                        style: const TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          decoration: TextDecoration.underline,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.favorite,
-                                color: vm.isFavorite
-                                    ? Colors.red
-                                    : Colors.grey.shade400,
-                                size: 30,
-                              ),
-                              onPressed: vm.toggleFavorite,
-                            ),
                           ],
                         ),
+                      ),
+                      /* colonne cœur + prix min */
+                      Column(
+                        children: [
+                          IconButton(
+                            icon: Icon(
+                              Icons.favorite,
+                              color: vm.isFavorite
+                                  ? Colors.red
+                                  : Colors.grey.shade400,
+                              size: 30,
+                            ),
+                            onPressed: vm.toggleFavorite,
+                          ),
+                          if (vm.minPrice != null)
+                            Text(
+                              '\$${vm.minPrice!.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 12),
-
-                  // ---------- Bar code ----------
-                  Text(
-                    prod['bar_code'] != null &&
-                        prod['bar_code'].toString().trim().isNotEmpty
-                        ? 'Bar code: ${prod['bar_code']}'
-                        : 'Bar code: — (non disponible)',
-                    style: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w500),
-                  ),
-
                   const SizedBox(height: 20),
 
-                  // ---------- Commerces ----------
+                  /* ---------- Commerces ---------- */
                   const Text(
                     'Commerces with the item',
-                    style:
-                    TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   if (vm.storesWithPrice.isEmpty)
@@ -124,32 +193,88 @@ class ItemPageCustomer extends StatelessWidget {
                         shrinkWrap: true,
                         itemCount: vm.storesWithPrice.length,
                         separatorBuilder: (_, __) =>
-                        const Divider(height: 1, color: Colors.black12),
+                            const Divider(height: 1, color: Colors.black12),
                         itemBuilder: (_, i) {
                           final s = vm.storesWithPrice[i];
                           final fav = vm.favoriteStoreIds.contains(
                             s['store_id'] as int,
                           );
+                          final priceText =
+                              '\$${(s['price'] as num).toStringAsFixed(2)}';
+
                           return ListTile(
                             dense: true,
                             leading: Icon(
                               Icons.favorite,
                               color: fav ? Colors.red : Colors.white,
                             ),
-                            title: Text(s['store_name'] ?? ''),
-                            trailing: Text('\$${s['price']}'),
+
+                            /* ─── Nom du commerce cli­quable ─── */
+                            title: InkWell(
+                              borderRadius: BorderRadius.circular(4),
+                              onTap: () {
+                                final int storeId = s['store_id'] as int;
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        StorePageCustomer(storeId: storeId),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                s['store_name'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ),
+
+                            /* ─── Prix cliquable ─── */
+                            trailing: InkWell(
+                              borderRadius: BorderRadius.circular(4),
+                              onTap: () {
+                                final int pid = s['product_id'] as int;
+                                if (pid != productId) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ItemPageCustomer(
+                                        productId: pid,
+                                        locatedStoreName:
+                                            s['store_name'] as String,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
+                                child: Text(
+                                  priceText,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ),
+                            ),
                           );
                         },
                       ),
                     ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // ---------- Similar item ----------
+                  /* ---------- Placeholder pour items similaires ---------- */
                   const Text(
                     'Similar item',
-                    style:
-                    TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 8),
                   Container(
@@ -165,10 +290,10 @@ class ItemPageCustomer extends StatelessWidget {
               ),
             ),
 
-            // ---------- Bottom nav ----------
+            /* ---------- Bottom nav ---------- */
             bottomNavigationBar: NavBar_Scanner(
               currentIndex: 3,
-              onTap: (i) async {
+              onTap: (i) {
                 if (i == 0) {
                   Navigator.push(
                     context,
@@ -178,6 +303,11 @@ class ItemPageCustomer extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const ScanClientPage()),
+                  );
+                } else if (i == 3) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SearchPage()),
                   );
                 }
                 // i == 2: historic, i == 3: stay on search

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dime_flutter/vm/current_store.dart';
-import 'package:dime_flutter/main.dart';
+import 'package:dime_flutter/vm/store_picker.dart'; // chemin ↦ lib/view/store_picker.dart
 
 class Header extends StatefulWidget implements PreferredSizeWidget {
   final String? nameCommerce;
-
   const Header(this.nameCommerce, {super.key});
 
   @override
@@ -36,9 +35,7 @@ class _HeaderState extends State<Header> {
             future: _storeNameFuture,
             builder: (context, snapshot) {
               final name =
-                  widget.nameCommerce ??
-                  snapshot.data ??
-                  'CommerceInconnueBoss';
+                  widget.nameCommerce ?? snapshot.data ?? 'Choisir un magasin';
 
               return Row(
                 children: [
@@ -48,29 +45,40 @@ class _HeaderState extends State<Header> {
                     color: Colors.black,
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    'Currently at:\n$name',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+
+                  // 👉 ouvre StorePickerPage
+                  InkWell(
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const StorePickerPage(),
+                        ),
+                      );
+                      if (mounted) {
+                        setState(() {
+                          _storeNameFuture =
+                              CurrentStoreService.getCurrentStoreName();
+                        });
+                      }
+                    },
+                    child: Text(
+                      'Currently at:\n$name',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
+
                   const Spacer(),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const MyApp(),
-                        ), // ou HomePage() si t'extrais la home
-                        (Route<dynamic> route) => false,
-                      );
-                    },
-                    child: SvgPicture.asset(
-                      'assets/icons/logout.svg',
-                      height: 28,
-                      color: Colors.black,
-                    ),
+
+                  // icône logout (optionnel — garde-le si tu l’utilises déjà)
+                  SvgPicture.asset(
+                    'assets/icons/logout.svg',
+                    height: 28,
+                    color: Colors.black,
                   ),
                 ],
               );

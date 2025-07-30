@@ -6,7 +6,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dime_flutter/view/components/header.dart';
 import 'package:dime_flutter/view/components/navbar_scanner.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
-import 'package:dime_flutter/vm/current_store.dart'; // pour récupérer l’id du magasin courant
+import 'package:dime_flutter/view/client/item_page_customer.dart';
+import 'package:dime_flutter/vm/current_store.dart';
+import 'package:dime_flutter/view/client/search_page.dart';
 
 class ScanClientPage extends StatefulWidget {
   const ScanClientPage({super.key});
@@ -19,16 +21,17 @@ class _ScanClientPageState extends State<ScanClientPage> {
   final _scanner = MobileScannerController();
   final _sb = Supabase.instance.client;
 
-  Map<String, dynamic>? _overlayData; // {name, price}
+  Map<String, dynamic>? _overlayData; // {id, name, amount}
   String? _lastRaw;
   DateTime _lastTime = DateTime.now();
 
+  /* ─────────── SCAN CALLBACK ─────────── */
   Future<void> _onDetect(BarcodeCapture capture) async {
     for (final code in capture.barcodes) {
       final raw = code.rawValue;
       if (raw == null) continue;
 
-      // anti-spam : ignore les doublons trop rapprochés
+      // anti-spam : même QR <= 2 s → ignore
       final now = DateTime.now();
       if (raw == _lastRaw &&
           now.difference(_lastTime) < const Duration(seconds: 2)) {
@@ -41,50 +44,61 @@ class _ScanClientPageState extends State<ScanClientPage> {
         final data = jsonDecode(raw);
         if (data is! Map) return;
 
-        /***
-         * PRODUCT  → { type:'product', product_id:<int> }
-         * SHELF    → { type:'shelf',   shelf_id:<int>   }
-         */
-        if (data['type'] == 'product') {
-          await _handleProduct(data['product_id'] as int);
-        } else if (data['type'] == 'shelf') {
-          // tu pourrais naviguer vers la liste des produits de l’étagère, etc.
+        /*  QR formats attendus :
+            { "type":"product", "product_id":42 }
+            { "type":"shelf"  , "shelf_id"  :17 }
+        */
+        switch (data['type']) {
+          case 'product':
+            await _handleProduct(data['product_id'] as int);
+            break;
+          case 'shelf':
+            // TODO: gérer l’affichage d’une étagère si besoin
+            break;
         }
       } catch (_) {
-        // QR non reconnu
+        // QR non reconnu → on ignore
       }
     }
   }
 
+  /* ─────────── RECUP PRODUIT + PRIX ─────────── */
   Future<void> _handleProduct(int id) async {
-    final storeId =
-        await CurrentStoreService.getCurrentStoreId(); // existe déjà dans ton projet
+    final int? storeId = await CurrentStoreService.getCurrentStoreId();
+    if (storeId == null) return;
 
-    // 1️⃣  nom du produit
-    final product = await _sb
-        .from('product')
-        .select('name')
-        .eq('product_id', id)
-        .maybeSingle();
+    try {
+      // 1 nom du produit
+      final product = await _sb
+          .from('product')
+          .select('name')
+          .eq('product_id', id)
+          .maybeSingle();
 
-    // 2️⃣  prix (dans priced_product)
-    final priceRow = await _sb
-        .from('priced_product')
-        .select('amount')
-        .eq('product_id', id)
-        .eq('store_id', storeId)
-        .maybeSingle();
+      // 2 prix dans CE magasin (colonne amount)
+      final priceRow = await _sb
+          .from('priced_product')
+          .select('amount, currency') // <- amount !
+          .eq('product_id', id)
+          .eq('store_id', storeId)
+          .maybeSingle();
 
-    if (product != null) {
-      setState(() {
-        _overlayData = {
-          'name': product['name'],
-          'price': priceRow != null ? priceRow['amount'] : null,
-        };
-      });
+      if (product != null) {
+        setState(() {
+          _overlayData = {
+            'id': id,
+            'name': product['name'],
+            'amount': priceRow?['amount'],
+            'currency': priceRow?['currency'] ?? '\$',
+          };
+        });
+      }
+    } catch (e) {
+      // log si besoin : debugPrint('❌ $e');
     }
   }
 
+  /* ─────────── UI ─────────── */
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -112,6 +126,11 @@ class _ScanClientPageState extends State<ScanClientPage> {
               context,
               MaterialPageRoute(builder: (_) => const FavoriteMenuPage()),
             );
+          } else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SearchPage()),
+            );
           }
         },
       ),
@@ -119,6 +138,9 @@ class _ScanClientPageState extends State<ScanClientPage> {
   }
 
   Widget _buildOverlayCard() {
+    final num? amount = _overlayData!['amount'] as num?;
+    final String currency = _overlayData!['currency'] as String? ?? '\$';
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -132,18 +154,33 @@ class _ScanClientPageState extends State<ScanClientPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  _overlayData!['name'] ?? 'Item inconnu',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                // nom cliquable
+                GestureDetector(
+                  onTap: () {
+                    final pid = _overlayData?['id'] as int?;
+                    if (pid != null) {
+                      setState(() => _overlayData = null); // cache l’overlay
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ItemPageCustomer(productId: pid),
+                        ),
+                      );
+                    }
+                  },
+                  child: Text(
+                    _overlayData!['name'] ?? 'Item inconnu',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _overlayData!['price'] != null
-                      ? '${(_overlayData!['price'] as num).toStringAsFixed(2)} \$'
+                  amount != null
+                      ? '${amount.toStringAsFixed(2)} $currency'
                       : 'Prix —',
                   style: const TextStyle(color: Colors.white70, fontSize: 16),
                 ),
