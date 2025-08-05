@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:dime_flutter/view/styles.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:dime_flutter/view/components/header.dart';
 import 'package:dime_flutter/view/components/navbar_scanner.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
-import 'package:dime_flutter/view/fenetre/fav-item-fenetre.dart';
+import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';
 import 'package:dime_flutter/view/fenetre/fav_commerce_fenetre.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/view/client/store_page_customer.dart';
@@ -16,7 +18,6 @@ import 'package:dime_flutter/vm/favorite_store_vm.dart'
 
 class FavoriteMenuPage extends StatefulWidget {
   const FavoriteMenuPage({super.key});
-
   @override
   State<FavoriteMenuPage> createState() => _FavoriteMenuPageState();
 }
@@ -25,8 +26,10 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
   Client? _client;
   List<Product> favoriteProducts = [];
   List<Store> favoriteStores = [];
+
   Map<int, bool> favoriteProductStates = {};
   Map<int, bool> favoriteStoreStates = {};
+
   bool _loading = true;
   String? _error;
 
@@ -39,7 +42,6 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
   Future<void> _initData() async {
     try {
       final actor = await CurrentActorService.getCurrentActor();
-
       final products = await FavoriteProductService.fetchFavorites(
         actor.actorId,
       );
@@ -63,23 +65,22 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
 
   Future<void> _persistDeletions() async {
     if (_client == null) return;
-    final supabase = Supabase.instance.client;
+    final sb = Supabase.instance.client;
 
-    // Produits
+    // produits
     for (final e in favoriteProductStates.entries) {
       if (!e.value) {
-        await supabase
+        await sb
             .from('favorite_product')
             .delete()
             .eq('actor_id', _client!.actorId)
             .eq('product_id', e.key);
       }
     }
-
-    // Commerces
+    // commerces
     for (final e in favoriteStoreStates.entries) {
       if (!e.value) {
-        await supabase
+        await sb
             .from('favorite_store')
             .delete()
             .eq('actor_id', _client!.actorId)
@@ -94,41 +95,47 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
     super.dispose();
   }
 
+  /*────────────────────────── UI ──────────────────────────*/
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-
     if (_error != null) {
       return Scaffold(
         appBar: const Header(null),
-        body: Center(child: Text('Erreur : $_error')),
+        body: Center(
+          child: Text('Erreur : $_error', style: AppTextStyles.body),
+        ),
       );
     }
 
     return Scaffold(
       appBar: const Header(null),
       body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: AppPadding.all,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- My favorite items ---
-              const Text(
+              /* ----------- mes produits favoris ----------- */
+              Text(
                 'My favorite items',
-                style: TextStyle(
-                  fontSize: 20,
+                style: AppTextStyles.subtitle.copyWith(
                   decoration: TextDecoration.underline,
-                  fontFamily: 'Poppins',
                 ),
               ),
               const SizedBox(height: 12),
+
               if (favoriteProducts.isEmpty)
-                const SizedBox(
+                SizedBox(
                   height: 160,
-                  child: Center(child: Text('Vous n\'avez aucun favori...')),
+                  child: Center(
+                    child: Text(
+                      'Vous n\'avez aucun favori.',
+                      style: AppTextStyles.body,
+                    ),
+                  ),
                 )
               else
                 SizedBox(
@@ -137,9 +144,8 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                     scrollDirection: Axis.horizontal,
                     itemCount: favoriteProducts.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (ctx, i) {
+                    itemBuilder: (_, i) {
                       final product = favoriteProducts[i];
-
                       return InkWell(
                         onTap: () => Navigator.push(
                           context,
@@ -151,11 +157,9 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                         child: FavItemFenetre(
                           name: product.name,
                           isFavorite: favoriteProductStates[product.id] ?? true,
-                          onFavoriteChanged: (fav) {
-                            setState(
-                              () => favoriteProductStates[product.id] = fav,
-                            );
-                          },
+                          onFavoriteChanged: (fav) => setState(
+                            () => favoriteProductStates[product.id] = fav,
+                          ),
                         ),
                       );
                     },
@@ -164,21 +168,23 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
 
               const SizedBox(height: 24),
 
-              // --- My favorite commerces ---
-              const Text(
+              /* ----------- mes commerces favoris ----------- */
+              Text(
                 'My favorite commerces',
-                style: TextStyle(
-                  fontSize: 20,
+                style: AppTextStyles.subtitle.copyWith(
                   decoration: TextDecoration.underline,
-                  fontFamily: 'Poppins',
                 ),
               ),
               const SizedBox(height: 12),
+
               if (favoriteStores.isEmpty)
-                const SizedBox(
+                SizedBox(
                   height: 160,
                   child: Center(
-                    child: Text('Vous n\'avez aucun commerce favori...'),
+                    child: Text(
+                      'Vous n\'avez aucun commerce favori.',
+                      style: AppTextStyles.body,
+                    ),
                   ),
                 )
               else
@@ -188,7 +194,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                     scrollDirection: Axis.horizontal,
                     itemCount: favoriteStores.length,
                     separatorBuilder: (_, __) => const SizedBox(width: 12),
-                    itemBuilder: (ctx, i) {
+                    itemBuilder: (_, i) {
                       final store = favoriteStores[i];
                       return InkWell(
                         onTap: () => Navigator.push(
@@ -201,9 +207,9 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                         child: FavCommerceFenetre(
                           name: store.name,
                           isFavorite: favoriteStoreStates[store.id] ?? true,
-                          onFavoriteChanged: (fav) {
-                            setState(() => favoriteStoreStates[store.id] = fav);
-                          },
+                          onFavoriteChanged: (fav) => setState(
+                            () => favoriteStoreStates[store.id] = fav,
+                          ),
                         ),
                       );
                     },
@@ -211,12 +217,12 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                 ),
 
               const SizedBox(height: 24),
-
-              // ... (Recommended items & commerces, à ajouter plus tard) ...
+              // … (autres sections à venir) …
             ],
           ),
         ),
       ),
+
       bottomNavigationBar: NavBar_Scanner(
         currentIndex: 0,
         onTap: (i) async {
@@ -232,8 +238,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
               MaterialPageRoute(builder: (_) => const SearchPage()),
             );
           }
-          // i == 2: historique
-          // i == 3: recherche
+          // i==2: historique
         },
       ),
     );

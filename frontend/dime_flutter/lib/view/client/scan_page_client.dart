@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:dime_flutter/view/styles.dart';
+
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -78,7 +80,7 @@ class _ScanClientPageState extends State<ScanClientPage> {
       // 2 prix dans CE magasin (colonne amount)
       final priceRow = await _sb
           .from('priced_product')
-          .select('amount, currency') // <- amount !
+          .select('amount, currency')
           .eq('product_id', id)
           .eq('store_id', storeId)
           .maybeSingle();
@@ -93,8 +95,8 @@ class _ScanClientPageState extends State<ScanClientPage> {
           };
         });
       }
-    } catch (e) {
-      // log si besoin : debugPrint('❌ $e');
+    } catch (_) {
+      // log si besoin
     }
   }
 
@@ -142,10 +144,10 @@ class _ScanClientPageState extends State<ScanClientPage> {
     final String currency = _overlayData!['currency'] as String? ?? '\$';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: AppPadding.all,
       decoration: BoxDecoration(
         color: Colors.black.withOpacity(0.75),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: AppRadius.border,
       ),
       child: Row(
         children: [
@@ -154,7 +156,7 @@ class _ScanClientPageState extends State<ScanClientPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // nom cliquable
+                /* ───── nom de l’item (cliquable) ───── */
                 GestureDetector(
                   onTap: () {
                     final pid = _overlayData?['id'] as int?;
@@ -170,11 +172,7 @@ class _ScanClientPageState extends State<ScanClientPage> {
                   },
                   child: Text(
                     _overlayData!['name'] ?? 'Item inconnu',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: AppTextStyles.subtitle.copyWith(color: Colors.white),
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -182,7 +180,10 @@ class _ScanClientPageState extends State<ScanClientPage> {
                   amount != null
                       ? '${amount.toStringAsFixed(2)} $currency'
                       : 'Prix —',
-                  style: const TextStyle(color: Colors.white70, fontSize: 16),
+                  style: AppTextStyles.body.copyWith(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),

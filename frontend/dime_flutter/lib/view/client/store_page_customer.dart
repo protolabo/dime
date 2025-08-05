@@ -6,12 +6,15 @@ import 'package:provider/provider.dart';
 import 'package:dime_flutter/vm/store_page_vm.dart';
 import 'package:dime_flutter/view/components/header.dart';
 import 'package:dime_flutter/view/components/navbar_scanner.dart';
-import 'package:dime_flutter/view/fenetre/fav-item-fenetre.dart';
+import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
+import 'package:dime_flutter/view/client/search_page.dart'; // ✅ pour le push
 
-const _bg = Color(0xFFFDF1DC);
+import 'package:dime_flutter/view/styles.dart'; // 🎨
+
+const _bg = AppColors.searchBg; // même teinte centralisée (ex-_bg)
 
 class StorePageCustomer extends StatelessWidget {
   const StorePageCustomer({super.key, required this.storeId});
@@ -26,48 +29,60 @@ class StorePageCustomer extends StatelessWidget {
           backgroundColor: _bg,
           appBar: const Header(null),
           bottomNavigationBar: NavBar_Scanner(
-            currentIndex: 3, // onglet Search (celui d’où on arrive)
+            currentIndex: 3,
             onTap: (i) {
               if (i == 0) {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const FavoriteMenuPage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FavoriteMenuPage()),
+                );
               } else if (i == 1) {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (_) => const ScanClientPage()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ScanClientPage()),
+                );
               } else if (i == 3) {
-                Navigator.pop(context); // revenir à Search
+                // 🔄 revient à la page de recherche via push (comme avant)
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SearchPage()),
+                );
               }
             },
           ),
           body: SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: AppPadding.horizontal, // <- centralisé
               physics: const BouncingScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  /* ------ Infos magasin (inchangées) ------ */
+                  /* ------ Infos magasin (mock) ------ */
                   const SizedBox(height: 12),
                   Row(
-                    children: const [
-                      Icon(Icons.storefront, size: 32),
-                      SizedBox(width: 8),
-                      Text('Épicerie John',
-                          style: TextStyle(
-                              fontSize: 32, fontWeight: FontWeight.bold)),
-                      Spacer(),
-                      Icon(Icons.favorite, color: Colors.red, size: 32),
+                    children: [
+                      const Icon(Icons.storefront, size: 32),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Épicerie John',
+                        style: AppTextStyles.title.copyWith(fontSize: 32),
+                      ),
+                      const Spacer(),
+                      const Icon(Icons.favorite, color: Colors.red, size: 32),
                     ],
                   ),
                   const SizedBox(height: 8),
-                  const Text('Adress: 123 Rue Principale',
-                      style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Adress: 123 Rue Principale',
+                    style: AppTextStyles.body.copyWith(fontSize: 16),
+                  ),
                   const SizedBox(height: 24),
 
                   /* ------ Recommandations ------ */
-                  const Text('Items from the store you may like:',
-                      style: TextStyle(
-                          fontSize: 20, fontWeight: FontWeight.w600)),
+                  Text(
+                    'Items from the store you may like:',
+                    style: AppTextStyles.subtitle,
+                  ),
                   const SizedBox(height: 12),
 
                   if (vm.recos.isEmpty)
@@ -81,11 +96,11 @@ class StorePageCustomer extends StatelessWidget {
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: vm.recos.length,
                       gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        mainAxisSpacing: 24,
-                        crossAxisSpacing: 24,
-                      ),
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 24,
+                            crossAxisSpacing: 24,
+                          ),
                       itemBuilder: (_, i) {
                         final r = vm.recos[i];
                         return GestureDetector(
@@ -106,7 +121,7 @@ class StorePageCustomer extends StatelessWidget {
                     ),
 
                   const SizedBox(height: 32),
-                  /* -- Ajoute ici tes autres sections si besoin -- */
+                  /* -- sections supplémentaires au besoin -- */
                 ],
               ),
             ),

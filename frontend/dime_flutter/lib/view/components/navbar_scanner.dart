@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:dime_flutter/view/styles.dart'; // 🎨 styles centralisés
 
 class NavBar_Scanner extends StatelessWidget {
-  final int currentIndex;
-  final Function(int) onTap;
-
   const NavBar_Scanner({
     super.key,
     required this.currentIndex,
     required this.onTap,
   });
+
+  final int currentIndex;
+  final Function(int) onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -16,20 +17,20 @@ class NavBar_Scanner extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
 
-      // — Apparence générale —
-      type: BottomNavigationBarType
-          .fixed, // indispensable pour afficher tous les labels
-      backgroundColor: const Color(0xFFFDF1DC),
-      selectedItemColor: Colors.black,
+      /* ─── Apparence ─── */
+      type: BottomNavigationBarType.fixed,
+      backgroundColor: AppColors.searchBg,
+      selectedItemColor: Colors.black, // même rendu qu’avant
       unselectedItemColor: Colors.black54,
 
-      // — Affichage des labels —
-      showSelectedLabels: true, // garde le label actif
-      showUnselectedLabels: true, // … et les autres aussi
-      // — Styles optionnels —
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+
       selectedIconTheme: const IconThemeData(size: 45),
-      selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
-      unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
+      selectedLabelStyle: AppTextStyles.body.copyWith(
+        fontWeight: FontWeight.bold,
+      ),
+      unselectedLabelStyle: AppTextStyles.body,
 
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favorite'),

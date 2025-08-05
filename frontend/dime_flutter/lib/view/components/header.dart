@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+
 import 'package:dime_flutter/vm/current_store.dart';
-import 'package:dime_flutter/vm/store_picker.dart'; // chemin ↦ lib/view/store_picker.dart
+import 'package:dime_flutter/vm/store_picker.dart';
+import 'package:dime_flutter/view/styles.dart';
+import 'package:dime_flutter/main.dart';     // pour l’action logout
 
 class Header extends StatefulWidget implements PreferredSizeWidget {
-  final String? nameCommerce;
   const Header(this.nameCommerce, {super.key});
-
-  @override
-  State<Header> createState() => _HeaderState();
+  final String? nameCommerce;
 
   @override
   Size get preferredSize => const Size.fromHeight(70);
+
+  @override
+  State<Header> createState() => _HeaderState();
 }
 
 class _HeaderState extends State<Header> {
@@ -26,11 +29,14 @@ class _HeaderState extends State<Header> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: const Color(0xFFFDF1DC),
+      color: AppColors.searchBg,                                // crème
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(                  // ⬅️ padding original
+            horizontal: 16,
+            vertical  : 12,
+          ),
           child: FutureBuilder<String?>(
             future: _storeNameFuture,
             builder: (context, snapshot) {
@@ -42,43 +48,52 @@ class _HeaderState extends State<Header> {
                   SvgPicture.asset(
                     'assets/icons/address-icon.svg',
                     height: 28,
-                    color: Colors.black,
+                    colorFilter: const ColorFilter.mode(
+                        Colors.black, BlendMode.srcIn),
                   ),
                   const SizedBox(width: 8),
 
-                  // 👉 ouvre StorePickerPage
+                  /* ─── Ouvre StorePicker ─── */
                   InkWell(
                     onTap: () async {
                       await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (_) => const StorePickerPage(),
-                        ),
+                            builder: (_) => const StorePickerPage()),
                       );
                       if (mounted) {
-                        setState(() {
-                          _storeNameFuture =
-                              CurrentStoreService.getCurrentStoreName();
-                        });
+                        setState(() =>
+                        _storeNameFuture =
+                            CurrentStoreService.getCurrentStoreName());
                       }
                     },
                     child: Text(
                       'Currently at:\n$name',
-                      style: const TextStyle(
-                        color: Colors.black,
+                      style: AppTextStyles.body.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
+                        color: Colors.black,
                       ),
                     ),
                   ),
 
                   const Spacer(),
 
-                  // icône logout (optionnel — garde-le si tu l’utilises déjà)
-                  SvgPicture.asset(
-                    'assets/icons/logout.svg',
-                    height: 28,
-                    color: Colors.black,
+                  /* ─── Logout ─── */
+                  IconButton(
+                    splashRadius: 22,
+                    onPressed: () {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const MyApp()),
+                            (_) => false,
+                      );
+                    },
+                    icon: SvgPicture.asset(
+                      'assets/icons/logout.svg',
+                      height: 28,
+                      colorFilter: const ColorFilter.mode(
+                          Colors.black, BlendMode.srcIn),
+                    ),
                   ),
                 ],
               );

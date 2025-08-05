@@ -8,11 +8,11 @@ class FavItemFenetre extends StatefulWidget {
   final FavoriteChanged onFavoriteChanged;
 
   const FavItemFenetre({
-    Key? key,
+    super.key,
     required this.name,
     required this.isFavorite,
     required this.onFavoriteChanged,
-  }) : super(key: key);
+  });
 
   @override
   _FavItemFenetreState createState() => _FavItemFenetreState();

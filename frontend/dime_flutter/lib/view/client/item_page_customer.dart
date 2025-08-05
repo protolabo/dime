@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:dime_flutter/view/styles.dart';
 
 import 'package:dime_flutter/view/components/header.dart';
 import 'package:dime_flutter/view/components/navbar_scanner.dart';
@@ -37,7 +38,7 @@ class ItemPageCustomer extends StatelessWidget {
           return Scaffold(
             appBar: Header(vm.currentStoreName),
             body: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: AppPadding.all,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -70,28 +71,22 @@ class ItemPageCustomer extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              vm.productName,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                            Text(vm.productName, style: AppTextStyles.title),
                             const SizedBox(height: 4),
                             Text(
                               vm.barCode.isNotEmpty
                                   ? 'Barcode: ${vm.barCode}'
                                   : 'Barcode non disponible',
-                              style: const TextStyle(fontSize: 12),
+                              style: AppTextStyles.body.copyWith(fontSize: 12),
                             ),
                             if (locatedStoreName != null)
                               Padding(
                                 padding: const EdgeInsets.only(top: 4),
                                 child: Row(
                                   children: [
-                                    const Text(
+                                    Text(
                                       'Located at: ',
-                                      style: TextStyle(
+                                      style: AppTextStyles.body.copyWith(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
                                       ),
@@ -99,7 +94,6 @@ class ItemPageCustomer extends StatelessWidget {
                                     InkWell(
                                       borderRadius: BorderRadius.circular(4),
                                       onTap: () {
-                                        // on cherche l’id correspondant dans la liste déjà chargée
                                         final match = vm.storesWithPrice
                                             .firstWhere(
                                               (e) =>
@@ -132,11 +126,10 @@ class ItemPageCustomer extends StatelessWidget {
                                       },
                                       child: Text(
                                         locatedStoreName!,
-                                        style: const TextStyle(
+                                        style: AppTextStyles.body.copyWith(
                                           fontSize: 13,
                                           fontWeight: FontWeight.w500,
                                           decoration: TextDecoration.underline,
-                                          color: Colors.black,
                                         ),
                                       ),
                                     ),
@@ -153,7 +146,7 @@ class ItemPageCustomer extends StatelessWidget {
                             icon: Icon(
                               Icons.favorite,
                               color: vm.isFavorite
-                                  ? Colors.red
+                                  ? AppColors.danger
                                   : Colors.grey.shade400,
                               size: 30,
                             ),
@@ -162,7 +155,7 @@ class ItemPageCustomer extends StatelessWidget {
                           if (vm.minPrice != null)
                             Text(
                               '\$${vm.minPrice!.toStringAsFixed(2)}',
-                              style: const TextStyle(
+                              style: AppTextStyles.subtitle.copyWith(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -175,9 +168,9 @@ class ItemPageCustomer extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   /* ---------- Commerces ---------- */
-                  const Text(
+                  Text(
                     'Commerces with the item',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                    style: AppTextStyles.subtitle,
                   ),
                   const SizedBox(height: 8),
                   if (vm.storesWithPrice.isEmpty)
@@ -206,7 +199,7 @@ class ItemPageCustomer extends StatelessWidget {
                             dense: true,
                             leading: Icon(
                               Icons.favorite,
-                              color: fav ? Colors.red : Colors.white,
+                              color: fav ? AppColors.danger : Colors.white,
                             ),
 
                             /* ─── Nom du commerce cli­quable ─── */
@@ -224,10 +217,9 @@ class ItemPageCustomer extends StatelessWidget {
                               },
                               child: Text(
                                 s['store_name'] ?? '',
-                                style: const TextStyle(
+                                style: AppTextStyles.body.copyWith(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black,
                                 ),
                               ),
                             ),
@@ -256,10 +248,9 @@ class ItemPageCustomer extends StatelessWidget {
                                 ),
                                 child: Text(
                                   priceText,
-                                  style: const TextStyle(
+                                  style: AppTextStyles.body.copyWith(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
-                                    color: Colors.black,
                                   ),
                                 ),
                               ),
@@ -272,10 +263,7 @@ class ItemPageCustomer extends StatelessWidget {
                   const SizedBox(height: 20),
 
                   /* ---------- Placeholder pour items similaires ---------- */
-                  const Text(
-                    'Similar item',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-                  ),
+                  Text('Similar item', style: AppTextStyles.subtitle),
                   const SizedBox(height: 8),
                   Container(
                     height: 150,
