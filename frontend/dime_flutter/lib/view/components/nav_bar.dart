@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:dime_flutter/view/styles.dart'; // 🎨 styles centralisés
+import 'package:dime_flutter/view/styles.dart';
 
-class NavBar_Scanner extends StatelessWidget {
-  const NavBar_Scanner({
+class navbar_client extends StatelessWidget {
+  const navbar_client({
     super.key,
     required this.currentIndex,
     required this.onTap,

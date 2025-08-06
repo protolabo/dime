@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:dime_flutter/view/styles.dart';   // 🎨 styles centralisés
+import 'package:dime_flutter/view/styles.dart';
 
 typedef FavoriteChanged = void Function(bool isNowFavorited);
 

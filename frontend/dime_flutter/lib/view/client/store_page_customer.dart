@@ -4,7 +4,7 @@ import 'package:dime_flutter/view/styles.dart';
 
 import 'package:dime_flutter/vm/store_page_vm.dart';
 import 'package:dime_flutter/view/components/header.dart';
-import 'package:dime_flutter/view/components/navbar_scanner.dart';
+import 'package:dime_flutter/view/components/nav_bar.dart';
 import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
@@ -39,7 +39,7 @@ class StorePageCustomer extends StatelessWidget {
           return Scaffold(
             backgroundColor: _bg,
             appBar: const Header(null),
-            bottomNavigationBar: NavBar_Scanner(
+            bottomNavigationBar: navbar_client(
               currentIndex: 3,
               onTap: (i) {
                 if (i == 0) {

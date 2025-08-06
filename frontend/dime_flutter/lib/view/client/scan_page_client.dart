@@ -6,7 +6,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dime_flutter/view/components/header.dart';
-import 'package:dime_flutter/view/components/navbar_scanner.dart';
+import 'package:dime_flutter/view/components/nav_bar.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/vm/current_store.dart';
@@ -120,7 +120,7 @@ class _ScanClientPageState extends State<ScanClientPage> {
             ),
         ],
       ),
-      bottomNavigationBar: NavBar_Scanner(
+      bottomNavigationBar: navbar_client(
         currentIndex: 1,
         onTap: (index) {
           if (index == 0) {

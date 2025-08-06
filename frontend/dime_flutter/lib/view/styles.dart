@@ -42,3 +42,22 @@ class AppPadding {
 class AppRadius {
   static const border = BorderRadius.all(Radius.circular(12));
 }
+
+/// Styles dédiés à la page de sélection de commerce
+class ChooseCommerceStyles {
+  // Couleur d’arrière-plan des tuiles
+  static const tileBg = Color(0xFFFFF4D9);
+
+  // Bordure noire de 2 px
+  static const tileBorder = BorderSide(width: 2, color: Colors.black);
+
+  // Icône de magasin
+  static const iconSize = 32.0;
+
+  // Texte centrée dans la tuile
+  static const tileText = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w600,
+    color: AppColors.text,
+  );
+}

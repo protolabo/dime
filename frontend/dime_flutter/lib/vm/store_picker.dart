@@ -1,3 +1,5 @@
+/* Ce fichier est seulement présent en bus de tests. Ce fichier nous permet de choisir facilement le magasin qu'on veut que le client soit présent.*/
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dime_flutter/vm/current_store.dart';

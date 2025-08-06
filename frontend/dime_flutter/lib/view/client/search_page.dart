@@ -5,7 +5,7 @@ import 'package:dime_flutter/view/styles.dart';
 
 import 'package:dime_flutter/vm/search_vm.dart';
 import 'package:dime_flutter/view/components/header.dart';
-import 'package:dime_flutter/view/components/navbar_scanner.dart';
+import 'package:dime_flutter/view/components/nav_bar.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/view/client/store_page_customer.dart';
 import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';
@@ -51,7 +51,7 @@ class _SearchPageState extends State<SearchPage> {
         builder: (ctx, vm, _) => Scaffold(
           backgroundColor: AppColors.searchBg,
           appBar: const Header(null),
-          bottomNavigationBar: NavBar_Scanner(
+          bottomNavigationBar: navbar_client(
             currentIndex: 3,
             onTap: (i) {
               if (i == 0) {

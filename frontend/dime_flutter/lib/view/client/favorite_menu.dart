@@ -3,13 +3,13 @@ import 'package:dime_flutter/view/styles.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:dime_flutter/view/components/header.dart';
-import 'package:dime_flutter/view/components/navbar_scanner.dart';
+import 'package:dime_flutter/view/components/nav_bar.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';
 import 'package:dime_flutter/view/fenetre/fav_commerce_fenetre.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/view/client/store_page_customer.dart';
-import 'package:dime_flutter/vm/current_connected_client_vm.dart';
+import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:dime_flutter/view/client/search_page.dart';
 import 'package:dime_flutter/vm/favorite_product_vm.dart'
     show Product, FavoriteProductService;
@@ -223,7 +223,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
         ),
       ),
 
-      bottomNavigationBar: NavBar_Scanner(
+      bottomNavigationBar: navbar_client(
         currentIndex: 0,
         onTap: (i) async {
           await _persistDeletions();

@@ -1,6 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'current_connected_client_vm.dart';
-import '../view/client/favorite_menu.dart'; // Pour le modèle Product
+
 
 /// Modèle Produit (id + nom)
 class Product {

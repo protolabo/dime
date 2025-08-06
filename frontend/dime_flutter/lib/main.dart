@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'view/client/scan_page_client.dart';
-import 'view/commercant_account/create_item_page.dart';
+import 'view/commercant_account/choose_commerce.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,7 +100,7 @@ class HomePage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const CreateItemPage(),
+                        builder: (context) => const ChooseCommercePage(),
                       ),
                     );
                   },

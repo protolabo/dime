@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dime_flutter/vm/current_store.dart';
 
-import 'current_connected_client_vm.dart';
+import 'current_connected_account_vm.dart';
 
 class ItemPageViewModel extends ChangeNotifier {
   /* ───────────── ctor ───────────── */

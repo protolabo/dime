@@ -2,7 +2,7 @@ import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:dime_flutter/vm/current_connected_client_vm.dart';
+import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 
 class StorePageVM extends ChangeNotifier {
   final SupabaseClient _c = Supabase.instance.client;
