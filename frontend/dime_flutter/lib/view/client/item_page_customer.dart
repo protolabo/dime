@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dime_flutter/view/styles.dart';
 
-import 'package:dime_flutter/view/components/header.dart';
-import 'package:dime_flutter/view/components/nav_bar.dart';
+import 'package:dime_flutter/view/components/header_client.dart';
+import 'package:dime_flutter/view/components/nav_bar_client.dart';
 import 'package:dime_flutter/vm/item_page_vm.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';

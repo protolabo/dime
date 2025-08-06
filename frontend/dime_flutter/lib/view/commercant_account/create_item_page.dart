@@ -1,10 +1,14 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';              // ⬅️ pour les formatters
 import 'package:provider/provider.dart';
+
+import 'package:dime_flutter/view/components/header_commercant.dart';
+import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/create_item_vm.dart';
 
-import 'package:dime_flutter/view/styles.dart';
-
+/* ────────────────────────────────────────────────────────────────
+   Page permettant au commerçant d’ajouter un nouvel item
+   ──────────────────────────────────────────────────────────────── */
 class CreateItemPage extends StatefulWidget {
   const CreateItemPage({super.key});
 
@@ -13,10 +17,19 @@ class CreateItemPage extends StatefulWidget {
 }
 
 class _CreateItemPageState extends State<CreateItemPage> {
-  final nameController = TextEditingController();
-  final priceController = TextEditingController();
-  final descriptionController = TextEditingController();
-  final barcodeController = TextEditingController();
+  final _nameC        = TextEditingController();
+  final _barCodeC     = TextEditingController();
+  final _priceC       = TextEditingController();
+  final _descriptionC = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameC.dispose();
+    _barCodeC.dispose();
+    _priceC.dispose();
+    _descriptionC.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,161 +37,63 @@ class _CreateItemPageState extends State<CreateItemPage> {
       create: (_) => CreateItemViewModel(),
       child: Consumer<CreateItemViewModel>(
         builder: (context, vm, _) => Scaffold(
-          backgroundColor: AppColors.searchBg, // ⬅️ ancien 0xFFFDF1DC
-          appBar: AppBar(
-            title: Text(
-              'Create a new item',
-              style: AppTextStyles.subtitle.copyWith(fontSize: 24),
-            ),
-            backgroundColor: AppColors.searchBg,
-            elevation: 0,
-            centerTitle: true,
-          ),
-
-          body: Padding(
-            padding: AppPadding.horizontal.copyWith(top: 16), // ⬅️
+          backgroundColor: AppColors.searchBg,
+          appBar: const HeaderCommercant(),
+          body: SingleChildScrollView(
+            padding: AppPadding.horizontal.copyWith(top: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                /* -------- Image + nom -------- */
-                Row(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.amber[100],
-                        border: Border.all(color: Colors.black),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Text('picture item', style: TextStyle(fontSize: 10)),
-                          Icon(Icons.photo_camera, size: 18),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: nameController,
-                        decoration: InputDecoration(
-                          hintText: 'Name of the item',
-                          hintStyle: AppTextStyles.body.copyWith(
-                            color: Colors.grey[700],
-                          ),
-                          filled: true,
-                          fillColor: Colors.amber[100],
-                          border: const OutlineInputBorder(),
-                        ),
-                      ),
+                Text('Add a new product', style: AppTextStyles.title),
+                const SizedBox(height: 24),
+
+                _InputField(label: 'Name', controller: _nameC),
+                const SizedBox(height: 16),
+
+                _InputField(label: 'Barcode', controller: _barCodeC),
+                const SizedBox(height: 16),
+
+                _InputField(
+                  label: 'Price',
+                  controller: _priceC,
+                  keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true, signed: false),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'^\d{0,6}(\.\d{0,2})?$'),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
 
-                /* -------- Barcode -------- */
-                TextField(
-                  controller: barcodeController,
-                  decoration: InputDecoration(
-                    hintText: 'Barcode (ex: 123456789)',
-                    hintStyle: AppTextStyles.body.copyWith(
-                      color: Colors.grey[700],
-                    ),
-                    filled: true,
-                    fillColor: Colors.amber[100],
-                    border: const OutlineInputBorder(),
-                  ),
+                _InputField(
+                  label: 'Description',
+                  controller: _descriptionC,
+                  maxLines: 3,
                 ),
-                const SizedBox(height: 24),
 
-                /* -------- Price -------- */
-                Text(
-                  'Price',
-                  style: AppTextStyles.subtitle.copyWith(fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: priceController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Enter price (e.g. 9.99)',
-                    hintStyle: AppTextStyles.body.copyWith(
-                      color: Colors.grey[700],
+                const SizedBox(height: 32),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    filled: true,
-                    fillColor: Colors.amber[100],
-                    border: const OutlineInputBorder(),
-                    suffixText: '\$',
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                /* -------- Description -------- */
-                Text(
-                  'Description',
-                  style: AppTextStyles.subtitle.copyWith(fontSize: 16),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: descriptionController,
-                  maxLines: 7,
-                  decoration: InputDecoration(
-                    hintText: 'Enter description...',
-                    hintStyle: AppTextStyles.body.copyWith(
-                      color: Colors.grey[700],
+                    onPressed: vm.isSaving
+                        ? null
+                        : () => vm.saveItem(
+                      name: _nameC.text.trim(),
+                      barCode: _barCodeC.text.trim(),
+                      price: _priceC.text.trim(),
+                      description: _descriptionC.text.trim(),
+                      context: context,
                     ),
-                    filled: true,
-                    fillColor: Colors.amber[100],
-                    border: const OutlineInputBorder(),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                /* -------- QR / Loader / Error -------- */
-                if (vm.isLoading)
-                  const Center(child: CircularProgressIndicator())
-                else if (vm.qrDataUrl != null)
-                  Center(
-                    child: Image.memory(
-                      base64Decode(vm.qrDataUrl!.split(',').last),
-                      height: 200,
-                    ),
-                  )
-                else if (vm.errorMessage != null)
-                  Text(
-                    vm.errorMessage!,
-                    style: AppTextStyles.body.copyWith(color: Colors.red),
-                  ),
-
-                const Spacer(),
-
-                /* -------- Save button -------- */
-                Center(
-                  child: SizedBox(
-                    width: 160,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.accent, // ⬅️
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: () {
-                        vm.generateQrCode(
-                          name: nameController.text,
-                          barcode: barcodeController.text,
-                          price: priceController.text,
-                          description: descriptionController.text,
-                        );
-                      },
-                      child: Text(
-                        'Save',
-                        style: AppTextStyles.button.copyWith(
-                          color: Colors.black,
-                        ),
-                      ),
-                    ),
+                    child: vm.isSaving
+                        ? const CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white)
+                        : Text('Save', style: AppTextStyles.button),
                   ),
                 ),
               ],
@@ -186,6 +101,36 @@ class _CreateItemPageState extends State<CreateItemPage> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/* Widget réutilisable pour les TextField */
+class _InputField extends StatelessWidget {
+  const _InputField({
+    required this.label,
+    required this.controller,
+    this.keyboardType,
+    this.maxLines = 1,
+    this.inputFormatters,
+  });
+
+  final String label;
+  final TextEditingController controller;
+  final TextInputType? keyboardType;
+  final int maxLines;
+  final List<TextInputFormatter>? inputFormatters;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      inputFormatters: inputFormatters,            // ⬅️ transmis ici
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(borderRadius: AppRadius.border),
+      ).copyWith(labelText: label),
     );
   }
 }

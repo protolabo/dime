@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../vm/choose_commerce_vm.dart';        // ← corrige le chemin si besoin
-import '../styles.dart';                   // ← nouveau
+import '../../vm/choose_commerce_vm.dart';
+import '../styles.dart';
 
 class ChooseCommercePage extends StatelessWidget {
   const ChooseCommercePage({super.key});
@@ -15,6 +15,7 @@ class ChooseCommercePage extends StatelessWidget {
         builder: (context, vm, _) {
           if (vm.isLoading) {
             return const Scaffold(
+              // ⬇️ PAS de header
               body: Center(child: CircularProgressIndicator()),
             );
           }
@@ -26,9 +27,9 @@ class ChooseCommercePage extends StatelessWidget {
           }
 
           return Scaffold(
-            appBar: AppBar(title: const Text('Pick a commerce')),
+            // ⬇️  AUCUN AppBar ici désormais
             body: Padding(
-              padding: AppPadding.all, // déjà défini dans styles.dart
+              padding: AppPadding.all,
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
@@ -39,8 +40,10 @@ class ChooseCommercePage extends StatelessWidget {
                 itemCount: vm.stores.length,
                 itemBuilder: (context, index) {
                   final store = vm.stores[index];
+
                   return GestureDetector(
-                    onTap: () => vm.selectStore(context, store),
+                    onTap: () =>
+                        vm.selectStore(context, store), // gère redirection
                     child: Container(
                       decoration: BoxDecoration(
                         color: ChooseCommerceStyles.tileBg,

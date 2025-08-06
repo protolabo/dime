@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:dime_flutter/vm/current_store.dart';
 import 'package:dime_flutter/vm/store_picker.dart';
 import 'package:dime_flutter/view/styles.dart';
-import 'package:dime_flutter/main.dart';     // pour l’action logout
+import 'package:dime_flutter/main.dart';
 
 class Header extends StatefulWidget implements PreferredSizeWidget {
   const Header(this.nameCommerce, {super.key});
@@ -29,11 +29,11 @@ class _HeaderState extends State<Header> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.searchBg,                                // crème
+      color: AppColors.searchBg,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(                  // ⬅️ padding original
+          padding: const EdgeInsets.symmetric(
             horizontal: 16,
             vertical  : 12,
           ),

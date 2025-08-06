@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'current_connected_account_vm.dart'; // ← service déjà fourni
+import 'current_store.dart';
+import '../view/commercant_account/create_item_page.dart';
 
+/// VM pour la page de choix de commerce (commerçant)
 class ChooseCommerceViewModel extends ChangeNotifier {
+  final SupabaseClient _client = Supabase.instance.client;
+
+  bool   isLoading = true;
+  String? error;
+  List<Map<String, dynamic>> stores = []; // [{store_id, name}]
+
   ChooseCommerceViewModel() {
-    _init();
+    _loadStores();
   }
 
-  bool isLoading = true;
-  String? error;
-
-  /// [{store_id, name}]
-  List<Map<String, dynamic>> stores = [];
-
-  Future<void> _init() async {
+  Future<void> _loadStores() async {
     try {
-      final merchant = await CurrentActorService.getCurrentMerchant(); // actor_id = 2 test
-      final data = await Supabase.instance.client
+      const int actorId = 2; // A CHANGER
+
+      final resp = await _client
           .from('store')
           .select('store_id, name')
-          .eq('actor_id', merchant.actorId);
+          .eq('actor_id', actorId);
 
-      stores = List<Map<String, dynamic>>.from(data);
+      stores = List<Map<String, dynamic>>.from(resp);
     } catch (e) {
       error = e.toString();
     } finally {
@@ -31,9 +34,24 @@ class ChooseCommerceViewModel extends ChangeNotifier {
     }
   }
 
-  void selectStore(BuildContext context, Map<String, dynamic> store) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('✅ Commerce « ${store['name']} » sélectionné !')),
-    );
+  Future<void> selectStore(BuildContext ctx, Map<String, dynamic> store) async {
+    final int storeId    = store['store_id'] as int;
+    // Si `setCurrentStore` attend le **nom**, passe plutôt `store['name']`
+    try {
+      await CurrentStoreService.setCurrentStore(storeId); // ajuste si besoin
+
+      if (!ctx.mounted) return;
+      Navigator.pushReplacement(
+        ctx,
+        MaterialPageRoute(builder: (_) => const CreateItemPage()),
+      );
+    } catch (e) {
+      debugPrint('❌ selectStore error: $e');
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+          SnackBar(content: Text('Erreur : $e')),
+        );
+      }
+    }
   }
 }

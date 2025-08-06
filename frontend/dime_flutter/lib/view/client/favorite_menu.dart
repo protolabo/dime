@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:dime_flutter/view/components/header.dart';
-import 'package:dime_flutter/view/components/nav_bar.dart';
+import 'package:dime_flutter/view/components/header_client.dart';
+import 'package:dime_flutter/view/components/nav_bar_client.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';
 import 'package:dime_flutter/view/fenetre/fav_commerce_fenetre.dart';

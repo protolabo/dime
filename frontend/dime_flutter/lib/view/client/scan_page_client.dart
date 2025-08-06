@@ -5,8 +5,8 @@ import 'package:dime_flutter/view/styles.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import 'package:dime_flutter/view/components/header.dart';
-import 'package:dime_flutter/view/components/nav_bar.dart';
+import 'package:dime_flutter/view/components/header_client.dart';
+import 'package:dime_flutter/view/components/nav_bar_client.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/vm/current_store.dart';
