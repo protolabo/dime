@@ -6,12 +6,14 @@ class Client {
   final String firstName;
   final String lastName;
   final String role;
+  final String email;
 
   Client({
     required this.actorId,
     required this.firstName,
     required this.lastName,
     required this.role,
+    required this.email,
   });
 }
 
@@ -50,7 +52,7 @@ class CurrentActorService {
 
     final response = await supabase
         .from('actor')
-        .select('actor_id, first_name, last_name, role')
+         .select('actor_id, first_name, last_name, role, email')
         .eq('actor_id', actorId)
         .maybeSingle();
 
@@ -63,6 +65,7 @@ class CurrentActorService {
       firstName: response['first_name'] as String,
       lastName: response['last_name'] as String,
       role: response['role'] as String,
+      email: response['email'] as String,
     );
 
     if (actor.role != expectedRole) {

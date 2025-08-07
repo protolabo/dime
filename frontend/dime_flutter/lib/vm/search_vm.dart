@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'current_connected_account_vm.dart';
 
 class SearchViewModel extends ChangeNotifier {
   final SupabaseClient _c = Supabase.instance.client;
@@ -15,7 +16,8 @@ class SearchViewModel extends ChangeNotifier {
 
   /*────────────────────  RECO  ────────────────────*/
   Future<void> _loadRecommendations() async {
-    const int userId = 1;                               // ← ton hack user
+    final actor = await CurrentActorService.getCurrentActor();
+    final userId = actor.actorId;
 
     final favProds = await _c
         .from('favorite_product')
@@ -135,4 +137,64 @@ class SearchViewModel extends ChangeNotifier {
 
     isLoading = false; notifyListeners();
   }
+
+  // en haut du fichier (où tu veux, p.ex. juste sous le constructeur)
+  /*────────── toggle favoris ──────────*/
+  Future<void> toggleFavoriteProduct(int productId, bool nowFav) async {
+    final actor = await CurrentActorService.getCurrentActor();
+    final userId    = actor.actorId;
+    final userEmail = actor.email;          // varchar NOT NULL
+
+    if (nowFav) {
+      await _c.from('favorite_product').insert({
+        'actor_id'   : userId,
+        'product_id' : productId,
+        'created_by' : userEmail,
+      });
+    } else {
+      await _c.from('favorite_product')
+          .delete()
+          .eq('actor_id', userId)
+          .eq('product_id', productId);
+    }
+
+    // on met à jour la liste locale (recos + results) pour refléter l’état
+    for (final lst in [recos, results]) {
+      for (final item in lst) {
+        if (item['type'] == 'product' && item['id'] == productId) {
+          item['isFav'] = nowFav;
+        }
+      }
+    }
+    notifyListeners();
+  }
+
+  Future<void> toggleFavoriteStore(int storeId, bool nowFav) async {
+    final actor = await CurrentActorService.getCurrentActor();
+    final userId    = actor.actorId;
+    final userEmail = actor.email;
+
+    if (nowFav) {
+      await _c.from('favorite_store').insert({
+        'actor_id'   : userId,
+        'store_id'   : storeId,
+        'created_by' : userEmail,
+      });
+    } else {
+      await _c.from('favorite_store')
+          .delete()
+          .eq('actor_id', userId)
+          .eq('store_id', storeId);
+    }
+
+    for (final lst in [recos, results]) {
+      for (final item in lst) {
+        if (item['type'] == 'store' && item['id'] == storeId) {
+          item['isFav'] = nowFav;
+        }
+      }
+    }
+    notifyListeners();
+  }
+
 }

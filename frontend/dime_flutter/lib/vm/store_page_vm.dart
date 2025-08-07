@@ -128,4 +128,34 @@ class StorePageVM extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+
+  /* ───────── ajout / retrait fav ───────── */
+  /// Ajoute ou retire le store des favoris
+  Future<void> toggleFavorite(int storeId) async {
+    final actor = await CurrentActorService.getCurrentActor();
+    final userId = actor.actorId;
+    final userEmail = actor.email;
+
+    if (isStoreFavorite) {
+      // ➖ RETIRER
+      await Supabase.instance.client
+          .from('favorite_store')
+          .delete()
+          .eq('actor_id', userId)
+          .eq('store_id', storeId);
+      isStoreFavorite = false;
+    } else {
+      // ➕ AJOUTER  (👉 on ajoute created_by)
+      await Supabase.instance.client.from('favorite_store').insert({
+        'actor_id'   : userId,
+        'store_id'   : storeId,
+        'created_by' : actor.email ?? '${actor.firstName} ${actor.lastName}',
+      });
+      isStoreFavorite = true;
+    }
+
+    notifyListeners();
+  }
+
 }

@@ -11,7 +11,6 @@ import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/client/search_page.dart';
 
-
 const _bg = AppColors.searchBg;
 
 class StorePageCustomer extends StatelessWidget {
@@ -21,7 +20,7 @@ class StorePageCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => StorePageVM()..load(storeId), // ← utilise l’utilisateur courant
+      create: (_) => StorePageVM()..load(storeId),
       child: Consumer<StorePageVM>(
         builder: (ctx, vm, _) {
           if (vm.isLoading) {
@@ -33,8 +32,6 @@ class StorePageCustomer extends StatelessWidget {
               body: Center(child: Text(vm.error!)),
             );
           }
-
-
 
           return Scaffold(
             backgroundColor: _bg,
@@ -52,7 +49,7 @@ class StorePageCustomer extends StatelessWidget {
                   Navigator.push(
                       context, MaterialPageRoute(builder: (_) => const SearchPage()));
                 }
-              },
+              },                           // 〰️ inchangé
             ),
             body: SafeArea(
               child: SingleChildScrollView(
@@ -73,12 +70,19 @@ class StorePageCustomer extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        Icon(
-                          vm.isStoreFavorite
-                              ? Icons.favorite
-                              : Icons.favorite_border,
-                          color: vm.isStoreFavorite ? Colors.red : Colors.grey,
-                          size: 32,
+                        InkWell(
+                          onTap: () => vm.toggleFavorite(storeId),
+                          borderRadius: BorderRadius.circular(32),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: Icon(
+                              vm.isStoreFavorite
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: vm.isStoreFavorite ? Colors.red : Colors.grey,
+                              size: 32,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -104,8 +108,7 @@ class StorePageCustomer extends StatelessWidget {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         itemCount: vm.recos.length,
-                        gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: 2,
                           mainAxisSpacing: 24,
                           crossAxisSpacing: 24,
@@ -116,13 +119,12 @@ class StorePageCustomer extends StatelessWidget {
                             onTap: () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) =>
-                                      ItemPageCustomer(productId: r['id'])),
+                                  builder: (_) => ItemPageCustomer(productId: r['id'])),
                             ),
                             child: FavItemFenetre(
                               name: r['title'],
                               isFavorite: r['isFav'] as bool,
-                              onFavoriteChanged: (_) {},
+                              onFavoriteChanged: (_) {},   // ici on ne gère que l’item
                             ),
                           );
                         },

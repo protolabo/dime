@@ -170,12 +170,13 @@ class _YouMightLike extends StatelessWidget {
                     ? FavItemFenetre(
                         name: r['title'],
                         isFavorite: r['isFav'] ?? false,
-                        onFavoriteChanged: (_) {},
+                  onFavoriteChanged: (bool fav) =>
+                         context.read<SearchViewModel>().toggleFavoriteProduct(r['id'], fav),
                       )
                     : FavCommerceFenetre(
                         name: r['title'],
                         isFavorite: r['isFav'] ?? false,
-                        onFavoriteChanged: (_) {},
+                  onFavoriteChanged: (bool fav) => context.read<SearchViewModel>().toggleFavoriteStore(r['id'], fav),
                       );
 
                 return GestureDetector(

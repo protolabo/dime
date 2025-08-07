@@ -5,11 +5,11 @@ typedef FavoriteChanged = void Function(bool isNowFavorited);
 
 class FavItemFenetre extends StatefulWidget {
   const FavItemFenetre({
-    Key? key,
+    super.key,
     required this.name,
     required this.isFavorite,
     required this.onFavoriteChanged,
-  }) : super(key: key);
+  });
 
   final String           name;
   final bool             isFavorite;
