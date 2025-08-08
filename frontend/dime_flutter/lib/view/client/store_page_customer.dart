@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dime_flutter/view/styles.dart';
 
-import 'package:dime_flutter/vm/store_page_vm.dart';
+import 'package:dime_flutter/vm/client/store_page_vm.dart';
 import 'package:dime_flutter/view/components/header_client.dart';
 import 'package:dime_flutter/view/components/nav_bar_client.dart';
 import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';

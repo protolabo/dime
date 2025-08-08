@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-import 'current_store.dart';
-import '../view/commercant_account/create_item_page.dart';
+import '../current_connected_account_vm.dart';
+import '../current_store.dart';
+import '../../view/commercant/create_item_page.dart';
 
 /// VM pour la page de choix de commerce (commerçant)
 class ChooseCommerceViewModel extends ChangeNotifier {
@@ -17,8 +17,10 @@ class ChooseCommerceViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadStores() async {
+    final actor = await CurrentActorService.getCurrentMerchant();
     try {
-      const int actorId = 2; // A CHANGER
+
+      final int actorId = actor.actorId; // A CHANGER
 
       final resp = await _client
           .from('store')

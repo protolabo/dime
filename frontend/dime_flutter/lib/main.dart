@@ -3,7 +3,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'view/client/scan_page_client.dart';
-import 'view/commercant_account/choose_commerce.dart';
+import 'view/commercant/choose_commerce.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

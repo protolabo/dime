@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:dime_flutter/view/styles.dart';
-import 'package:dime_flutter/view/commercant_account/choose_commerce.dart';
+import 'package:dime_flutter/view/commercant/choose_commerce.dart';
 import 'package:dime_flutter/vm/current_store.dart';
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:dime_flutter/main.dart';

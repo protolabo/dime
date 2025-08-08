@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:dime_flutter/view/styles.dart';
 
-import 'package:dime_flutter/vm/search_vm.dart';
+import 'package:dime_flutter/vm/client/search_vm.dart';
 import 'package:dime_flutter/view/components/header_client.dart';
 import 'package:dime_flutter/view/components/nav_bar_client.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';

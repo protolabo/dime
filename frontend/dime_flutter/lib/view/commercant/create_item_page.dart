@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dime_flutter/view/components/header_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
-import 'package:dime_flutter/vm/create_item_vm.dart';
+import 'package:dime_flutter/vm/commercant/create_item_vm.dart';
 
 /* ────────────────────────────────────────────────────────────────
    Page permettant au commerçant d’ajouter un nouvel item

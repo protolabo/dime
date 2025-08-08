@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../vm/choose_commerce_vm.dart';
+import '../../vm/commercant/choose_commerce_vm.dart';
 import '../styles.dart';
 
 class ChooseCommercePage extends StatelessWidget {
