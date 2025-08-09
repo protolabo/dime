@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';              // ⬅️ pour les formatters
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dime_flutter/view/components/header_commercant.dart';
+import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_item_vm.dart';
 
@@ -39,6 +40,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
         builder: (context, vm, _) => Scaffold(
           backgroundColor: AppColors.searchBg,
           appBar: const HeaderCommercant(),
+
           body: SingleChildScrollView(
             padding: AppPadding.horizontal.copyWith(top: 20),
             child: Column(
@@ -57,7 +59,8 @@ class _CreateItemPageState extends State<CreateItemPage> {
                   label: 'Price',
                   controller: _priceC,
                   keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true, signed: false),
+                    decimal: true, signed: false,
+                  ),
                   inputFormatters: [
                     FilteringTextInputFormatter.allow(
                       RegExp(r'^\d{0,6}(\.\d{0,2})?$'),
@@ -99,6 +102,22 @@ class _CreateItemPageState extends State<CreateItemPage> {
               ],
             ),
           ),
+
+          // ⬇️ Ajout: barre de navigation commerçant (My Team sélectionné)
+          bottomNavigationBar: navbar_commercant(
+            currentIndex: 0,
+            onTap: (i) {
+              // Pour l’instant: simple feedback pour valider que ça marche
+              // (tu brancheras la vraie navigation plus tard)
+              debugPrint('Commercant nav tapped: index=$i');
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Tapped tab index $i'),
+                  duration: const Duration(milliseconds: 800),
+                ),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -127,7 +146,7 @@ class _InputField extends StatelessWidget {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      inputFormatters: inputFormatters,            // ⬅️ transmis ici
+      inputFormatters: inputFormatters,
       decoration: const InputDecoration(
         border: OutlineInputBorder(borderRadius: AppRadius.border),
       ).copyWith(labelText: label),
