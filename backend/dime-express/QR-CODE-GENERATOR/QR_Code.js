@@ -1,4 +1,3 @@
-// QR_Code.js
 const express   = require('express');
 const path      = require('path');
 const fs        = require('fs');
@@ -6,8 +5,8 @@ const QRCode    = require('qrcode');
 require('dotenv').config();
 const supabase  = require('../supabaseClient');
 
-const app   = express();
-const port  = process.env.PORT || 3000;
+const app  = express();
+const port = process.env.PORT || 3000;
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(express.json());
@@ -19,11 +18,9 @@ const qrDir = path.join(__dirname, 'public', 'qr');
 fs.mkdirSync(qrDir, { recursive: true });
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ─── Routes GET ────────────────────────────────────────────────────────────────
-// Redirect racine → form création item
+// ─── Routes GET (formulaires web facultatifs) ─────────────────────────────────
 app.get('/', (_req, res) => res.redirect('/item/new'));
 
-// Formulaire création d’un item avec choix du store
 app.get('/item/new', async (_req, res, next) => {
   try {
     const { data: stores, error } = await supabase
@@ -36,7 +33,6 @@ app.get('/item/new', async (_req, res, next) => {
   }
 });
 
-// Formulaire création d’une étagère (shelf) avec choix du store
 app.get('/shelf/new', async (_req, res, next) => {
   try {
     const { data: stores, error } = await supabase
@@ -49,12 +45,24 @@ app.get('/shelf/new', async (_req, res, next) => {
   }
 });
 
-// ─── Routes POST ───────────────────────────────────────────────────────────────
-// Ajout d’un nouvel item
+// ─── Routes POST ──────────────────────────────────────────────────────────────
+// Création d’un item + prix + QR
 app.post('/item/new', async (req, res, next) => {
   try {
-    const { name, barcode, price, description, store_id } = req.body;
-    // 1️⃣ Insert produit
+    const {
+      name,
+      barcode,
+      price,
+      description,
+      store_id,
+      created_by, // ⬅️ NOUVEAU : envoyé par l’app Flutter
+    } = req.body;
+
+    // Valeurs “safe” par défaut si jamais le client n’envoie rien
+    const auditCreatedBy = created_by || 'unknown';
+    const storeId        = Number(store_id) || 1;
+
+    // 1) Insert produit
     const { data: prodRows, error: prodErr } = await supabase
       .from('product')
       .insert({
@@ -62,22 +70,23 @@ app.post('/item/new', async (req, res, next) => {
         description,
         category: 'default',
         bar_code: barcode,
-        created_by: 'admin'
+        created_by: auditCreatedBy,     // ⬅️ NOUVEAU
       })
       .select('product_id');
+
     if (prodErr) throw prodErr;
     const product_id = prodRows[0].product_id;
 
-    // 2️⃣ Insert prix initial
+    // 2) Insert prix initial (facultatif)
     if (price) {
       const payload = {
-        store_id: Number(store_id) || 1,
+        store_id: storeId,              // ⬅️ utilise le store choisi côté app
         product_id,
         amount: parseFloat(price),
         currency: 'CAD',
         pricing_unit: 'unit',
-        created_by: 'admin',
-        avaible: 1
+        created_by: auditCreatedBy,     // ⬅️ NOUVEAU
+        avaible: 1,
       };
       const { error: priceErr } = await supabase
         .from('priced_product')
@@ -85,25 +94,25 @@ app.post('/item/new', async (req, res, next) => {
       if (priceErr) console.error('❌ priced_product insert error:', priceErr);
     }
 
-    // 3️⃣ Génération du QR code
+    // 3) Génération du QR code
     const qrPayload = JSON.stringify({ type: 'product', product_id });
     const fileName  = `product-${product_id}.png`;
     const filePath  = path.join(qrDir, fileName);
     await QRCode.toFile(filePath, qrPayload);
     const dataUrl = await QRCode.toDataURL(qrPayload);
 
-    // 4️⃣ Mise à jour du produit avec l’image QR
+    // 4) Mise à jour du produit avec l’image QR
     const { error: updErr } = await supabase
       .from('product')
       .update({ qr_code: dataUrl })
       .eq('product_id', product_id);
     if (updErr) console.error('❌ product update error:', updErr);
 
-    // Affichage du résultat
+    // 5) Rendu HTML (l’app Flutter récupère le dataURL avec une RegExp)
     res.render('qrResult', {
       dataUrl,
       fileName,
-      meta: { name }
+      meta: { name },
     });
   } catch (err) {
     console.error(err);
