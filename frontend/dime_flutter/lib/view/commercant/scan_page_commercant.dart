@@ -5,26 +5,25 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/scan_page_vm.dart';
 
-import '../components/header_client.dart';
-import '../components/nav_bar_client.dart';
-import 'favorite_menu.dart';
-import 'item_page_customer.dart';
-import 'search_page.dart';
+import '../components/header_commercant.dart';
+import '../components/nav_bar_commercant.dart';
+import 'create_qr_menu.dart';
+import 'shelf_page.dart';
 
-class ScanClientPage extends StatelessWidget {
-  const ScanClientPage({super.key});
+class ScanCommercantPage extends StatelessWidget {
+  const ScanCommercantPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => ScanPageVM(),
-      child: const _ScanClientPageBody(),
+      child: const _ScanCommercantPageBody(),
     );
   }
 }
 
-class _ScanClientPageBody extends StatelessWidget {
-  const _ScanClientPageBody({super.key});
+class _ScanCommercantPageBody extends StatelessWidget {
+  const _ScanCommercantPageBody({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,10 +31,7 @@ class _ScanClientPageBody extends StatelessWidget {
     final media = MediaQuery.of(context);
 
     return Scaffold(
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(70),
-        child: Header(null),
-      ),
+      appBar: const HeaderCommercant(),
       body: Stack(
         children: [
           // Caméra visible par défaut ; retirée seulement si étagère plein écran
@@ -67,7 +63,8 @@ class _ScanClientPageBody extends StatelessWidget {
                   media.size.height, media.padding, vm.qrRect!.bottom + 12)
                   : null,
               bottom: vm.qrRect == null ? 40 : null,
-              left: 20, right: 20,
+              left: 20,
+              right: 20,
               child: _buildProductOverlay(context, vm),
             ),
 
@@ -91,13 +88,11 @@ class _ScanClientPageBody extends StatelessWidget {
             ),
         ],
       ),
-      bottomNavigationBar: navbar_client(
-        currentIndex: 1,
+      bottomNavigationBar: navbar_commercant(
+        currentIndex: 2,
         onTap: (index) {
           if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteMenuPage()));
-          } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPage()));
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
           }
         },
       ),
@@ -118,7 +113,7 @@ class _ScanClientPageBody extends StatelessWidget {
       double desiredTop,
       List<ShelfItemVM> items,
       ) {
-    final previewMax = 5;
+    const previewMax = 5;
     final rows = items.length < previewMax ? items.length : previewMax;
     final estHeight = 56.0 * rows + 80.0; // rows + header/padding approx
     final maxTop = screenH - viewInsets.bottom - 16.0 - estHeight;
@@ -127,7 +122,9 @@ class _ScanClientPageBody extends StatelessWidget {
 
   /* ─────────── OVERLAY PRODUIT ─────────── */
   Widget _buildProductOverlay(BuildContext context, ScanPageVM vm) {
-    final data = vm.overlayData!;
+    final data = vm.overlayData; // ✅ nom correct dans le VM
+    if (data == null) return const SizedBox.shrink();
+
     final num? amount = data['amount'] as num?;
     final String currency = data['currency'] as String? ?? '\$';
     final num? promo = data['promo'] as num?;
@@ -135,7 +132,8 @@ class _ScanClientPageBody extends StatelessWidget {
     return Container(
       padding: AppPadding.all,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.75),
+        // Si .withValues indisponible sur ta version, remets .withOpacity(0.75)
+        color: Colors.black.withValues(alpha: 0.75),
         borderRadius: AppRadius.border,
       ),
       child: Row(
@@ -145,22 +143,11 @@ class _ScanClientPageBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                GestureDetector(
-                  onTap: () {
-                    final pid = data['id'] as int?;
-                    if (pid != null) {
-                      vm.clearOverlay();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => ItemPageCustomer(productId: pid)),
-                      );
-                    }
-                  },
-                  child: Text(
-                    data['name'] ?? 'Item inconnu',
-                    style: AppTextStyles.subtitle.copyWith(color: Colors.white),
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                // ⚠️ Commerçant : cliquer sur le nom NE FAIT RIEN
+                Text(
+                  data['name'] ?? 'Item inconnu',
+                  style: AppTextStyles.subtitle.copyWith(color: Colors.white),
+                  overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 if (promo != null) ...[
@@ -194,77 +181,86 @@ class _ScanClientPageBody extends StatelessWidget {
   /* ─────────── OVERLAY ÉTAGÈRE ─────────── */
   Widget _buildShelfOverlay(BuildContext context, ScanPageVM vm) {
     final items = vm.shelfItems;
-    final previewMax = 5;
-    final visible = vm.expanded ? items : items.take(previewMax).toList();
+    final list = vm.expanded ? items : (items.length <= 5 ? items : items.take(5).toList());
 
-    final decoration = BoxDecoration(
-      color: Colors.black.withOpacity(vm.expanded ? 0.92 : 0.75),
-      borderRadius: vm.expanded ? BorderRadius.zero : AppRadius.border,
-    );
-
-    final compactMaxHeight =
-    (56.0 * visible.length + 80.0).clamp(140.0, MediaQuery.of(context).size.height * .55);
-
-    final listWidget = ListView.separated(
-      physics: const ClampingScrollPhysics(),
-      shrinkWrap: vm.expanded ? false : true,
-      itemBuilder: (_, i) => _shelfItemTile(context, vm, visible[i]),
-      separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
-      itemCount: visible.length,
+    final listWidget = ListView.builder(
+      shrinkWrap: !vm.expanded,
+      physics: vm.expanded ? const AlwaysScrollableScrollPhysics() : const NeverScrollableScrollPhysics(),
+      itemCount: list.length,
+      itemBuilder: (context, i) => _shelfItemTile(context, vm, list[i]),
     );
 
     return Container(
-      padding: vm.expanded ? const EdgeInsets.only(top: 8, left: 12, right: 12, bottom: 12) : AppPadding.all,
-      decoration: decoration,
-      child: SafeArea(
-        bottom: true,
-        child: Column(
-          mainAxisSize: vm.expanded ? MainAxisSize.max : MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
+      decoration: BoxDecoration(
+        // Si .withValues indisponible, remets .withOpacity(0.80)
+        color: Colors.black.withValues(alpha: 0.80),
+        borderRadius: vm.expanded ? null : AppRadius.border,
+      ),
+      padding: vm.expanded ? const EdgeInsets.fromLTRB(16, 16, 16, 24) : AppPadding.all,
+      child: Column(
+        mainAxisSize: vm.expanded ? MainAxisSize.max : MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              // ⬇️ Nom d’étagère cliquable → ouvre ShelfPageCommercant
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    final name = vm.shelfName ?? 'Shelf';
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ShelfPageCommercant(
+                          shelfName: name,
+                          // Si ton VM expose shelfId/qrData, passe-les ici:
+                          // shelfId: vm.shelfId,
+                          // qrData: vm.shelfQrData,
+                        ),
+                      ),
+                    );
+                  },
                   child: Text(
                     vm.shelfName ?? 'Shelf',
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.subtitle.copyWith(color: Colors.white),
+                    style: AppTextStyles.subtitle.copyWith(
+                      color: Colors.white,
+                      decoration: TextDecoration.underline,
+                    ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(vm.expanded ? Icons.close_fullscreen : Icons.open_in_full, color: Colors.white),
-                  tooltip: vm.expanded ? 'Réduire' : 'Agrandir',
-                  onPressed: vm.toggleExpanded,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: vm.clearOverlay,
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-
-            if (items.isEmpty)
-              Text('Aucun produit sur cette étagère',
-                  style: AppTextStyles.body.copyWith(color: Colors.white70))
-            else
-              (vm.expanded)
-                  ? Expanded(child: listWidget)
-                  : ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: compactMaxHeight),
-                child: listWidget,
               ),
+              IconButton(
+                icon: Icon(vm.expanded ? Icons.close_fullscreen : Icons.open_in_full, color: Colors.white),
+                tooltip: vm.expanded ? 'Réduire' : 'Agrandir',
+                onPressed: vm.toggleExpanded,
+              ),
+              IconButton(
+                icon: const Icon(Icons.close, color: Colors.white),
+                onPressed: vm.clearOverlay,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          if (items.isEmpty)
+            Text('Aucun item trouvé sur cette étagère',
+                style: AppTextStyles.body.copyWith(color: Colors.white70))
+          else ...[
+            if (vm.expanded)
+              Expanded(child: listWidget)
+            else
+              Flexible(child: listWidget),
 
-            if (!vm.expanded && items.length > visible.length)
+            if (!vm.expanded && items.length > list.length)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
-                  '+${items.length - visible.length} autres items — appuie pour agrandir',
+                  '+${items.length - list.length} autres items — appuie pour agrandir',
                   style: AppTextStyles.body.copyWith(color: Colors.white60, fontSize: 12),
                 ),
               ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -273,29 +269,35 @@ class _ScanClientPageBody extends StatelessWidget {
     final price = it.price;
     final promo = it.promoPrice;
 
+    // ⚠️ Commerçant : cliquer ne fait rien ici (la navigation se fait sur la page d’étagère)
     return InkWell(
-      onTap: () {
-        vm.clearOverlay();
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => ItemPageCustomer(productId: it.productId)),
-        );
-      },
+      onTap: null,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(
           children: [
-            Expanded(child: Text(it.name, style: AppTextStyles.body.copyWith(color: Colors.white))),
+            Expanded(
+              child: Text(
+                it.name,
+                style: AppTextStyles.body.copyWith(color: Colors.white),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             const SizedBox(width: 8),
             if (it.promoActive && promo != null) ...[
               Text(
                 price != null ? '${price.toStringAsFixed(2)} ${it.currency}' : '',
                 style: AppTextStyles.body.copyWith(
-                    fontSize: 12, color: Colors.white54, decoration: TextDecoration.lineThrough),
+                  fontSize: 12,
+                  color: Colors.white54,
+                  decoration: TextDecoration.lineThrough,
+                ),
               ),
               const SizedBox(width: 6),
-              Text('${promo.toStringAsFixed(2)} ${it.currency}',
-                  style: AppTextStyles.body.copyWith(color: Colors.white)),
+              Text(
+                '${promo.toStringAsFixed(2)} ${it.currency}',
+                style: AppTextStyles.body.copyWith(color: Colors.white),
+              ),
             ] else
               Text(
                 price != null ? '${price.toStringAsFixed(2)} ${it.currency}' : '—',

@@ -5,6 +5,7 @@ import 'package:dime_flutter/view/components/header_commercant.dart';
 import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_qr_menu_vm.dart';
+import 'scan_page_commercant.dart';
 
 
 class CreateQrMenuPage extends StatelessWidget {
@@ -90,13 +91,13 @@ class CreateQrMenuPage extends StatelessWidget {
               onTap: (i) {
                 // Pour l’instant: simple feedback pour valider que ça marche
                 // (tu brancheras la vraie navigation plus tard)
+                if (i == 2) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ScanCommercantPage()),
+                  );
+                }
                 debugPrint('Commercant nav tapped: index=$i');
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Tapped tab index $i'),
-                    duration: const Duration(milliseconds: 800),
-                  ),
-                );
               },
             ),
           );

@@ -6,6 +6,9 @@ import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_shelf_vm.dart';
 
+import 'create_qr_menu.dart';
+import 'scan_page_commercant.dart';
+
 class CreateShelfPage extends StatefulWidget {
   const CreateShelfPage({super.key});
 
@@ -74,12 +77,13 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
             ),
 
             bottomNavigationBar: navbar_commercant(
-              currentIndex: 0, // My Commerce
-              onTap: (i) {
-                // tu brancheras plus tard
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Tab $i')),
-                );
+              currentIndex: 0,
+              onTap: (index) {
+                if (index == 0) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
+                } else if (index == 2) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
+                }
               },
             ),
           );

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../current_store.dart';
+import 'current_store.dart';
 
 enum ScanOverlayKind { none, product, shelf }
 
