@@ -18,9 +18,23 @@ class Client {
 }
 
 class CurrentActorService {
+  /*
+  * Id existant:
+  *
+  * 1 = John Doe (client)
+  * 2: Donald D. Epstein (commercant)
+  * 3: L-E Lafontant (commercant)
+  * 4: DB (client)
+  *
+  * */
+
+
+
+
+
   /*─────────────────── IDs de test ────────────────────*/
   // 1 → compte client (déjà utilisé partout dans l’app)
-  static const int _testActorId       = 1;
+  static const int _testActorId       = 4;
   // 2 → compte commerçant (nouveau pour le côté merchant)
   static const int _testMerchantId    = 2;
 
