@@ -97,13 +97,13 @@ class ItemPageCustomer extends StatelessWidget {
                                         final match = vm.storesWithPrice
                                             .firstWhere(
                                               (e) =>
-                                                  e['store_name'] ==
-                                                  locatedStoreName,
-                                              orElse: () => {},
-                                            );
+                                          e['store_name'] ==
+                                              locatedStoreName,
+                                          orElse: () => {},
+                                        );
                                         if (match.isNotEmpty) {
                                           final int storeId =
-                                              match['store_id'] as int;
+                                          match['store_id'] as int;
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
@@ -154,7 +154,7 @@ class ItemPageCustomer extends StatelessWidget {
                           ),
                           if (vm.minPrice != null)
                             Text(
-                              '\$${vm.minPrice!.toStringAsFixed(2)}',
+                              '${vm.minPrice!.toStringAsFixed(2)}\$',
                               style: AppTextStyles.subtitle.copyWith(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -173,7 +173,7 @@ class ItemPageCustomer extends StatelessWidget {
                     style: AppTextStyles.subtitle,
                   ),
                   const SizedBox(height: 8),
-                  if (vm.storesWithPrice.isEmpty)
+                  if (vm.storesForSection.isEmpty)
                     const Text('Aucun commerce trouvé')
                   else
                     Container(
@@ -184,16 +184,16 @@ class ItemPageCustomer extends StatelessWidget {
                       child: ListView.separated(
                         physics: const NeverScrollableScrollPhysics(),
                         shrinkWrap: true,
-                        itemCount: vm.storesWithPrice.length,
+                        itemCount: vm.storesForSection.length,
                         separatorBuilder: (_, __) =>
-                            const Divider(height: 1, color: Colors.black12),
+                        const Divider(height: 1, color: Colors.black12),
                         itemBuilder: (_, i) {
-                          final s = vm.storesWithPrice[i];
+                          final s = vm.storesForSection[i];
                           final fav = vm.favoriteStoreIds.contains(
                             s['store_id'] as int,
                           );
                           final priceText =
-                              '\$${(s['price'] as num).toStringAsFixed(2)}';
+                              '${(s['price'] as num).toStringAsFixed(2)}\$';
 
                           return ListTile(
                             dense: true,
@@ -236,7 +236,7 @@ class ItemPageCustomer extends StatelessWidget {
                                       builder: (_) => ItemPageCustomer(
                                         productId: pid,
                                         locatedStoreName:
-                                            s['store_name'] as String,
+                                        s['store_name'] as String,
                                       ),
                                     ),
                                   );

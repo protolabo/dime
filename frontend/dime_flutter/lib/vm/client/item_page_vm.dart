@@ -13,6 +13,9 @@ class ItemPageViewModel extends ChangeNotifier {
   /* ──────────── fields ──────────── */
   final int productId;
 
+  // Nombre max de magasins affichés dans la section
+  static const int kStoresSectionLimit = 6;
+
   bool isLoading = true;
   String? error;
 
@@ -134,9 +137,8 @@ class ItemPageViewModel extends ChangeNotifier {
           .select('product_id')
           .eq('bar_code', barCode);
 
-      final productIds = idRows
-          .map<int>((r) => r['product_id'] as int)
-          .toList();
+      final productIds =
+      idRows.map<int>((r) => r['product_id'] as int).toList();
       if (productIds.isEmpty) {
         storesWithPrice = [];
         return;
@@ -154,10 +156,8 @@ class ItemPageViewModel extends ChangeNotifier {
       }
 
       // 3) Noms des magasins
-      final storeIds = pricedRows
-          .map<int>((r) => r['store_id'] as int)
-          .toSet()
-          .toList();
+      final storeIds =
+      pricedRows.map<int>((r) => r['store_id'] as int).toSet().toList();
 
       final storeRows = await supabase
           .from('store')
@@ -197,9 +197,8 @@ class ItemPageViewModel extends ChangeNotifier {
         final promo = promoMap[row['promotion_id']];
         return {
           'store_id': row['store_id'],
-          'product_id': row['product_id'], // pour filtrer plus tard
-          'store_name':
-              storeName[row['store_id']] ?? 'Store ${row['store_id']}',
+          'product_id': row['product_id'], // pour naviguer si besoin
+          'store_name': storeName[row['store_id']] ?? 'Store ${row['store_id']}',
           'price': row['amount'],
           'isPromo': promo != null,
           'promoTitle': promo?['title'],
@@ -220,5 +219,34 @@ class ItemPageViewModel extends ChangeNotifier {
     }
 
     notifyListeners();
+  }
+
+  /* ─────── Liste triée + limitée pour l’UI ─────── */
+  List<Map<String, dynamic>> get storesForSection {
+    if (storesWithPrice.isEmpty) return [];
+    final favSet = favoriteStoreIds.toSet();
+
+    final fav = <Map<String, dynamic>>[];
+    final nonFav = <Map<String, dynamic>>[];
+
+    for (final s in storesWithPrice) {
+      final id = s['store_id'] as int?;
+      if (id == null) continue;
+      (favSet.contains(id) ? fav : nonFav).add(s);
+    }
+
+    int _byPrice(a, b) {
+      final pa = (a['price'] as num?)?.toDouble() ?? double.infinity;
+      final pb = (b['price'] as num?)?.toDouble() ?? double.infinity;
+      return pa.compareTo(pb);
+    }
+
+    fav.sort(_byPrice);
+    nonFav.sort(_byPrice);
+
+    final merged = <Map<String, dynamic>>[...fav, ...nonFav];
+    return merged.length <= kStoresSectionLimit
+        ? merged
+        : merged.sublist(0, kStoresSectionLimit);
   }
 }

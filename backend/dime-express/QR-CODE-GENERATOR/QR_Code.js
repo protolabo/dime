@@ -123,35 +123,45 @@ app.post('/item/new', async (req, res, next) => {
 // Ajout d’une nouvelle étagère (shelf)
 app.post('/shelf/new', async (req, res, next) => {
   try {
-    const { shelfName, store_id, location = '' } = req.body;
-    // 1️⃣ Insert shelf
+    const { shelfName, store_id, location = '', created_by } = req.body;
+
+    const auditCreatedBy = created_by || 'unknown';
+    const storeId        = Number(store_id) || 1;
+
+    // 1) Insert shelf (created_at vient du DEFAULT now() en DB)
     const { data: shelfRows, error: shelfErr } = await supabase
       .from('shelf')
       .insert({
-        store_id: Number(store_id) || 1,
+        store_id: storeId,
         name: shelfName,
         location,
-        created_by: 'admin'
+        created_by: auditCreatedBy,
       })
       .select('shelf_id');
+
     if (shelfErr) throw shelfErr;
     const shelf_id = shelfRows[0].shelf_id;
 
-    // 2️⃣ Génération du QR code
+    // 2) Génération du QR
     const qrPayload = JSON.stringify({ type: 'shelf', shelf_id });
     const fileName  = `shelf-${shelf_id}.png`;
     const filePath  = path.join(qrDir, fileName);
     await QRCode.toFile(filePath, qrPayload);
     const dataUrl = await QRCode.toDataURL(qrPayload);
 
-    // 3️⃣ Mise à jour de la shelf avec l’image QR
+    // 3) Update shelf avec le QR + champs d'audit de MAJ
     const { error: updErr } = await supabase
       .from('shelf')
-      .update({ qr_code: dataUrl })
+      .update({
+        qr_code: dataUrl,
+        last_updated_at: new Date(),
+        last_updated_by: auditCreatedBy,
+      })
       .eq('shelf_id', shelf_id);
+
     if (updErr) console.error('❌ shelf update error:', updErr);
 
-    // Affichage du résultat
+    // 4) Rendu HTML (dataUrl récupéré par l’app Flutter)
     res.render('qrResult', {
       dataUrl,
       fileName,
@@ -162,6 +172,7 @@ app.post('/shelf/new', async (req, res, next) => {
     next(err);
   }
 });
+
 
 // ─── Démarrage du serveur (une seule fois) ────────────────────────────────────
 app.listen(port, () =>

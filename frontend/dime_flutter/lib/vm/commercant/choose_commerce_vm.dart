@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../current_connected_account_vm.dart';
 import '../current_store.dart';
-import '../../view/commercant/create_item_page.dart';
+import '../../view/commercant/create_qr_menu.dart';
 
 /// VM pour la page de choix de commerce (commerçant)
 class ChooseCommerceViewModel extends ChangeNotifier {
@@ -45,7 +45,7 @@ class ChooseCommerceViewModel extends ChangeNotifier {
       if (!ctx.mounted) return;
       Navigator.pushReplacement(
         ctx,
-        MaterialPageRoute(builder: (_) => const CreateItemPage()),
+        MaterialPageRoute(builder: (_) => const CreateQrMenuPage()),
       );
     } catch (e) {
       debugPrint('❌ selectStore error: $e');
