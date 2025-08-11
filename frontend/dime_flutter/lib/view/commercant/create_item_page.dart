@@ -7,6 +7,10 @@ import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_item_vm.dart';
 
+import 'create_qr_menu.dart';
+import 'scan_page_commercant.dart';
+import 'search_page_commercant.dart';
+
 /* ────────────────────────────────────────────────────────────────
    Page permettant au commerçant d’ajouter un nouvel item
    ──────────────────────────────────────────────────────────────── */
@@ -106,16 +110,15 @@ class _CreateItemPageState extends State<CreateItemPage> {
           // ⬇️ Ajout: barre de navigation commerçant (My Team sélectionné)
           bottomNavigationBar: navbar_commercant(
             currentIndex: 0,
-            onTap: (i) {
-              // Pour l’instant: simple feedback pour valider que ça marche
-              // (tu brancheras la vraie navigation plus tard)
-              debugPrint('Commercant nav tapped: index=$i');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Tapped tab index $i'),
-                  duration: const Duration(milliseconds: 800),
-                ),
-              );
+            onTap: (index) {
+              if (index == 0) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
+              } else if (index == 2) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
+              }
+              else if (index == 4) {
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
+              }
             },
           ),
         ),

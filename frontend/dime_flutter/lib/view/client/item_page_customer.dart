@@ -8,7 +8,7 @@ import 'package:dime_flutter/vm/client/item_page_vm.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/client/store_page_customer.dart';
-import 'package:dime_flutter/view/client/search_page.dart';
+import 'package:dime_flutter/view/client/search_page_client.dart';
 
 class ItemPageCustomer extends StatelessWidget {
   final int productId;

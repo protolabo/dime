@@ -6,8 +6,10 @@ import 'package:dime_flutter/view/components/header_commercant.dart';
 import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/vm/commercant/shelf_page_vm.dart';
 
+import 'add_item_to_shelf.dart';
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
+import 'search_page_commercant.dart';
 
 class ShelfPageCommercant extends StatelessWidget {
   const ShelfPageCommercant({
@@ -56,6 +58,9 @@ class _ShelfPageBodyState extends State<_ShelfPageBody> {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
             } else if (index == 2) {
               Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
+            }
+            else if (index == 4) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
             }
           },
         ),
@@ -200,10 +205,33 @@ class _Content extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Add item (à venir)')),
+              onPressed: () async {
+                // vm est déjà dispo dans ton build (Option A)
+                final int? id = vm.shelfId;
+                final String? rawName = vm.shelfName;
+
+                if (id == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Shelf not loaded yet')),
+                  );
+                  return;
+                }
+
+                final String name =
+                (rawName == null || rawName.trim().isEmpty) ? 'Shelf #$id' : rawName.trim();
+
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => AddItemToShelfPage(
+                      shelfId: id,           // int (non-null ici)
+                      shelfName: name,       // String (non-null ici)
+                    ),
+                  ),
                 );
+
+                // Optionnel: rafraîchir la page d’étagère au retour
+                // if (context.mounted) vm.reload();
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -212,7 +240,7 @@ class _Content extends StatelessWidget {
               ),
               child: const Text('Add an item'),
             ),
-          ),
+          )
         ],
       ),
     );

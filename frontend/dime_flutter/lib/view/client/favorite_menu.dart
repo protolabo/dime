@@ -9,7 +9,7 @@ import 'package:dime_flutter/view/fenetre/fav_item_fenetre.dart';
 import 'package:dime_flutter/view/fenetre/fav_commerce_fenetre.dart';
 import 'package:dime_flutter/view/client/item_page_customer.dart';
 import 'package:dime_flutter/view/client/store_page_customer.dart';
-import 'package:dime_flutter/view/client/search_page.dart';
+import 'package:dime_flutter/view/client/search_page_client.dart';
 
 import 'package:dime_flutter/vm/client/favorite_menu_vm.dart';
 

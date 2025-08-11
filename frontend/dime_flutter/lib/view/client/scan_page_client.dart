@@ -9,7 +9,7 @@ import '../components/header_client.dart';
 import '../components/nav_bar_client.dart';
 import 'favorite_menu.dart';
 import 'item_page_customer.dart';
-import 'search_page.dart';
+import 'search_page_client.dart';
 
 class ScanClientPage extends StatelessWidget {
   const ScanClientPage({super.key});

@@ -9,6 +9,7 @@ import '../components/header_commercant.dart';
 import '../components/nav_bar_commercant.dart';
 import 'create_qr_menu.dart';
 import 'shelf_page.dart';
+import 'search_page_commercant.dart';
 
 class ScanCommercantPage extends StatelessWidget {
   const ScanCommercantPage({super.key});
@@ -93,6 +94,8 @@ class _ScanCommercantPageBody extends StatelessWidget {
         onTap: (index) {
           if (index == 0) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
+          } else if (index == 4) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
           }
         },
       ),

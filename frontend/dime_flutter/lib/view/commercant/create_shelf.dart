@@ -8,6 +8,7 @@ import 'package:dime_flutter/vm/commercant/create_shelf_vm.dart';
 
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
+import 'search_page_commercant.dart';
 
 class CreateShelfPage extends StatefulWidget {
   const CreateShelfPage({super.key});
@@ -83,6 +84,8 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
                 } else if (index == 2) {
                   Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
+                } else if (index == 4) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
                 }
               },
             ),
