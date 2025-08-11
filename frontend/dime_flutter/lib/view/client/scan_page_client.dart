@@ -29,6 +29,7 @@ class _ScanClientPageBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ScanPageVM>();
+    final media = MediaQuery.of(context);
 
     return Scaffold(
       appBar: const PreferredSize(
@@ -37,27 +38,53 @@ class _ScanClientPageBody extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Caméra visible par défaut ; on la retire seulement si étagère plein écran
+          // Caméra visible par défaut ; retirée seulement si étagère plein écran
           if (!(vm.kind == ScanOverlayKind.shelf && vm.expanded))
-            MobileScanner(
-              controller: vm.scanner,
-              onDetect: (capture) => vm.onDetect(capture, context),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final previewSize = constraints.biggest;
+                const fit = BoxFit.cover;
+                return MobileScanner(
+                  fit: fit,
+                  controller: vm.scanner,
+                  onDetect: (capture) => vm.onDetect(
+                    capture,
+                    context,
+                    previewSize: previewSize,
+                    boxFit: fit,
+                  ),
+                );
+              },
             )
           else
             Container(color: Colors.black),
 
-          // Overlay produit
+          // Overlay PRODUIT (sous le QR quand possible)
           if (vm.kind == ScanOverlayKind.product)
             Positioned(
-              bottom: 40, left: 20, right: 20,
+              top: vm.qrRect != null
+                  ? _clampTopForProduct(
+                  media.size.height, media.padding, vm.qrRect!.bottom + 12)
+                  : null,
+              bottom: vm.qrRect == null ? 40 : null,
+              left: 20, right: 20,
               child: _buildProductOverlay(context, vm),
             ),
 
-          // Overlay étagère (compact ou plein écran)
+          // Overlay ÉTAGÈRE (sous le QR en compact, plein écran si expand)
           if (vm.kind == ScanOverlayKind.shelf)
             Positioned(
-              top: vm.expanded ? 0 : null,
-              bottom: vm.expanded ? 0 : 20,
+              top: vm.expanded
+                  ? 0
+                  : (vm.qrRect != null
+                  ? _clampTopForShelf(
+                media.size.height,
+                media.padding,
+                vm.qrRect!.bottom + 12,
+                vm.shelfItems,
+              )
+                  : null),
+              bottom: vm.expanded ? 0 : (vm.qrRect == null ? 20 : null),
               left: vm.expanded ? 0 : 16,
               right: vm.expanded ? 0 : 16,
               child: _buildShelfOverlay(context, vm),
@@ -77,7 +104,28 @@ class _ScanClientPageBody extends StatelessWidget {
     );
   }
 
-  /* ---------- Overlay PRODUIT ---------- */
+  // Empêche l’overlay produit de dépasser en bas
+  double _clampTopForProduct(double screenH, EdgeInsets viewInsets, double desiredTop) {
+    const estHeight = 100.0; // carte produit approx
+    final maxTop = screenH - viewInsets.bottom - 16.0 - estHeight;
+    return desiredTop.clamp(viewInsets.top + 16.0, maxTop);
+  }
+
+  // Empêche l’overlay étagère (compact) de dépasser en bas
+  double _clampTopForShelf(
+      double screenH,
+      EdgeInsets viewInsets,
+      double desiredTop,
+      List<ShelfItemVM> items,
+      ) {
+    final previewMax = 5;
+    final rows = items.length < previewMax ? items.length : previewMax;
+    final estHeight = 56.0 * rows + 80.0; // rows + header/padding approx
+    final maxTop = screenH - viewInsets.bottom - 16.0 - estHeight;
+    return desiredTop.clamp(viewInsets.top + 16.0, maxTop);
+  }
+
+  /* ─────────── OVERLAY PRODUIT ─────────── */
   Widget _buildProductOverlay(BuildContext context, ScanPageVM vm) {
     final data = vm.overlayData!;
     final num? amount = data['amount'] as num?;
@@ -104,9 +152,7 @@ class _ScanClientPageBody extends StatelessWidget {
                       vm.clearOverlay();
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => ItemPageCustomer(productId: pid),
-                        ),
+                        MaterialPageRoute(builder: (_) => ItemPageCustomer(productId: pid)),
                       );
                     }
                   },
@@ -135,7 +181,7 @@ class _ScanClientPageBody extends StatelessWidget {
                     amount != null ? '${amount.toStringAsFixed(2)} $currency' : 'Prix —',
                     style: AppTextStyles.body.copyWith(color: Colors.white70, fontSize: 16),
                   ),
-                ],
+                ]
               ],
             ),
           ),
@@ -145,7 +191,7 @@ class _ScanClientPageBody extends StatelessWidget {
     );
   }
 
-  /* ---------- Overlay ÉTAGÈRE ---------- */
+  /* ─────────── OVERLAY ÉTAGÈRE ─────────── */
   Widget _buildShelfOverlay(BuildContext context, ScanPageVM vm) {
     final items = vm.shelfItems;
     final previewMax = 5;
@@ -156,9 +202,8 @@ class _ScanClientPageBody extends StatelessWidget {
       borderRadius: vm.expanded ? BorderRadius.zero : AppRadius.border,
     );
 
-    // Hauteur utilisable en compact (évite Expanded/Flexible avec hauteur non bornée)
-    final compactMaxHeight = 56.0 * visible.length + 80.0; // 56/row + header approx
-    final constrained = compactMaxHeight.clamp(140.0, MediaQuery.of(context).size.height * .55);
+    final compactMaxHeight =
+    (56.0 * visible.length + 80.0).clamp(140.0, MediaQuery.of(context).size.height * .55);
 
     final listWidget = ListView.separated(
       physics: const ClampingScrollPhysics(),
@@ -204,9 +249,9 @@ class _ScanClientPageBody extends StatelessWidget {
                   style: AppTextStyles.body.copyWith(color: Colors.white70))
             else
               (vm.expanded)
-                  ? Expanded(child: listWidget) // plein écran → on peut utiliser Expanded
-                  : ConstrainedBox(            // compact → hauteur bornée
-                constraints: BoxConstraints(maxHeight: constrained),
+                  ? Expanded(child: listWidget)
+                  : ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: compactMaxHeight),
                 child: listWidget,
               ),
 
