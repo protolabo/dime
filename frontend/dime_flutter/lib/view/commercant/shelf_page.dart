@@ -10,6 +10,7 @@ import 'add_item_to_shelf.dart';
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
+import 'item_commercant.dart';
 
 class ShelfPageCommercant extends StatelessWidget {
   const ShelfPageCommercant({
@@ -78,9 +79,7 @@ class _ShelfPageBodyState extends State<_ShelfPageBody> {
     );
   }
 
-  void _onNavTap(BuildContext context, int index) {
-    // TODO: ta logique de nav (pushReplacementNamed / go_router, etc.)
-  }
+
 }
 
 class _ErrorView extends StatelessWidget {
@@ -259,8 +258,14 @@ class _Content extends StatelessWidget {
             Expanded(
               child: InkWell(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Item "${it.name}" cliqué')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ItemCommercantPage(
+                        productId: it.productId,
+                        productName: it.name,
+                      ),
+                    ),
                   );
                 },
                 child: Text(

@@ -59,6 +59,7 @@ class ScanPageVM extends ChangeNotifier {
   String? _currentKey; // "product:123" / "shelf:45"
 
   /* ─────────── SCAN CALLBACK ─────────── */
+  /// Fonction lorsque la caméra détecte un code QR
   Future<void> onDetect(
       BarcodeCapture capture,
       BuildContext context, {
@@ -172,6 +173,8 @@ class ScanPageVM extends ChangeNotifier {
   }
 
   /* ─────────── PRODUIT ─────────── */
+
+  /// Requêtes nécessaires pour la fenêtre d'un code QR d'un produit
   Future<void> _handleProduct(int id) async {
     final int? storeId = await CurrentStoreService.getCurrentStoreId();
     if (storeId == null) return;
@@ -220,7 +223,8 @@ class ScanPageVM extends ChangeNotifier {
     } catch (_) {}
   }
 
-  /* ─────────── ÉTAGÈRE ─────────── */
+
+  /// Requêtes nécessaires pour la fenêtre d'un code QR d'une étagère
   Future<void> _handleShelf(int shelfId) async {
     final int? storeId = await CurrentStoreService.getCurrentStoreId();
     if (storeId == null) return;
@@ -291,7 +295,7 @@ class ScanPageVM extends ChangeNotifier {
               .select('promotion_id, start_date, end_date')
               .inFilter('promotion_id', promoIds);
           for (final p in promos) {
-            promoById[p['promotion_id'] as int] = p as Map<String, dynamic>;
+            promoById[p['promotion_id'] as int] = p;
           }
         } catch (_) {}
       }

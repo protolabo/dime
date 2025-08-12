@@ -8,7 +8,7 @@ class Store {
   Store(this.id, this.name);
 }
 
-/// Service MVVM pour charger les commerces favoris
+/// Service pour charger les commerces favoris d'un acteur client
 class FavoriteStoreService {
   static Future<List<Store>> fetchFavorites(int actorId) async {
     final supabase = Supabase.instance.client;

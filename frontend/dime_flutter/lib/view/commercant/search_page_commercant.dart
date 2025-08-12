@@ -10,6 +10,8 @@ import 'package:dime_flutter/view/commercant/scan_page_commercant.dart';
 import 'package:dime_flutter/view/commercant/create_qr_menu.dart';
 import 'package:dime_flutter/view/commercant/shelf_page.dart';
 
+import 'item_commercant.dart';
+
 class SearchPageCommercant extends StatelessWidget {
   const SearchPageCommercant({super.key});
 
@@ -174,8 +176,9 @@ class _ProductTile extends StatelessWidget {
             : Text('Code-barres: ${p.barCode}', style: AppTextStyles.secondary),
         trailing: Text(_priceText(), style: AppTextStyles.price),
         onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Item "${p.name}" appuyé')),
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ItemCommercantPage(productId: p.productId, productName: p.name,)),
           );
         },
       ),

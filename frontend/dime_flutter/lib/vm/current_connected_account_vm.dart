@@ -21,7 +21,7 @@ class CurrentActorService {
   /*
   * Id existant:
   *
-  * 1 = John Doe (client)
+  * 1: John Doe (client)
   * 2: Donald D. Epstein (commercant)
   * 3: L-E Lafontant (commercant)
   * 4: DB (client)
@@ -38,7 +38,8 @@ class CurrentActorService {
   // 2 → compte commerçant (nouveau pour le côté merchant)
   static const int _testMerchantId    = 2;
 
-  /*───────────── Acteur “client” existant ─────────────*/
+
+  /// Retourne un acteur du rôle client
   static Future<Client> getCurrentActor() async {
     return _fetchActor(
       actorId: _testActorId,
@@ -47,7 +48,8 @@ class CurrentActorService {
     );
   }
 
-  /*─────────────── Acteur “commerçant” ───────────────*/
+
+  /// Retourne un acteur du rôle client
   static Future<Client> getCurrentMerchant() async {
     return _fetchActor(
       actorId: _testMerchantId,
@@ -56,7 +58,7 @@ class CurrentActorService {
     );
   }
 
-  /*─────────────── Méthode partagée ────────────────*/
+  /// Fait la requête pour avoir les éléments de l'acteur demandé
   static Future<Client> _fetchActor({
     required int actorId,
     required String expectedRole,

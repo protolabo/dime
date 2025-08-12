@@ -10,6 +10,8 @@ import '../components/nav_bar_commercant.dart';
 import 'create_qr_menu.dart';
 import 'shelf_page.dart';
 import 'search_page_commercant.dart';
+import 'item_commercant.dart';
+
 
 class ScanCommercantPage extends StatelessWidget {
   const ScanCommercantPage({super.key});
@@ -146,11 +148,23 @@ class _ScanCommercantPageBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ⚠️ Commerçant : cliquer sur le nom NE FAIT RIEN
-                Text(
-                  data['name'] ?? 'Item inconnu',
-                  style: AppTextStyles.subtitle.copyWith(color: Colors.white),
-                  overflow: TextOverflow.ellipsis,
+                GestureDetector(
+                  onTap: () {
+                    final pid = data['id'] as int?;
+                    final p_name = data['name'];
+                    if (pid != null) {
+                      vm.clearOverlay();
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => ItemCommercantPage(productId: pid, productName: p_name,)),
+                      );
+                    }
+                  },
+                  child: Text(
+                    data['name'] ?? 'Item inconnu',
+                    style: AppTextStyles.subtitle.copyWith(color: Colors.white),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 if (promo != null) ...[

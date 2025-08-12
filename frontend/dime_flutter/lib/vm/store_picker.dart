@@ -22,6 +22,7 @@ class _StorePickerPageState extends State<StorePickerPage> {
     _load();
   }
 
+  /// Récuoère tous les magasins du système
   Future<void> _load() async {
     // récupère TOUS les magasins (store_id + name)
     final rows = await _sb.from('store').select('store_id, name');
