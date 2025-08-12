@@ -52,19 +52,19 @@ class _ShelfPageBodyState extends State<_ShelfPageBody> {
 
     return Scaffold(
       appBar: const HeaderCommercant(),
-        bottomNavigationBar: navbar_commercant(
-          currentIndex: 0,
-          onTap: (index) {
-            if (index == 0) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
-            } else if (index == 2) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
-            }
-            else if (index == 4) {
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
-            }
-          },
-        ),
+      bottomNavigationBar: navbar_commercant(
+        currentIndex: 0,
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
+          } else if (index == 2) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
+          }
+          else if (index == 4) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
+          }
+        },
+      ),
       body: SafeArea(
         child: vm.loading
             ? const Center(child: CircularProgressIndicator())
@@ -144,6 +144,7 @@ class _Content extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.searchBg,
               borderRadius: AppRadius.border,
+              border: Border.all(color: AppColors.border),
               boxShadow: const [BoxShadow(blurRadius: 6, spreadRadius: 0.5, color: Colors.black12)],
             ),
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -178,7 +179,7 @@ class _Content extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: onToggleExpanded,
-                    child: Text(expanded ? 'Less items' : 'More items'),
+                    child: Text(expanded ? 'Less items' : 'More items', style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
                   ),
                 ),
               ],
@@ -192,8 +193,9 @@ class _Content extends StatelessWidget {
               onPressed: vm.downloadQrPdf, // ← utilise l’image BD
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.border),
-                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
               ),
               child: const Text('Download QR Code'),
             ),
@@ -234,8 +236,9 @@ class _Content extends StatelessWidget {
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.border),
-                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
+                backgroundColor: AppColors.accent,
+                foregroundColor: Colors.white,
               ),
               child: const Text('Add an item'),
             ),
