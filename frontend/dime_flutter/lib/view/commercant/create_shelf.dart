@@ -41,6 +41,15 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_back),
+                        tooltip: 'Go Back',
+                        onPressed: () => Navigator.of(context).maybePop(),
+                      ),
+                    ],
+                  ),
                   Text('Create a new shelf', style: AppTextStyles.title),
                   const SizedBox(height: 24),
 
@@ -57,10 +66,7 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
+                      style: AppButtonStyles.primary, // ✅ vert centralisé
                       onPressed: vm.isSaving
                           ? null
                           : () => vm.saveShelf(
@@ -68,10 +74,17 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                         context: context,
                       ),
                       child: vm.isSaving
-                          ? const CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white)
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                           : Text('Save', style: AppTextStyles.button),
                     ),
+
                   ),
                 ],
               ),

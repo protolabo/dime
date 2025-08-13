@@ -243,6 +243,64 @@ class ShelfPageVM extends ChangeNotifier {
     );
   }
 
+  /// Refresh l'étagère après l'ajout d'éléments.
+  Future<void> reload() async {
+    try {
+      // Si on n’a pas l’info minimale, retombe sur init()
+      if (shelfId == null || storeId == null) {
+        await init();
+        return;
+      }
+
+      error = null;
+
+      final sp = await _supabase
+          .from('shelf_place')
+          .select('product_id')
+          .eq('shelf_id', shelfId!);
+
+      final productIds = <int>[
+        for (final r in (sp as List)) r['product_id'] as int,
+      ];
+
+      final prows = await _supabase
+          .from('product')
+          .select('product_id,name')
+          .inFilter('product_id', productIds);
+
+      final nameById = <int, String>{
+        for (final r in (prows as List))
+          (r['product_id'] as int): (r['name'] as String?) ?? 'Unnamed',
+      };
+
+      final priceRows = await _supabase
+          .from('priced_product')
+          .select('product_id,amount,currency')
+          .eq('store_id', storeId!)
+          .inFilter('product_id', productIds);
+
+      final priceById = <int, Map<String, dynamic>>{
+        for (final r in (priceRows as List)) (r['product_id'] as int): r,
+      };
+
+      items = productIds
+          .map((pid) => ShelfItem(
+        productId: pid,
+        name: nameById[pid] ?? 'Product $pid',
+        price: (priceById[pid]?['amount'] as num?)?.toDouble(),
+        currency: priceById[pid]?['currency'] as String?,
+      ))
+          .toList()
+        ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+
+      notifyListeners();
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+    }
+  }
+
+
   // Helpers
   Uint8List _dataUrlToBytes(String dataUrl) {
     final idx = dataUrl.indexOf(',');

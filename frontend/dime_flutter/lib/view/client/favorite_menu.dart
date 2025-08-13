@@ -79,7 +79,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                         height: 160,
                         child: Center(
                           child: Text(
-                            'Vous n\'avez aucun favori.',
+                            'You don\'t have any favorite items.',
                             style: AppTextStyles.body,
                           ),
                         ),
@@ -130,7 +130,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
                         height: 160,
                         child: Center(
                           child: Text(
-                            'Vous n\'avez aucun commerce favori.',
+                            'You don\'t have any favorite commerces.',
                             style: AppTextStyles.body,
                           ),
                         ),

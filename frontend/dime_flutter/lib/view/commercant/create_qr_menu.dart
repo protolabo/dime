@@ -5,9 +5,9 @@ import 'package:dime_flutter/view/components/header_commercant.dart';
 import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_qr_menu_vm.dart';
+
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
-
 
 class CreateQrMenuPage extends StatelessWidget {
   const CreateQrMenuPage({super.key});
@@ -19,9 +19,8 @@ class CreateQrMenuPage extends StatelessWidget {
       child: Consumer<CreateQrMenuViewModel>(
         builder: (context, vm, _) {
           return Scaffold(
-            backgroundColor: AppColors.searchBg,
+            backgroundColor: AppColors.background,
             appBar: const HeaderCommercant(),
-
             body: Padding(
               padding: const EdgeInsets.only(top: 24.0, left: 16.0, right: 16.0),
               child: Column(
@@ -33,9 +32,9 @@ class CreateQrMenuPage extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      // Si tu ajoutes AppColors.border dans styles.dart, remplace Colors.black12 par AppColors.border
-                      border: Border.all(color: Colors.black12),
+                      borderRadius: AppRadius.card,
+                      border: AppBorders.card,
+                      boxShadow: AppShadows.card,
                     ),
                     child: Text(
                       vm.isLoading ? '...' : (vm.storeName ?? '—'),
@@ -50,13 +49,7 @@ class CreateQrMenuPage extends StatelessWidget {
                     children: [
                       Expanded(
                         child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                          style: AppButtonStyles.primary, // ✅ vert Dime
                           onPressed: () => vm.goToCreateItem(context),
                           child: const Text(
                             'Create Item',
@@ -67,13 +60,7 @@ class CreateQrMenuPage extends StatelessWidget {
                       const SizedBox(width: 24),
                       Expanded(
                         child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            padding: const EdgeInsets.symmetric(vertical: 18),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
+                          style: AppButtonStyles.primary, // ✅ vert Dime
                           onPressed: () => vm.goToCreateShelf(context),
                           child: const Text(
                             'Create shelf',
@@ -86,22 +73,20 @@ class CreateQrMenuPage extends StatelessWidget {
                 ],
               ),
             ),
-
             bottomNavigationBar: navbar_commercant(
               currentIndex: 0,
               onTap: (i) {
-                // Pour l’instant: simple feedback pour valider que ça marche
-                // (tu brancheras la vraie navigation plus tard)
                 if (i == 2) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const ScanCommercantPage()),
                   );
+                } else if (i == 4) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SearchPageCommercant()),
+                  );
                 }
-                else if (i == 4) {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
-                }
-                debugPrint('Commercant nav tapped: index=$i');
               },
             ),
           );

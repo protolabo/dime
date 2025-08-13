@@ -11,9 +11,9 @@ class FavItemFenetre extends StatefulWidget {
     required this.onFavoriteChanged,
   });
 
-  final String           name;
-  final bool             isFavorite;
-  final FavoriteChanged  onFavoriteChanged;
+  final String name;
+  final bool isFavorite;
+  final FavoriteChanged onFavoriteChanged;
 
   @override
   State<FavItemFenetre> createState() => _FavItemFenetreState();
@@ -36,41 +36,46 @@ class _FavItemFenetreState extends State<FavItemFenetre> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width : 140,
+      width: 140,
       height: 140,
       decoration: BoxDecoration(
-        color : AppColors.searchBg,
-        border: Border.all(color: Colors.black, width: 2),
+        // ⬇️ Exactement comme choose_commerce
+        color: ChooseCommerceStyles.tileBg,
+        border: Border.fromBorderSide(ChooseCommerceStyles.tileBorder),
+        borderRadius: AppRadius.border,
       ),
+      clipBehavior: Clip.antiAlias,
       child: Stack(
         children: [
-          /* ─── Nom de l’item ─── */
+          // Nom de l’item (même style que choose_commerce)
           Center(
-            child: Text(
-              widget.name,
-              textAlign: TextAlign.center,
-              style: AppTextStyles.body.copyWith(
-                fontSize : 16,
-                fontFamily: 'Poppins',
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.sm),
+              child: Text(
+                widget.name,
+                textAlign: TextAlign.center,
+                style: ChooseCommerceStyles.tileText,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
 
-          /* ─── Cœur favori ─── */
+          // Cœur favori
           Positioned(
-            top : 6,
+            top: 6,
             right: 6,
             child: GestureDetector(
-              onTap : _toggleFavorite,
-              child : Icon(
+              onTap: _toggleFavorite,
+              child: Icon(
                 Icons.favorite,
-                size : 28,
+                size: 28,
                 color: _isFavorited ? AppColors.danger : Colors.white,
                 shadows: const [
                   Shadow(
                     blurRadius: 4,
-                    offset   : Offset(1, 1),
-                    color    : Colors.black26,
+                    offset: Offset(1, 1),
+                    color: Colors.black26,
                   ),
                 ],
               ),

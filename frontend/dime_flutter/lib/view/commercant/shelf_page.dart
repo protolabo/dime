@@ -38,7 +38,7 @@ class ShelfPageCommercant extends StatelessWidget {
 }
 
 class _ShelfPageBody extends StatefulWidget {
-  const _ShelfPageBody({super.key});
+  const _ShelfPageBody();
   @override
   State<_ShelfPageBody> createState() => _ShelfPageBodyState();
 }
@@ -120,10 +120,10 @@ class _Content extends StatelessWidget {
               const Spacer(),
               IconButton(
                 icon: const Icon(Icons.delete_outline),
-                tooltip: 'Delete / Edit shelf (à venir)',
+                tooltip: 'Delete / Edit shelf (Ã  venir)',
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Édition étagère à venir')),
+                    const SnackBar(content: Text('Ã‰dition Ã©tagÃ¨re Ã  venir')),
                   );
                 },
               ),
@@ -188,21 +188,6 @@ class _Content extends StatelessWidget {
 
           const SizedBox(height: 24),
 
-          Center(
-            child: ElevatedButton(
-              onPressed: vm.downloadQrPdf, // ← utilise l’image BD
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Download QR Code'),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
           Align(
             alignment: Alignment.centerRight,
             child: ElevatedButton(
@@ -231,8 +216,8 @@ class _Content extends StatelessWidget {
                   ),
                 );
 
-                // Optionnel: rafraîchir la page d’étagère au retour
-                // if (context.mounted) vm.reload();
+                // Optionnel: rafraîchir la page d'étagère au retour
+                if (context.mounted) vm.reload();
               },
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -242,7 +227,45 @@ class _Content extends StatelessWidget {
               ),
               child: const Text('Add an item'),
             ),
-          )
+          ),
+
+          const SizedBox(height: 16),
+
+          Center(
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  await vm.downloadQrPdf();
+                  if (!context.mounted) return;
+
+                  // même feedback que sur la page d'item
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('QR Code téléchargé avec succès'),
+                      backgroundColor: AppColors.accent,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: AppRadius.border),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.qr_code, size: 20),
+                label: const Text(
+                  'Download QR Code',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.xl,
+                    vertical: AppSpacing.md,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.md),
+                  ),
+                  elevation: 2,
+                ),
+              )
+          ),
         ],
       ),
     );

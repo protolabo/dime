@@ -288,7 +288,13 @@ class _ScanCommercantPageBody extends StatelessWidget {
 
     // ⚠️ Commerçant : cliquer ne fait rien ici (la navigation se fait sur la page d’étagère)
     return InkWell(
-      onTap: null,
+      onTap: () {
+        vm.clearOverlay();
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ItemCommercantPage(productId: it.productId, productName: it.name,)),
+        );
+            },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
         child: Row(

@@ -50,6 +50,15 @@ class _CreateItemPageState extends State<CreateItemPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      tooltip: 'Go Back',
+                      onPressed: () => Navigator.of(context).maybePop(),
+                    ),
+                  ],
+                ),
                 Text('Add a new product', style: AppTextStyles.title),
                 const SizedBox(height: 24),
 
@@ -84,10 +93,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
+                    style: AppButtonStyles.primary, // ✅ bouton vert centralisé
                     onPressed: vm.isSaving
                         ? null
                         : () => vm.saveItem(
@@ -98,10 +104,18 @@ class _CreateItemPageState extends State<CreateItemPage> {
                       context: context,
                     ),
                     child: vm.isSaving
-                        ? const CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white)
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white, // lisible sur le vert
+                      ),
+                    )
                         : Text('Save', style: AppTextStyles.button),
                   ),
+
+
                 ),
               ],
             ),

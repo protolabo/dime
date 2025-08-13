@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'view/styles.dart';
 
 import 'view/client/scan_page_client.dart';
 import 'view/commercant/choose_commerce.dart';
@@ -40,17 +41,17 @@ class MyApp extends StatelessWidget {
       title: 'Dime',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        scaffoldBackgroundColor: const Color(0xFFFDF1DC),
+        scaffoldBackgroundColor: AppColors.background, // ← blanc défini dans styles.dart
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: AppButtonStyles.primary, // AppColors.accent + radius + typo
+        ),
         primarySwatch: Colors.orange,
         textTheme: const TextTheme(
-          titleLarge: TextStyle(
-            fontSize: 40,
-            fontWeight: FontWeight.w500,
-            color: Colors.black,
-          ),
+          titleLarge: TextStyle(fontSize: 40, fontWeight: FontWeight.w500, color: Colors.black),
         ),
         useMaterial3: true,
       ),
+
       home: const HomePage(),
     );
   }
