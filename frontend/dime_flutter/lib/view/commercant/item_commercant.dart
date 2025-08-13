@@ -264,24 +264,24 @@ class _ItemBodyState extends State<_ItemBody> with TickerProviderStateMixin {
 
   Widget _buildEditSection(BuildContext context, ItemCommercantVM vm) {
     return _buildCard(
-      title: 'Modifier l\'article',
+      title: 'Modify Item',
       icon: Icons.edit,
       child: Column(
         children: [
           _buildEditField(
             controller: _nameCtrl,
-            label: 'Nom de l\'article',
+            label: 'Item Name',
             icon: Icons.label_outline,
             onSave: () async {
               await vm.updateName(_nameCtrl.text);
               if (!context.mounted) return;
-              _showSnackBar(context, vm.errorMessage ?? 'Nom mis à jour avec succès');
+              _showSnackBar(context, vm.errorMessage ?? 'Name Update');
             },
           ),
           const SizedBox(height: AppSpacing.lg),
           _buildEditField(
             controller: _priceCtrl,
-            label: 'Prix régulier',
+            label: 'Regualr Price',
             icon: Icons.attach_money,
             suffix: Text('CAD', style: AppTextStyles.muted),
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -289,12 +289,12 @@ class _ItemBodyState extends State<_ItemBody> with TickerProviderStateMixin {
               final txt = _priceCtrl.text.replaceAll(',', '.');
               final amt = double.tryParse(txt);
               if (amt == null) {
-                _showSnackBar(context, 'Prix invalide', isError: true);
+                _showSnackBar(context, 'Invalid Price', isError: true);
                 return;
               }
               await vm.updatePrice(amt, currencyCode: vm.currency ?? 'CAD');
               if (!context.mounted) return;
-              _showSnackBar(context, vm.errorMessage ?? 'Prix mis à jour avec succès');
+              _showSnackBar(context, vm.errorMessage ?? 'Regular price update');
             },
           ),
         ],
@@ -352,7 +352,7 @@ class _ItemBodyState extends State<_ItemBody> with TickerProviderStateMixin {
               ),
               elevation: 0,
             ),
-            child: const Text('Sauver', style: TextStyle(fontWeight: FontWeight.w600)),
+            child: const Text('Save', style: TextStyle(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -372,10 +372,10 @@ class _ItemBodyState extends State<_ItemBody> with TickerProviderStateMixin {
 
   Widget _buildShelvesSection(BuildContext context, ItemCommercantVM vm) {
     return _buildCard(
-      title: 'Étagères (${vm.shelves.length})',
+      title: 'Shelves (${vm.shelves.length})',
       icon: Icons.shelves,
       child: vm.shelves.isEmpty
-          ? _buildEmptyState('Cet article n\'est sur aucune étagère de ce magasin.')
+          ? _buildEmptyState('No shelves with this item')
           : Column(
         children: vm.shelves.asMap().entries.map((entry) {
           final index = entry.key;
@@ -454,12 +454,12 @@ class _ItemBodyState extends State<_ItemBody> with TickerProviderStateMixin {
           if (vm.errorMessage != null) {
             _showSnackBar(context, vm.errorMessage!, isError: true);
           } else {
-            _showSnackBar(context, 'QR Code téléchargé avec succès');
+            _showSnackBar(context, 'QR Code downloaded with success');
           }
         },
         icon: const Icon(Icons.qr_code, size: 20),
         label: const Text(
-          'Télécharger le QR Code',
+          'Download QR Code',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(

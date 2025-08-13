@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pdf/pdf.dart';
@@ -133,7 +134,7 @@ class ItemCommercantVM extends ChangeNotifier {
     }
     notifyListeners();
   }
-
+/// Modifie le prix d'un item en question.
   Future<void> updatePrice(double newAmount, {String currencyCode = 'CAD'}) async {
     final storeId = await CurrentStoreService.getCurrentStoreId();
     if (storeId == null) {
@@ -143,23 +144,53 @@ class ItemCommercantVM extends ChangeNotifier {
     }
 
     try {
-      await _supabase
+      final merchant = await CurrentActorService.getCurrentMerchant();
+      final email = merchant.email;
+
+      // Vérifier si l'enregistrement existe déjà
+      final existing = await _supabase
           .from('priced_product')
-          .upsert({
-        'store_id': storeId,
-        'product_id': productId,
-        'amount': newAmount,
-        'currency': currencyCode,
-        'last_updated_at': DateTime.now().toIso8601String(),
-      }, onConflict: 'store_id,product_id');
+          .select('store_id')
+          .eq('store_id', storeId)
+          .eq('product_id', productId)
+          .maybeSingle();
+
+      if (existing != null) {
+        // UPDATE - l'enregistrement existe
+        await _supabase
+            .from('priced_product')
+            .update({
+          'amount': newAmount,
+          'currency': currencyCode,
+          'last_updated_by': email,
+          // Ne pas inclure created_by lors d'un UPDATE
+        })
+            .eq('store_id', storeId)
+            .eq('product_id', productId);
+      } else {
+        // INSERT - nouvel enregistrement
+        await _supabase
+            .from('priced_product')
+            .insert({
+          'store_id': storeId,
+          'product_id': productId,
+          'amount': newAmount,
+          'currency': currencyCode,
+          'created_by': email,
+          'last_updated_by': email,
+          // created_at et last_updated_at seront gérés automatiquement
+        });
+      }
 
       price = newAmount;
       currency = currencyCode;
+      errorMessage = null;
     } catch (e) {
       errorMessage = 'Impossible de mettre à jour le prix: $e';
     }
     notifyListeners();
   }
+
 
   /// Supprime l’item de CE magasin : efface son prix et le retire des étagères du store.
   Future<bool> removeFromCurrentStore() async {
