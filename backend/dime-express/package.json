@@ -3,16 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "start": "concurrently \"nodemon index.js\" \"nodemon QR-CODE-GENERATOR/QR_Code.js\"",
-  "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "concurrently \"nodemon index.js\" \"nodemon QR-CODE-GENERATOR/QR_Code.js\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "Backend du projet Dime",
   "dependencies": {
     "@supabase/supabase-js": "^2.51.0",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "ejs": "^3.1.10",
     "express": "^5.1.0",

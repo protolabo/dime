@@ -1,6 +1,3 @@
-Voici ton `README.md` corrigé en conservant le format **Markdown** pour que tu puisses le copier directement :
-
-```markdown
 # dime_flutter
 
 Ce répertoire contient **toute la partie frontend** du projet.  
@@ -57,6 +54,8 @@ Voici la liste et leur utilité :
 Comme tout projet Flutter, le code source se trouve dans le répertoire [lib](dime_flutter/lib).  
 L’architecture utilisée est **[MVVM](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)**, recommandée dans la [documentation officielle Flutter](https://docs.flutter.dev/app-architecture/guide).
 
+
+**⚠️ Le fichier `.env` contenant les informations liées à la base de données (non inclus dans le dépôt GitHub) doit être ajouté à la racine du répertoire [`dime_flutter`](dime_flutter) pour que le projet fonctionne correctement.**
 ---
 
 ### 📂 [Répertoire _view_](dime_flutter/lib/view)
@@ -107,5 +106,5 @@ Fichiers supplémentaires dans la racine :
 - **`favorite_store_vm.dart`** : Récupère les commerces favoris du client connecté.
 - **`store_picker.dart`** : Change le commerce actif côté client (outil temporaire pour le développement).
 - **`scan_page_vm.dart`** : Gère la logique selon le type de code QR scanné (identique pour client et commerçant).
-```
+
 
