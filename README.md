@@ -11,6 +11,8 @@ Assurez-vous d’avoir les outils suivants installés :
 
 - Python **3.8** ou plus récent
 - `pip` (gestionnaire de paquets Python)
+- [Flutter](https://docs.flutter.dev/get-started/install)
+- [Node.js](https://nodejs.org/en/download)
 
 ## Installation
 
@@ -57,12 +59,20 @@ mkdocs gh-deploy
 
 > Cette commande pousse automatiquement le contenu du site sur la branche gh-pages.
 
+
+Pour le fonctionnement du frontend ainsi que du "backend", veuillez lire les instructions des README correspondants:
+
+- [README du repertoire frontend](frontend/README.md)
+- [README du repertoire backend](backend/README.md)
+
 ## Structure du projet
 
 - `docs/` : Contient tous les fichiers Markdown du site
 - `mkdocs.yml` : Configuration de MkDocs
 - `requirements.txt` : Dépendances Python
 - `site/` : Site généré (créé lors de la construction)
+- `frontend/` : Développement du frontend Flutter
+- `backend/` : Développement du générateur de code QR avec Express.js. Pour l'instant, le projet utilise l'API auto-généré de la base de donnée Supabase. Il n'y a techniquement pas de backend ordinaire.
 
 ## Personnalisation
 
@@ -72,10 +82,12 @@ mkdocs gh-deploy
 
 # 🗂️ Organisation
 
-Les dossiers du répertoire sont organisés comme suit:
+L'organisation des répertoires [frontend](frontend/README.md) et [backend](backend/README.md) est expliqué en détail dans les README.md correspondants.
 
 # 🌟 Contribution
 
 Si vous êtes intéressé à participer au projet, veuillez prendre contact avec [Louis-Edouard LAFONTANT](mailto:louis.edouard.lafontant@umontreal.ca).
 
 ## Contributeurs
+- De-Webertho Dieudonné 
+- Patrick Symenouh
