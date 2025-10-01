@@ -4,52 +4,70 @@
 
 ### Décrire le problème à résoudre.
 
-Le projet Dime vise à accompagner les consommateurs dans leurs achats en leur fournissant des informations instantanées sur les produits, telles que le prix dans les magasins à proximité et les alternatives. L'application dépend actuellement de Supabase, ce qui complique la gestion et la validation des données au fur et à mesure que les fonctionnalités s'étoffent. Un backend plus robuste est nécessaire pour améliorer la performance et la sécurité.
+Faire l'épicerie est une activité essentielle du quotidien. Pour vivre, chacun doit se nourrir, entretenir son hygiène
+et subvenir à ses besoins de base. Or, ces actions ont un coût, et bien souvent, les consommateurs n'ont pas une connaissance
+précise des produits qu'ils achètent.
 
-De plus, des fonctionnalités essentielles pour les commerçants, comme le scan de codes-barres pour l'ajout de produits et la gestion des employés, ne sont pas encore intégrées. L'interface utilisateur pourrait aussi être améliorée pour une meilleure expérience. Ces lacunes limitent l'utilité de Dime pour les commerces locaux et l'attrait pour les utilisateurs. Les améliorations proposées ont pour but de renforcer la fondation technique de l'application et d'y ajouter des fonctionnalités clés pour en faire un outil plus puissant, fiable et convivial.
+Il arrive qu’une personne achète un article :
+- sans en connaitre les caractéristiques ou la qualité,
+- sans savoir qu'il est disponible à un meilleur prix ailleurs,
+- sans être informée des alternatives similaires et moins couteuses.
 
----
+
+
+
+Ces situations mènent à des dépenses inutiles ou à des choix de consommation sous-optimaux.
+
+Le but de Dime est d’accompagner les utilisateurs dans leurs achats en leur fournissant instantanément des informations utiles
+sur les produits, comme :
+- une description claire et précise,
+- le prix dans d'autres commerces à proximité,
+- potentiellement des recommandations ou alertes sur de meilleures options.
 
 ## Exigences
 
 ### Exigences fonctionnelles
+- Créer des codes QR pour les commerçants
+- Rentrer le prix de plusieurs articles avec le même code QR
+- Permettre de scanner des codes QR
+- Le prix de chaque article lié au code QR scanné (et possiblement une courte description de l'article sera accompagnée).
+- Les prix dans les commerces à proximité s'ils le possèdent.
+- Possibilité de faire un compte "Acheteur" ou "Commerce", car beaucoup de petits commerces ne possèdent pas de sites web. Ils pourront inclure les produits qu'ils ont en stock facilement (Le compte "Acheteur" ne sera pas obligatoire. Par compte, celui du commerçant le sera).
 
-- **Mettre en place un backend robuste** avec Express.js pour une meilleure structuration et validation des requêtes, réduisant la dépendance à Supabase.
-- **Implémenter le scan de codes-barres** pour les commerçants, afin de simplifier l'ajout et la gestion des produits en stock.
-- **Implémenter un système d'authentification et de gestion des employés** pour les comptes "Commerce", permettant aux propriétaires de magasins d'attribuer et de gérer des accès.
-- **Intégrer Cloudflare** pour optimiser la gestion des images et améliorer la performance.
 
 ### Exigences non fonctionnelles
+- Frontend avec Flutter
+- Backend avec Express.js
+- Doit marcher sur Android et IOS
+- Pouvoir utiliser un API qui possède déjà une banque de produits (s'il existe) ([Google Lens/Google Cloud Vision](https://support.google.com/websearch/thread/301813986/is-there-a-api-for-google-lens?hl=en))
+- Priorité sur les commerces locaux que sur les grandes marques.
+- Possibilité d'alertes selon les allergènes de l'utilisateur.
+- Écrire des avis sur le produit.
+- Doit posséder un mode hors-connexion pour scanner les articles, sans WIFI.
 
-- Le backend doit être développé avec **Express.js**.
-- L'application doit fonctionner sur **Android et iOS**.
-- Le design et l'interface utilisateur (**UI/UX**) doivent être améliorés pour une expérience plus fluide.
-- L'application doit pouvoir scanner des produits sans connexion réseau (mode hors-connexion).
-
----
 
 ## Recherche de solutions
 
-Toutes les applications mentionnées sont similaires à ce que Dime vise à devenir.
+Toutes les applications mentionnées sont similaires à ce que Dime vise à devenir. Elles sont toutes disponibles sur Android et iOS.
 
-### [eezly](https://www.eezly.com/fr/)
-Permet de scanner un code-barre, comparer les prix de milliers de produits entre les grandes bannières au Québec (Maxi, Super C, Metro, Provigo, ...).
-On peut créer une liste d’épicerie et voir le coût total selon les magasins.
+### [Yuka](https://yuka.io/)
 
-### [reebee](https://apps.apple.com/ca/app/reebee-circulaires-et-rabais/id558297215?l=fr-CA)
-Permet de parcourir les circulaires (flyers), créer des listes d’épicerie, comparer certaines offres/promos, et voir les deals dans les magasins locaux.
+Cette application est centrée sur la qualité des produits alimentaires et cosmétiques. Après avoir scanné un produit, elle lui attribue une note sur 100 indiquant à quel point il est bon pour la santé. Une courte description explique ensuite pourquoi le produit a obtenu cette note. L’application affiche aussi les allergènes potentiels et propose des produits similaires, mais meilleurs pour la santé, si possible.
 
-### [Open Food Facts](https://play.google.com/store/apps/details?id=org.openfoodfacts.scanner)
-Base de données collaborative de produits alimentaires. Permet de scanner les produits pour obtenir des informations sur leur composition, leur Nutri-Score et leur Eco-Score.
+### [ShopSavvy](https://shopsavvy.com/about)
 
----
+Cette application permet de scanner des produits, de consulter leur prix en ligne, leur historique de prix et les promotions passées. Les utilisateurs peuvent laisser des avis sur les articles, et l’application suggère des produits similaires. Il est aussi possible de rechercher un produit à l’aide d’une barre de recherche. Si un produit nous intéresse, on peut l’ajouter à une liste de suivi, et l’application nous enverra une notification en cas de changement de prix.
+
+Cependant, le design de l’application laisse à désirer. Il serait facile de le rendre plus attrayant pour les utilisateurs.
+
+### [Google Lens](https://lens.google/)
+
+Google Lens est une application développée par Google qui permet de scanner des objets, codes-barres ou images pour obtenir rapidement des informations. Elle affiche le nom du produit, une courte description, un prix estimé et des liens pour l’acheter en ligne. Elle se distingue par sa capacité à reconnaître des éléments visuels même sans code-barres.
+
+Bien qu’elle soit rapide, précise et souvent intégrée aux appareils Android, elle reste peu axée sur les commerces locaux, n’offre pas toujours les meilleurs prix ni de recommandations personnalisées. D’où l’intérêt d’une application comme Dime, centrée sur les besoins concrets des consommateurs au quotidien.
+
+
 
 ## Méthodologie
 
-Le développement sera mené par itération, en priorisant les améliorations techniques et fonctionnelles.
-
-1.  **Backend Express.js** : La première phase consistera à finaliser l'architecture du backend avec Express.js pour une meilleure gestion des données et une plus grande sécurité.
-2.  **Gestion des employés et authentification** : La deuxième itération se concentrera sur la mise en place du système d'authentification des employés pour les commerçants.
-3.  **Scan de codes-barres pour les commerçants** : La fonctionnalité de scan de codes-barres sera développée pour simplifier l'ajout des produits.
-4.  **Intégration de Cloudflare** : Cloudflare sera intégré pour optimiser la gestion des images et la performance globale de l'application.
-5.  **Amélioration de l'UI/UX** : L'interface utilisateur sera continuellement améliorée pour offrir une expérience plus intuitive et agréable aux utilisateurs et aux commerçants.
+Développement par itération
