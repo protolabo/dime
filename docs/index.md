@@ -4,79 +4,84 @@
 > **Superviseur**: Lafontant, Louis Edouard  
 > **Collaborateurs:** N/A
 
-## Informations importantes
-
-!!! info "Dates importantes"
-    - **Description du projet** : 16 mai 2025
-    - **Foire 1: Prototypage** : 9-13 juin 2025
-    - **Foire 2: Version beta** : 14-18 juillet 2025
-    - **Présentation et rapport** : 11-15 août 2025
+## Informations Générales
+Le présent projet constitue une suite et une amélioration du système
+Dime, initialement développé par De-Webertho Dieudonné et Patrick
+Symenouh. Ce travail vise à enrichir la plateforme existante, en consolidant
+son architecture et en introduisant de nouvelles fonctionnalités adaptées aux
+besoins des commerçants et des utilisateurs. Les détails des améliorations
+proposées seront précisés plus tard dans la description détaillé du projet.
 
 ## Équipe
 
-- Dieudonné, De-Webertho (20262379) : Responsable de...
-- Symenouh, Patrick (20190082) : Responsable de...
+- Ben Amor, Hazem (20236062)
 
 ## Description du projet
 
 ### Contexte
-
-De plus en plus de grands commerces commencent à s’adapter à l’ère numérique actuelle. Dans la majorité des cas, ces grandes chaînes possèdent un site web et une application mobile. Cela facilite grandement la vie de la clientèle. Ces applications digitales permettent entre autres d'avoir un aperçu des produits de la chaîne du magasin, leurs prix, une petite description des articles et plus.
-
-Par contre, il n'existe pas seulement que des grands commerces. Parmi les 30 073 commerces de détail au Québec en 2023, **34,47 %** sont considérés comme étant des **micros commerces** avec entre 1 et 4 employés et **62,95 %** sont classés **petits commerces** avec 5 à 99 employés à leurs actifs. Un large nombre de ces commerces locaux ne possèdent pas de sites web ou d'applications mobiles pour assister leur clientèle, ce qui peut, de nos jours, les décourager à acheter local.
+Le projet Dime s’inscrit dans la tendance de la numérisation du com-
+merce de détail, où de nombreux petits commerces peinent encore à rivaliser
+avec les grandes chaînes disposant d’infrastructures numériques avancées.
+Une première version du système a été développée afin de répondre à ce be-
+soin, en offrant une plateforme permettant d’explorer des produits via des
+étiquettes numériques et des codes QR. Ce travail constitue une continuité de
+ces efforts, visant à renforcer l’architecture logicielle et à enrichir l’expérience
+utilisateur.
 
 ### Problématique ou motivations
 
-Faire l’épicerie est une activité courante, mais qui demeure complexe pour une grande partie de la population. Les consommateurs sont souvent confrontés à un manque d’information au moment de prendre des décisions d’achat. Il n’est pas rare qu’un client achète un produit sans connaître sa qualité, ses alternatives ou son prix réel ailleurs. Cela peut engendrer des dépenses inutiles et des choix sous-optimaux.
-
-De plus, si certaines grandes bannières offrent des outils numériques modernes pour aider les consommateurs, la majorité des petits commerces ne disposent pas des ressources techniques ou financières pour en faire autant. Ce manque de présence numérique rend difficile l'accès à leurs produits pour une clientèle pourtant de plus en plus connectée.
-
-Dime vise à combler cet écart numérique. En offrant une plateforme simple d’utilisation, accessible aux acheteurs et aux petits commerçants, le projet permet à chacun de prendre des décisions d’achat éclairées, tout en soutenant l’économie locale.
-
-Selon le Baromètre de la consommation responsable 2023 publié par l’UQAM, 65 % des consommateurs québécois affirment vouloir adopter des comportements d’achat plus responsables, mais mentionnent le manque d’information comme un frein majeur. Par ailleurs, un rapport de Détail Québec indique que près de 35 % des commerces de détail québécois n’ont aucune présence en ligne.
+Bien que l’application existante fournisse une base fonctionnelle, elle pré-
+sente certaines limites qui freinent son évolution et son adoption à grande
+échelle. En effet, la dépendance exclusive à Supabase pour la gestion des
+requêtes et du traitement des données limite la flexibilité du système. De
+plus, plusieurs fonctionnalités essentielles ne sont pas encore intégrées, no-
+tamment l’authentification des employés, la gestion des images et l’optimisa-
+tion de l’expérience utilisateur. Ainsi, il est nécessaire de mettre en place une
+architecture plus robuste, notamment à travers l’intégration d’un backend
+dédié, permettant de mieux structurer et valider les échanges de données,
+tout en offrant une marge de manœuvre accrue pour l’évolution future de
+l’application.
 
 ### Proposition et objectifs
 
-Le projet Dime consiste à développer une application mobile multiplateforme permettant aux utilisateurs de scanner des produits à l’aide de codes QR afin d’obtenir instantanément des informations utiles : description, prix comparés, avis clients et recommandations alternatives.
+Le présent travail vise à consolider la solution existante et atteindre les
+objectifs suivants :
 
-L’application intégrera deux types de comptes distincts. Les commerçants pourront ajouter facilement leurs produits, sans nécessiter de site web, ce qui est particulièrement utile pour les petits commerces. Les acheteurs, quant à eux, auront accès aux fonctionnalités de recherche, d’analyse de produits et d’alerte (ex. allergènes).
-
-Les objectifs concrets sont :
-
-* Permettre la création et la lecture de codes QR associés à des articles.
-* Afficher les prix d’un même produit selon les commerces locaux disponibles.
-* Offrir une interface utilisateur conviviale, compatible Android et iOS.
-* Offrir une interface intuitive pour l'exploration des produits sans recours à des outils externes.
-* Favoriser les petits commerçants sans infrastructure numérique.
-* Proposer des recommandations et avis selon les préférences de l’utilisateur.
+1. Mettre en place un backend afin de mieux structurer et valider le trai-
+tement des requêtes actuellement gérées exclusivement par Supabase.
+2. Intégrer un serveur backend basé sur Express, amorcé dans une version
+   initiale.
+3. Mettre en place l’intégration de Cloudflare pour assurer une gestion
+   sécurisée et optimisée des images.
+4. Implémenter une fonctionnalité de scan de code-barres dédiée aux
+   commerçants.
+5. Mettre en œuvre un système d’authentification et de gestion des
+   employés.
+6. Améliorer l’interface utilisateur et l’expérience utilisateur (UI/UX ) afin
+   de rendre l’application plus intuitive et accessible.
 
 ### Méthodologie
-
-Le développement du projet Dime s’appuiera sur une approche itérative, inspirée de la méthode agile. Le travail sera organisé en courts cycles de développement, chacun visant à livrer une version partielle mais fonctionnelle du système. Cette méthode permettra une réévaluation constante des priorités et une adaptation rapide en fonction des défis rencontrés.
-
-L’interface de l’application sera conçue avec Flutter, afin d’assurer une compatibilité native avec les systèmes Android et iOS. Le serveur backend reposera sur le framework Express.js, et gérera l’authentification des utilisateurs, l’accès aux données produits ainsi que les requêtes liées aux commerces. Une base de données orientée documents, MongoDB, sera utilisée pour sa flexibilité et sa facilité d’intégration avec les plateformes mobiles.
-
-Le développement se déroulera en plusieurs phases, incluant la conception, l’implémentation et les tests. Chacune de ces étapes correspond à un jalon défini dans l’échéancier du cours. Des livrables tels que les maquettes, les diagrammes de conception et les prototypes seront produits au fil du temps, selon les dates prévues. Ce découpage progressif permet d’assurer un suivi rigoureux du projet tout en maintenant une cohérence entre les besoins identifiés et la solution développée.
-
-
+La planification du projet s’étend sur 12 semaines et se divise en plusieurs
+étapes :
 
 ## Échéancier
 
 !!! info
     Le suivi complet est disponible dans la page [Suivi de projet](suivi.md).
 
-| Jalon (*Milestone*)            | Date prévue   | Livrable                            | Statut      |
-|--------------------------------|---------------|-------------------------------------|-------------|
-| Ouverture de projet            | 1 mai         | Proposition de projet               | ✅ Terminé |
-| Analyse des exigences          | 16 mai        | Document d'analyse                  | ✅ Terminé |
-| Prototype 1                    | 23 mai        | Maquette + Flux d'activités         | ✅ Terminé |
-| Prototype 2                    | 30 mai        | Prototype finale + Flux             | 🔄 En cours |
-| Architecture                   | 30 mai        | Diagramme UML ou modèle C4          | ✅ Terminé |
-| Modèle de donneés              | 6 juin        | Diagramme UML ou entité-association | ✅ Terminé |
-| Revue de conception            | 6 juin        | Feedback encadrant + ajustements    | 🔄 En cours  |
-| Implémentation v1              | 20 juin       | Application v1                      | ⏳ À venir  |
-| Implémentation v2 + tests      | 11 juillet    | Application v2 + Tests              | ⏳ À venir  |
-| Implémentation v3              | 1er août      | Version finale                      | ⏳ À venir  |
-| Tests                          | 11-31 juillet | Plan + Résultats intermédiaires     | ⏳ À venir  |
-| Évaluation finale              | 8 août        | Analyse des résultats + Discussion  | ⏳ À venir  |
-| Présentation + Rapport         | 15 août       | Présentation + Rapport              | ⏳ À venir  |
+| Jalon (*Milestone*)                                                      | Date prévue  | Tache                                                                  | Statut    |
+|--------------------------------------------------------------------------|--------------|------------------------------------------------------------------------|-----------|
+| Ouverture de projet                                                      | 11 Septembre | Proposition de projet                                                  | ✅ Terminé |
+| Analyse des exigences                                                    | 18 Septembre | Document d'analyse                                                     | ✅ Terminé |
+| Prototype                                                                | 25 Septembre | Diagramme C4                                                           | ✅ Terminé |
+| Mise en place du backend (1)                                             | 2 Octobre    | Structuration du serveur avec Express                                  | ✅ Terminé |
+| Mise en place du backend (2)                                             | 9 Octobre    | Mise en place de la communication entre le backend et le frontend      | ⏳ À venir |
+| Intégration de Cloudflare / Tests                                        | 16 Octobre   | Configuration pour la gestion et l’optimisation des images produits    | ⏳ À venir|
+| Implémentation du scan de code-barres (1)                                | 23 Octobre   | Intégration du scanner dans l’application mobile                       | ⏳ À venir |
+| Implémentation du scan de code-barres (2)                                | 30 Octobre   | Intégration du scanner dans l’application mobile                       | ⏳ À venir |
+| Implémentation d’authentification et du gestion des employés / Tests (1) | 6 Novembre   | Mise en place d’un système d’inscription/connexion sécurisé            | ⏳ À venir |
+| Implémentation d’authentification et du gestion des employés / Tests (2) | 13 Novembre  | Mise en place d’un système d’inscription/connexion sécurisé            | ⏳ À venir |
+| Amélioration du UI/UX                                                    | 20 Novembre  | Révision de l’interface utilisateur pour une navigation plus intuitive | ⏳ À venir |
+| Amélioration du UI/UX                                                    | 27 Novembre  | Révision de l’interface utilisateur pour une navigation plus intuitive | ⏳ À venir |
+| Rapport                                                                  | 4 Décembre   | Intégration des résultats et préparation de la remise                  | ⏳ À venir |
+| Présentation + Rapport                                                   | 11 Décembre  | Présentation                                                | ⏳ À venir |
