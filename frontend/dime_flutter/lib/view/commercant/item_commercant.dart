@@ -7,6 +7,7 @@ import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/commercant/shelf_page.dart';
 import 'package:dime_flutter/vm/commercant/item_commercant_vm.dart';
 
+import '../../vm/commercant/search_commercant_vm.dart';
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
@@ -34,7 +35,7 @@ class ItemCommercantPage extends StatelessWidget {
 }
 
 class _ItemBody extends StatefulWidget {
-  const _ItemBody({super.key});
+  const _ItemBody();
 
   @override
   State<_ItemBody> createState() => _ItemBodyState();
@@ -576,7 +577,11 @@ class _ItemBodyState extends State<_ItemBody> with TickerProviderStateMixin {
             : (vm.errorMessage ?? 'Échec de la suppression de l\'article.'),
         isError: !success,
       );
-      if (success) Navigator.of(context).maybePop();
+      if (success) {
+        if (!context.mounted) return;
+        Navigator.of(context).pop(true);
+      }
+
     }
   }
 

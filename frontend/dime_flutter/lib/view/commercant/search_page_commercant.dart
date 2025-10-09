@@ -133,7 +133,7 @@ class _ResultsList extends StatelessWidget {
             padding: EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text("Produits", style: AppTextStyles.sectionTitle),
           ),
-          ...vm.products.map((p) => _ProductTile(p)).toList(),
+          ...vm.products.map((p) => _ProductTile(p)),
           SizedBox(height: AppSpacing.lg),
         ],
         if (vm.shelves.isNotEmpty) ...[
@@ -141,7 +141,7 @@ class _ResultsList extends StatelessWidget {
             padding: EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text("Étagères", style: AppTextStyles.sectionTitle),
           ),
-          ...vm.shelves.map((s) => _ShelfTile(s)).toList(),
+          ...vm.shelves.map((s) => _ShelfTile(s)),
         ],
       ],
     );
@@ -175,12 +175,19 @@ class _ProductTile extends StatelessWidget {
             ? null
             : Text('Code-barres: ${p.barCode}', style: AppTextStyles.secondary),
         trailing: Text(_priceText(), style: AppTextStyles.price),
-        onTap: () {
-          Navigator.push(
+        onTap: () async {
+          final result = await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => ItemCommercantPage(productId: p.productId, productName: p.name,)),
+            MaterialPageRoute(
+              builder: (_) => ItemCommercantPage(productId: p.productId, productName: p.name),
+            ),
           );
-        },
+          if (result == true) {
+            final vm = Provider.of<SearchCommercantVM>(context, listen: false);
+            await vm.search(vm.lastQuery);
+          }
+        }
+,
       ),
     );
   }

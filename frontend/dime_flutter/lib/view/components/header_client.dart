@@ -62,12 +62,15 @@ class _HeaderView extends StatelessWidget {
                   /* ────── bloc “Currently at / nom” ────── */
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const StorePickerPage(),
-                        ),
-                      ),
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StorePickerPage(),
+                          ),
+                        );
+                        context.read<HeaderClientVM>().reloadStoreName();
+                      },
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
