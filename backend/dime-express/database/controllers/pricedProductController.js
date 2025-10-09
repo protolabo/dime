@@ -3,11 +3,17 @@ const supabase = require('../../supabaseClient');
 // GET /priced-products
 const getPricedProducts = async (req, res) => {
     try {
-        const { store_id, product_id } = req.query;
-
+        let { store_id, product_id } = req.query;
         let query = supabase.from('priced_product').select('*');
         if (store_id) query = query.eq('store_id', store_id);
-        if (product_id) query = query.eq('product_id', product_id);
+
+        if (product_id) {
+            if (Array.isArray(product_id)) {
+                query = query.in('product_id', product_id.map(Number));
+            } else {
+                query = query.eq('product_id', Number(product_id));
+            }
+        }
 
         const { data, error } = await query;
         if (error) return res.status(500).json({ error: error.message });
@@ -17,6 +23,7 @@ const getPricedProducts = async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
 
 // POST /priced-products
 const createPricedProduct = async (req, res) => {
@@ -92,11 +99,11 @@ const deletePricedProduct = async (req, res) => {
         .from('priced_product')
         .delete()
         .eq('store_id', store_id)
-        .eq('product_id', product_id);
+        .eq('product_id', product_id)
+        .select();
 
     if (error) return res.status(500).json({ error: error.message });
-    if (!data.length) return res.status(404).json({ error: 'Priced product not found' });
-
+    if (!data || !data.length) return res.status(404).json({ error: 'Priced product not found' });
     res.status(200).json({ success: true, message: 'Priced product deleted successfully' });
 };
 

@@ -3,7 +3,7 @@ const supabase = require('../../supabaseClient');
 // GET /stores (avec ou sans store_id)
 const getStores = async (req, res) => {
     try {
-        const { store_id } = req.query;
+        const { store_id,queryClient } = req.query;
 
         // Si on fournit store_id en query param, on filtre par store
         let query = supabase
@@ -11,7 +11,15 @@ const getStores = async (req, res) => {
             .select('*')
 
         if (store_id) {
-            query = query.eq('store_id', store_id);
+            if (Array.isArray(store_id)) {
+                query = query.in('store_id', store_id.map(Number));
+            } else {
+                query = query.eq('store_id', Number(store_id));
+            }
+        }
+        if (queryClient) {
+            const pattern = `%${queryClient}%`;
+            query = query.or(`name.ilike.${pattern},address.ilike.${pattern},city.ilike.${pattern},postal_code.ilike.${pattern},country.ilike.${pattern}`);
         }
 
         const { data, error } = await query;

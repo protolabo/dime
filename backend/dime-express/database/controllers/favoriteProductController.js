@@ -42,6 +42,7 @@ const createFavorite = async (req, res) => {
   res.status(201).json({ success: true, favorite: data[0] });
 };
 
+// DELETE /favorite-stores/:actor_id/:product_id
 const deleteFavorite = async (req, res) => {
   const { actor_id,product_id } = req.params;
 
@@ -49,11 +50,11 @@ const deleteFavorite = async (req, res) => {
       .from('favorite_product')
       .delete()
       .eq('product_id', product_id)
-      .eq('actor_id', actor_id);
+      .eq('actor_id', actor_id)
+      .select();
 
   if (error) return res.status(500).json({ error: error.message });
-  if (!data.length) return res.status(404).json({ error: 'Favorite product not found' });
-
+  if (!data || !data.length) return res.status(404).json({ error: 'Favorite product not found' });
   res.status(200).json({ success: true, message: 'Favorite product deleted successfully' });
 };
 

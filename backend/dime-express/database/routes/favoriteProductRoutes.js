@@ -11,8 +11,8 @@ const {
 router.get('/', getFavorites);
 
 // POST /favorite_products
-// body: { actor_id, product_id, store_id, created_by }
 router.post('/', createFavorite);
+
 // DELETE /favorite_products
-router.delete('/', deleteFavorite);
+router.delete('/:actor_id/:product_id', deleteFavorite);
 module.exports = router;

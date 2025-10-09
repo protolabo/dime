@@ -1,13 +1,30 @@
 const supabase = require('../../supabaseClient');
-const {generateAndSaveQR} = require("../qrCode");
+const {generateAndSaveQR,type} = require("../qrCode");
 
 //GET /products
 const getProducts = async (_req, res) => {
   try {
-    const {product_id} = _req.query;
+    const {product_id, queryClient,queryCommercant} = _req.query;
     let query = supabase.from('product').select('*');
 
-    if (product_id) query = query.eq('product_id', product_id);
+    if (product_id) {
+      if (Array.isArray(product_id)) {
+        query = query.in('product_id', product_id.map(Number));
+      } else {
+        query = query.eq('product_id', Number(product_id));
+      }
+    }
+
+    // Nouvelle logique de recherche textuelle pour les clients
+    if (queryClient) {
+      const pattern = `%${queryClient}%`;
+      query = query.or(`name.ilike.${pattern},bar_code.ilike.${pattern}`);
+    }
+    // Nouvelle logique de recherche textuelle pour les commerçants
+    if (queryCommercant) {
+      const pattern = `%${queryCommercant}%`;
+      query = query.or(`name.ilike.${pattern},category.ilike.${pattern},bar_code.ilike.${pattern}`);
+    }
 
     const { data, error } = await query;
     if (error) return res.status(500).json({ error: error.message });
@@ -17,6 +34,7 @@ const getProducts = async (_req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 };
+
 //POST /products
 const createProduct = async (req, res) => {
   const {
@@ -82,7 +100,7 @@ const createProduct = async (req, res) => {
   const product = prodRows[0];
   // Génère le QR code et met à jour le produit
   if (product && product.product_id) {
-    const { dataUrl, fileName } = await generateAndSaveQR('product', product.product_id, storeId);
+    const { dataUrl, fileName } = await generateAndSaveQR(type.PRODUCT, product.product_id, storeId);
     await supabase
         .from('product')
         .update({ qr_code: dataUrl })
@@ -111,12 +129,12 @@ const updateProduct = async (req, res) => {
 };
 //DELETE /products/:id
 const deleteProduct = async (req, res) => {
-  const { id } = req.params;
+  const { product_id } = req.params;
 
   const { data, error } = await supabase
       .from('product')
       .delete()
-      .eq('product_id', id);
+      .eq('product_id', product_id);
 
   if (error) return res.status(500).json({ error: error.message });
   if (!data.length) return res.status(404).json({ error: 'Product not found' });

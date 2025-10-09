@@ -5,7 +5,13 @@ const getPromotions = async (_req, res) => {
     try {
         const {promotion_id} = _req.query;
         let query = supabase.from('promotion').select('*');
-        if (promotion_id) query = query.eq('promotion_id', promotion_id);
+        if (promotion_id) {
+            if (Array.isArray(promotion_id)) {
+                query = query.in('promotion_id', promotion_id.map(Number));
+            } else {
+                query = query.eq('promotion_id', Number(promotion_id));
+            }
+        }
 
         const { data, error } = await query;
         if (error) return res.status(500).json({ error: error.message });

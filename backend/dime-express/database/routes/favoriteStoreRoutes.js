@@ -9,6 +9,6 @@ router.get('/', getFavoriteStores);
 router.post('/', createFavoriteStore);
 
 // DELETE /favorite-stores
-router.delete('/', deleteFavoriteStore);
+router.delete('/:actor_id/:store_id', deleteFavoriteStore);
 
 module.exports = router;

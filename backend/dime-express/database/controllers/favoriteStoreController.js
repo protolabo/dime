@@ -36,20 +36,20 @@ const createFavoriteStore = async (req, res) => {
     res.status(201).json({ success: true, favoriteStore: data[0] });
 };
 
-// DELETE /favorite-stores
+// DELETE /favorite-stores/:actor_id/:store_id
 const deleteFavoriteStore = async (req, res) => {
-    const { actor_id, store_id } = req.body;
+    const { actor_id, store_id } = req.params;
 
     const { data, error } = await supabase
         .from('favorite_store')
         .delete()
         .eq('actor_id', actor_id)
-        .eq('store_id', store_id);
-
+        .eq('store_id', store_id)
+        .select();
     if (error) return res.status(500).json({ error: error.message });
-    if (!data.length) return res.status(404).json({ error: 'Favorite store not found' });
-
+    if (!data || !data.length) return res.status(404).json({ error: 'Favorite store not found' });
     res.status(200).json({ success: true, message: 'Favorite store deleted successfully' });
 };
+
 
 module.exports = { getFavoriteStores, createFavoriteStore, deleteFavoriteStore };

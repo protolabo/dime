@@ -1,15 +1,24 @@
 const supabase = require('../../supabaseClient');
-const {generateAndSaveQR} = require("../qrCode");
-
+const {generateAndSaveQR,type} = require("../qrCode");
 // GET /shelves
 const getShelves = async (_req, res) => {
     try {
-        const {shelf_id,store_id} = _req.query;
-        let query = supabase.from('shelf').select('*');
+        const {shelf_id, store_id, name, qr_code, location, queryCommercant} = _req.query;
+        let sqlQuery = supabase.from('shelf').select('*');
 
-        if (shelf_id) query = query.eq('shelf_id', shelf_id);
-        if (store_id) query = query.eq('store_id', store_id);
-        const { data, error } = await query;
+        if (shelf_id) sqlQuery = sqlQuery.eq('shelf_id', shelf_id);
+        if (store_id) sqlQuery = sqlQuery.eq('store_id', store_id);
+        if (name) sqlQuery = sqlQuery.eq('name', name);
+        if (qr_code) sqlQuery = sqlQuery.eq('qr_code', qr_code);
+        if (location) sqlQuery = sqlQuery.eq('location', location);
+
+        // Nouvelle logique de recherche textuelle
+        if (queryCommercant) {
+            const pattern = `%${queryCommercant}%`;
+            sqlQuery = sqlQuery.or(`name.ilike.${pattern},location.ilike.${pattern}`);
+        }
+
+        const { data, error } = await sqlQuery;
         if (error) return res.status(500).json({ error: error.message });
         res.status(200).json({ reviews: data });
     }
@@ -17,6 +26,7 @@ const getShelves = async (_req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
 
 // POST /shelves
 const createShelf = async (req, res) => {
@@ -57,7 +67,7 @@ const createShelf = async (req, res) => {
     // 2) Generate QR code and update shelf
     const shelf = shelfRows[0];
     if (shelf && shelf.shelf_id) {
-        const { dataUrl, fileName } = await generateAndSaveQR('shelf', shelf.shelf_id,storeId);
+        const { dataUrl, fileName } = await generateAndSaveQR(type.SHELF, shelf.shelf_id,storeId);
         await supabase
             .from('shelf')
             .update({ qr_code: dataUrl })
