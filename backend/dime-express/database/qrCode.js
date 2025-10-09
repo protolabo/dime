@@ -3,8 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const QRCode = require('qrcode');
 const axios = require('axios');
-
 const qrBaseDir = path.join(__dirname, '../QR-CODE-GENERATOR/public/qr');
+const type = {
+    PRODUCT: 'product',
+    SHELF: 'shelf'
+}
+
 
 async function getStoreName(store_id) {
     const url = `http://localhost:3001/stores/?store_id=${store_id}`;
@@ -15,7 +19,11 @@ async function getStoreName(store_id) {
 }
 
 async function generateAndSaveQR(type, id, store_id) {
-    const storeName = await getStoreName(store_id);
+    const rawStoreName = await getStoreName(store_id);
+    // Pour enelver les accents des noms de magasins
+    const storeName = rawStoreName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
     const storeQrDir = path.join(qrBaseDir, storeName);
     if (!fs.existsSync(storeQrDir)) {
         fs.mkdirSync(storeQrDir, { recursive: true });
@@ -31,4 +39,4 @@ async function generateAndSaveQR(type, id, store_id) {
     return { dataUrl, fileName, relativePath: `/qr/${storeName}/${fileName}` };
 }
 
-module.exports = { generateAndSaveQR };
+module.exports = { generateAndSaveQR,type };
