@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -44,20 +46,22 @@ class CreateShelfViewModel extends ChangeNotifier {
       final createdBy = merchant.email; // on envoie l'email
 
       // Appel backend Express (même hôte que create_item_vm)
-      final uri = Uri.parse('http://10.0.0.168:3000/shelf/new');
+      final uri = Uri.parse('http://localhost:3001/shelves');
 
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
           'shelfName': shelfName,
           'store_id': storeId.toString(),
           'location': '',
           'created_by': createdBy,
-        },
-      );
+        }),
 
-      if (response.statusCode == 200) {
+      );
+      // print('Status: ${response.statusCode}');
+      // print('Body: ${response.body}');
+      if (response.statusCode == 201) {
         final html = response.body;
         final match = RegExp(r'src="(data:image[^"]+)"').firstMatch(html);
         if (match != null) {

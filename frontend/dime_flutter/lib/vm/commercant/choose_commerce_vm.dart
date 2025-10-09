@@ -1,13 +1,13 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 import '../current_connected_account_vm.dart';
 import '../current_store.dart';
 import '../../view/commercant/create_qr_menu.dart';
 
 /// VM pour la page de choix de commerce (commerçant)
 class ChooseCommerceViewModel extends ChangeNotifier {
-  final SupabaseClient _client = Supabase.instance.client;
-
   bool   isLoading = true;
   String? error;
   List<Map<String, dynamic>> stores = []; // [{store_id, name}]
@@ -21,13 +21,15 @@ class ChooseCommerceViewModel extends ChangeNotifier {
     try {
 
       final int actorId = actor.actorId; // A CHANGER
+      final uri = Uri.parse('http://localhost:3001/stores?actor_id=$actorId');
+      final response = await http.get(uri);
 
-      final resp = await _client
-          .from('store')
-          .select('store_id, name')
-          .eq('actor_id', actorId);
-
-      stores = List<Map<String, dynamic>>.from(resp);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        stores = List<Map<String, dynamic>>.from(data['favorites']);
+      } else {
+        error = 'Erreur serveur (${response.statusCode}) : ${response.body}';
+      }
     } catch (e) {
       error = e.toString();
     } finally {

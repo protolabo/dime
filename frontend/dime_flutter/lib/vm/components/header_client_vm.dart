@@ -6,6 +6,12 @@ class HeaderClientVM extends ChangeNotifier {
     _storeNameFuture = CurrentStoreService.getCurrentStoreName();
   }
 
-  late final Future<String?> _storeNameFuture;
+  late Future<String?> _storeNameFuture;
   Future<String?> get storeNameFuture => _storeNameFuture;
+
+  void reloadStoreName() {
+    _storeNameFuture = CurrentStoreService.getCurrentStoreName();
+    notifyListeners();
+  }
 }
+

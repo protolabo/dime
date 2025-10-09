@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dime_flutter/vm/current_store.dart';
-
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../current_connected_account_vm.dart';
 
 class ItemPageViewModel extends ChangeNotifier {
@@ -9,7 +10,7 @@ class ItemPageViewModel extends ChangeNotifier {
   ItemPageViewModel({required this.productId}) {
     _init();
   }
-
+  static const _baseUrl = 'http://localhost:3001';
   /* ──────────── fields ──────────── */
   final int productId;
 
@@ -54,21 +55,24 @@ class ItemPageViewModel extends ChangeNotifier {
   }
 
   /* ─────────── produit ─────────── */
+
+
   Future<void> _fetchProduct() async {
-    final supabase = Supabase.instance.client;
+    final response = await http.get(
+      Uri.parse('$_baseUrl/products?product_id=$productId'));
 
-    final data = await supabase
-        .from('product')
-        .select('product_id, name, bar_code')
-        .eq('product_id', productId)
-        .maybeSingle();
-
-    if (data == null) throw 'Produit introuvable (#$productId)';
-
+    if (response.statusCode == 200){
+    final json = jsonDecode(response.body);
+    final data = (json['reviews'] as List).isNotEmpty ? json['reviews'][0] : null;
+    if (data == null) throw Exception('Produit introuvable (id: $productId)');
     product = data;
-    productName = data['name'] as String? ?? '';
+    productName = data['name'] ?? '';
     barCode = (data['bar_code'] ?? '').toString();
+    } else {
+      throw Exception('Failed to load product');
+    }
   }
+
 
   /* ─────────── magasin courant ─────────── */
   Future<void> _fetchCurrentStoreName() async {
@@ -78,116 +82,136 @@ class ItemPageViewModel extends ChangeNotifier {
 
   /* ─────── favoris (stores) ─────── */
   Future<void> _fetchFavoriteStores() async {
-    final supabase = Supabase.instance.client;
     final actor = await CurrentActorService.getCurrentActor();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/favorite-stores?actor_id=${actor.actorId}')
+    );
 
-    final rows = await supabase
-        .from('favorite_store')
-        .select('store_id')
-        .eq('actor_id', actor.actorId);
-
-    favoriteStoreIds = rows.map<int>((r) => r['store_id'] as int).toList();
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final data = (json['favorites'] as List?) ?? [];
+      favoriteStoreIds = data
+          .map<int>((r) => r['store_id'] as int)
+          .toList();
+    } else {
+      throw Exception('Erreur lors du chargement des magasins favoris');
+    }
   }
 
   /* ─────── favoris (produit) ─────── */
-  Future<void> _checkFavoriteProduct() async {
-    final supabase = Supabase.instance.client;
-    final actor = await CurrentActorService.getCurrentActor();
+   Future<void> _checkFavoriteProduct() async {
+     final actor = await CurrentActorService.getCurrentActor();
+     final response = await http.get(
+       Uri.parse('$_baseUrl/favorite-products?actor_id=${actor.actorId}&product_id=$productId')
+     );
 
-    final fav = await supabase
-        .from('favorite_product')
-        .select('actor_id')
-        .eq('actor_id', actor.actorId)
-        .eq('product_id', productId)
-        .maybeSingle();
-
-    isFavorite = fav != null;
-  }
+     if (response.statusCode == 200) {
+       final json = jsonDecode(response.body);
+       final data = (json['favorites'] as List?) ?? [];
+       isFavorite = data.isNotEmpty;
+     } else {
+       throw Exception('Erreur lors de la vérification du favori produit');
+     }
+   }
 
   Future<void> toggleFavorite() async {
-    final supabase = Supabase.instance.client;
     final actor = await CurrentActorService.getCurrentActor();
 
     if (isFavorite) {
-      await supabase
-          .from('favorite_product')
-          .delete()
-          .eq('actor_id', actor.actorId)
-          .eq('product_id', productId);
-      isFavorite = false;
+      // Supprime le favori via l’API Express
+      final response = await http.delete(
+        Uri.parse('$_baseUrl/favorite-products/${actor.actorId}/$productId'),
+      );
+      if (response.statusCode == 200) {
+        isFavorite = false;
+      } else {
+        throw Exception('Erreur lors de la suppression du favori');
+      }
     } else {
-      await supabase.from('favorite_product').insert({
-        'actor_id': actor.actorId,
-        'product_id': productId,
-        'created_by': actor.actorId.toString(),
-      });
-      isFavorite = true;
+      // Ajoute le favori via l’API Express
+      final response = await http.post(
+        Uri.parse('$_baseUrl/favorite-products'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'actor_id': actor.actorId,
+          'product_id': productId,
+          'created_by': actor.actorId.toString(),
+        }),
+      );
+      if (response.statusCode == 201) {
+        isFavorite = true;
+      } else {
+        throw Exception('Erreur lors de l\'ajout du favori');
+      }
     }
     notifyListeners();
   }
 
+
   /* ─────── prix & magasins ─────── */
   Future<void> _fetchStoresWithPrices() async {
-    final supabase = Supabase.instance.client;
-
     try {
-      // 1) Produits avec le même code-barre
-      final idRows = await supabase
-          .from('product')
-          .select('product_id')
-          .eq('bar_code', barCode);
-
-      final productIds =
-      idRows.map<int>((r) => r['product_id'] as int).toList();
+      // 1) Récupère les produits avec le même code-barre
+      final productRes = await http.get(
+        Uri.parse('$_baseUrl/products?query=$barCode'),
+      );
+      if (productRes.statusCode != 200) throw Exception('Erreur produits');
+      final productJson = jsonDecode(productRes.body);
+      final productList = (productJson['reviews'] as List?) ?? [];
+      final productIds = productList.map<int>((r) => r['product_id'] as int).toList();
       if (productIds.isEmpty) {
         storesWithPrice = [];
         return;
       }
 
-      // 2) Prix + promo éventuelle (on garde product_id)
-      final pricedRows = await supabase
-          .from('priced_product')
-          .select('store_id, amount, promotion_id, product_id')
-          .inFilter('product_id', productIds);
-
+      // 2) Récupère les prix par magasin pour ces produits
+      final productIdParams = productIds.map((id) => 'product_id=$id').join('&');
+      final pricedRes = await http.get(
+        Uri.parse('$_baseUrl/priced-products?$productIdParams'),
+      );
+      if (pricedRes.statusCode != 200) throw Exception('Erreur prix');
+      final pricedJson = jsonDecode(pricedRes.body);
+      final pricedRows = (pricedJson['pricedProducts'] as List?) ?? [];
       if (pricedRows.isEmpty) {
         storesWithPrice = [];
         return;
       }
 
-      // 3) Noms des magasins
-      final storeIds =
-      pricedRows.map<int>((r) => r['store_id'] as int).toSet().toList();
-
-      final storeRows = await supabase
-          .from('store')
-          .select('store_id, name')
-          .inFilter('store_id', storeIds);
-
+      // 3) Récupère les noms des magasins
+      final storeIds = pricedRows.map<int>((r) => r['store_id'] as int).toSet().toList();
+      final storeIdParams = storeIds.map((id) => 'store_id=$id').join('&');
+      final storeRes = await http.get(
+        Uri.parse('$_baseUrl/stores?$storeIdParams'),
+      );
+      if (storeRes.statusCode != 200) throw Exception('Erreur magasins');
+      final storeJson = jsonDecode(storeRes.body);
+      final storeRows = (storeJson['favorites'] as List?) ?? [];
       final storeName = {
         for (final r in storeRows) r['store_id'] as int: r['name'] as String,
       };
 
-      // 4) Infos promo (actives)
+      // 4) Récupère les promotions actives
       final promoIds = pricedRows
           .where((r) => r['promotion_id'] != null)
           .map<int>((r) => r['promotion_id'] as int)
           .toSet()
           .toList();
-
       Map<int, Map<String, dynamic>> promoMap = {};
       if (promoIds.isNotEmpty) {
-        final promos = await supabase
-            .from('promotion')
-            .select('promotion_id, title, start_date, end_date')
-            .inFilter('promotion_id', promoIds);
-
-        final now = DateTime.now();
-        for (final p in promos) {
-          final start = DateTime.parse(p['start_date']);
-          final end = DateTime.parse(p['end_date'] ?? '9999-12-31');
-          if (start.isBefore(now) && end.isAfter(now)) {
-            promoMap[p['promotion_id'] as int] = p;
+        final promoIdParams = promoIds.map((id) => 'promotion_id=$id').join('&');
+        final promoRes = await http.get(
+          Uri.parse('$_baseUrl/promotions?$promoIdParams'),
+        );
+        if (promoRes.statusCode == 200) {
+          final promoJson = jsonDecode(promoRes.body);
+          final promos = (promoJson['reviews'] as List?) ?? [];
+          final now = DateTime.now();
+          for (final p in promos) {
+            final start = DateTime.parse(p['start_date']);
+            final end = DateTime.parse(p['end_date'] ?? '9999-12-31');
+            if (start.isBefore(now) && end.isAfter(now)) {
+              promoMap[p['promotion_id'] as int] = p;
+            }
           }
         }
       }
@@ -197,7 +221,7 @@ class ItemPageViewModel extends ChangeNotifier {
         final promo = promoMap[row['promotion_id']];
         return {
           'store_id': row['store_id'],
-          'product_id': row['product_id'], // pour naviguer si besoin
+          'product_id': row['product_id'],
           'store_name': storeName[row['store_id']] ?? 'Store ${row['store_id']}',
           'price': row['amount'],
           'isPromo': promo != null,
@@ -217,9 +241,9 @@ class ItemPageViewModel extends ChangeNotifier {
     } catch (e) {
       error = e.toString();
     }
-
     notifyListeners();
   }
+
 
   /* ─────── Liste triée + limitée pour l’UI ─────── */
   List<Map<String, dynamic>> get storesForSection {
@@ -235,14 +259,14 @@ class ItemPageViewModel extends ChangeNotifier {
       (favSet.contains(id) ? fav : nonFav).add(s);
     }
 
-    int _byPrice(a, b) {
+    int byPrice(a, b) {
       final pa = (a['price'] as num?)?.toDouble() ?? double.infinity;
       final pb = (b['price'] as num?)?.toDouble() ?? double.infinity;
       return pa.compareTo(pb);
     }
 
-    fav.sort(_byPrice);
-    nonFav.sort(_byPrice);
+    fav.sort(byPrice);
+    nonFav.sort(byPrice);
 
     final merged = <Map<String, dynamic>>[...fav, ...nonFav];
     return merged.length <= kStoresSectionLimit

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'current_store.dart';
 
@@ -28,8 +28,7 @@ class ShelfItemVM {
 
 class ScanPageVM extends ChangeNotifier {
   final MobileScannerController scanner = MobileScannerController();
-  final SupabaseClient _sb = Supabase.instance.client;
-
+  static const _baseUrl = 'http://localhost:3001';
   // Type d’overlay
   ScanOverlayKind _kind = ScanOverlayKind.none;
   ScanOverlayKind get kind => _kind;
@@ -180,48 +179,50 @@ class ScanPageVM extends ChangeNotifier {
     if (storeId == null) return;
 
     try {
-      final product = await _sb
-          .from('product')
-          .select('name')
-          .eq('product_id', id)
-          .maybeSingle();
-
+      // 1. Récupérer le produit
+      dynamic product;
+      final productResponse = await http.get(
+        Uri.parse('$_baseUrl/products?product_id=$id'),
+      );
+      if (productResponse.statusCode == 200){
+        final productData = jsonDecode(productResponse.body);
+        final List<dynamic> products = productData['reviews'] ?? [];
+        product = products.first;
+        if (products.isEmpty) return;
+      } else {
+        throw Exception('Failed to load product');
+      }
+      // 2. Récupérer le prix
+      final priceResponse = await http.get(
+        Uri.parse('$_baseUrl/priced-products?product_id=$id&store_id=$storeId'),
+      );
       Map<String, dynamic>? priceRow;
-      try {
-        priceRow = await _sb
-            .from('priced_product')
-            .select('amount, currency, promotion_id, promotion_price')
-            .eq('product_id', id)
-            .eq('store_id', storeId)
-            .maybeSingle();
-      } catch (_) {
-        priceRow = await _sb
-            .from('priced_product')
-            .select('amount, currency, promotion_id')
-            .eq('product_id', id)
-            .eq('store_id', storeId)
-            .maybeSingle();
+      if (priceResponse.statusCode == 200) {
+        final priceData = jsonDecode(priceResponse.body);
+        final List<dynamic> prices = priceData['pricedProducts'] ?? [];
+        if (prices.isNotEmpty) priceRow = prices.first;
       }
-
-      if (product != null) {
-        _kind = ScanOverlayKind.product;
-        _expanded = false;
-        _shelfName = null;
-        _shelfItems = const [];
-        _currentKey = 'product:$id';
-
-        _productOverlay = {
-          'id': id,
-          'name': product['name'],
-          'amount': priceRow?['amount'],
-          'currency': priceRow?['currency'] ?? '\$',
-          if (priceRow?['promotion_price'] != null) 'promo': priceRow!['promotion_price'],
-          'promotion_id': priceRow?['promotion_id'],
-        };
-        notifyListeners();
+      else {
+        throw Exception('Failed to load price');
       }
+      _kind = ScanOverlayKind.product;
+      _expanded = false;
+      _shelfName = null;
+      _shelfItems = const [];
+      _currentKey = 'product:$id';
+
+      _productOverlay = {
+        'id': id,
+        'name': product['name'],
+        'amount': priceRow?['amount'],
+        'currency': priceRow?['currency'] ?? '\$',
+        if (priceRow?['promotion_price'] != null) 'promo': priceRow!['promotion_price'],
+        'promotion_id': priceRow?['promotion_id'],
+      };
+      notifyListeners();
     } catch (_) {}
   }
+
 
 
   /// Requêtes nécessaires pour la fenêtre d'un code QR d'une étagère
@@ -230,20 +231,22 @@ class ScanPageVM extends ChangeNotifier {
     if (storeId == null) return;
 
     try {
-      final shelfRow = await _sb
-          .from('shelf')
-          .select('name, store_id')
-          .eq('shelf_id', shelfId)
-          .maybeSingle();
-      if (shelfRow == null) return;
+      // 1. Récupérer l’étagère
+      final shelfResponse = await http.get(Uri.parse('$_baseUrl/shelves?shelf_id=$shelfId'));
+      if (shelfResponse.statusCode != 200) return;
+      final shelfData = jsonDecode(shelfResponse.body);
+      final shelf = (shelfData['reviews'] as List?)?.firstWhere(
+            (e) => e['shelf_id'] == shelfId,
+        orElse: () => null,
+      );
+      if (shelf == null) return;
+      _shelfName = shelf['name'] as String? ?? 'Shelf #$shelfId';
 
-      _shelfName = shelfRow['name'] as String? ?? 'Shelf #$shelfId';
-
-      final List<dynamic> sp = await _sb
-          .from('shelf_place')
-          .select('product_id')
-          .eq('shelf_id', shelfId);
-
+      // 2. Récupérer les produits sur l’étagère
+      final spResponse = await http.get(Uri.parse('$_baseUrl/shelf-places?shelf_id=$shelfId'));
+      if (spResponse.statusCode != 200) return;
+      final spData = jsonDecode(spResponse.body);
+      final List<dynamic> sp = spData['shelfPlaces'] ?? [];
       if (sp.isEmpty) {
         _kind = ScanOverlayKind.shelf;
         _currentKey = 'shelf:$shelfId';
@@ -253,33 +256,29 @@ class ScanPageVM extends ChangeNotifier {
         notifyListeners();
         return;
       }
-
       final List<int> productIds = sp.map((e) => e['product_id'] as int).toList();
 
-      final List<dynamic> products = await _sb
-          .from('product')
-          .select('product_id, name')
-          .inFilter('product_id', productIds);
+      // 3. Récupérer les infos produits
+      final productsResponse = await http.get(Uri.parse(
+        '$_baseUrl/products?${productIds.map((id) => 'product_id=$id').join('&')}',
+      ));
+      if (productsResponse.statusCode != 200) return;
+      final productsData = jsonDecode(productsResponse.body);
+      final List<dynamic> products = productsData['reviews'] ?? [];
 
-      List<dynamic> priceRows = [];
-      try {
-        priceRows = await _sb
-            .from('priced_product')
-            .select('product_id, amount, currency, promotion_id, promotion_price')
-            .eq('store_id', storeId)
-            .inFilter('product_id', productIds);
-      } catch (_) {
-        priceRows = await _sb
-            .from('priced_product')
-            .select('product_id, amount, currency, promotion_id')
-            .eq('store_id', storeId)
-            .inFilter('product_id', productIds);
-      }
+      // 4. Récupérer les prix
+      final pricedResponse = await http.get(Uri.parse(
+        '$_baseUrl/priced-products?store_id=$storeId&${productIds.map((id) => 'product_id=$id').join('&')}',
+      ));
+      final List<dynamic> priceRows = (pricedResponse.statusCode == 200)
+          ? (jsonDecode(pricedResponse.body)['pricedProducts'] ?? [])
+          : [];
 
       final Map<int, Map<String, dynamic>> priceByPid = {
         for (final row in priceRows) row['product_id'] as int: row as Map<String, dynamic>
       };
 
+      // 5. Récupérer les promotions si besoin
       final promoIds = priceRows
           .map((e) => e['promotion_id'])
           .where((e) => e != null)
@@ -289,15 +288,15 @@ class ScanPageVM extends ChangeNotifier {
 
       Map<int, Map<String, dynamic>> promoById = {};
       if (promoIds.isNotEmpty) {
-        try {
-          final promos = await _sb
-              .from('promotion')
-              .select('promotion_id, start_date, end_date')
-              .inFilter('promotion_id', promoIds);
+        final promosResponse = await http.get(Uri.parse(
+          '$_baseUrl/promotions?${promoIds.map((id) => 'promotion_id=$id').join('&')}',
+        ));
+        if (promosResponse.statusCode == 200) {
+          final promos = jsonDecode(promosResponse.body)['reviews'] ?? [];
           for (final p in promos) {
             promoById[p['promotion_id'] as int] = p;
           }
-        } catch (_) {}
+        }
       }
 
       final now = DateTime.now();
@@ -348,6 +347,7 @@ class ScanPageVM extends ChangeNotifier {
       notifyListeners();
     } catch (_) {}
   }
+
 
   /* ─────────── HELPERS ─────────── */
   void clearOverlay() {

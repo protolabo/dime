@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -21,7 +23,7 @@ class CreateItemViewModel extends ChangeNotifier {
     required String name,
     required String barCode,
     String? description,
-    String? price, // string pour laisser le champ vide si besoin
+    String? price,
   }) async {
     if (_isSaving) return;
     _isSaving = true;
@@ -30,7 +32,6 @@ class CreateItemViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // 1) Récupérer le commerçant connecté et le store sélectionné
       final merchant = await CurrentActorService.getCurrentMerchant();
       final storeId = await CurrentStoreService.getCurrentStoreId();
 
@@ -39,34 +40,29 @@ class CreateItemViewModel extends ChangeNotifier {
         return;
       }
 
-      // 2) Appel backend (Express)
-      // NOTE: laisse l’URL telle qu’utilisée avant; ajuste si besoin.
-      final uri = Uri.parse('http://10.0.0.168:3000/item/new');
-
+      final uri = Uri.parse('http://localhost:3001/products');
       final response = await http.post(
         uri,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: {
-          'name'       : name,
-          'barcode'    : barCode,
-          'price'      : price ?? '',
-          'description': description ?? '',
-          'store_id'   : storeId.toString(),
-          'created_by' : merchant.email, // ou '${merchant.firstName} ${merchant.lastName} (#${merchant.actorId})'
-        },
+        headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'name': name,
+            'barcode': barCode,
+            'price': price ?? '',
+            'description': description ?? '',
+            'store_id': storeId.toString(),
+            'created_by': merchant.email,
+          }),
       );
 
-      if (response.statusCode == 200) {
-        // La page EJS renvoie un <img src="data:image/png;base64,...">
-        final html = response.body;
-        final match = RegExp(r'src="(data:image[^"]+)"').firstMatch(html);
-        if (match != null) {
-          qrDataUrl = match.group(1);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Produit enregistré ✔')),
-            );
-          }
+
+      if (response.statusCode == 201) {
+        final json = Map<String, dynamic>.from(jsonDecode(response.body));
+        final product = json['product'] as Map<String, dynamic>?;
+        qrDataUrl = product?['qr_code'] as String?;
+        if (qrDataUrl != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Produit enregistré ✔')),
+          );
         } else {
           errorMessage = 'QR introuvable dans la réponse serveur.';
         }

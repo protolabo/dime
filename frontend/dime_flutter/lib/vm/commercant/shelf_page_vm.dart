@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import 'package:dime_flutter/vm/current_store.dart';
 
-/// Représente un item (produit) présent sur l’étagère
+// Constante pour l'URL de base de l'API
+const String apiBaseUrl = 'http://localhost:3001';
+
+/// Représente un item (produit) présent sur l'étagère
 class ShelfItem {
   final int productId;
   final String name;
@@ -25,7 +27,7 @@ class ShelfItem {
   });
 }
 
-/// VM de la page d’étagère (côté commerçant)
+/// VM de la page d'étagère (côté commerçant)
 class ShelfPageVM extends ChangeNotifier {
   ShelfPageVM({
     required this.initialShelfName,
@@ -53,8 +55,6 @@ class ShelfPageVM extends ChangeNotifier {
 
   List<ShelfItem> items = [];
 
-  final _supabase = Supabase.instance.client;
-
   Future<void> init() async {
     loading = true;
     error = null;
@@ -63,13 +63,17 @@ class ShelfPageVM extends ChangeNotifier {
     try {
       Map<String, dynamic>? shelfRow;
 
-      // ── 1) Résoudre l’étagère
+      // ── 1) Résoudre l'étagère
       if (initialShelfId != null) {
-        shelfRow = await _supabase
-            .from('shelf')
-            .select('shelf_id,name,store_id,qr_code')
-            .eq('shelf_id', initialShelfId!) // non-null
-            .maybeSingle();
+        final response = await http.get(
+          Uri.parse('$apiBaseUrl/shelves?shelf_id=$initialShelfId'),
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final shelves = data['reviews'] as List;
+          shelfRow = shelves.isNotEmpty ? shelves.first : null;
+        }
       } else if (initialQrData != null) {
         final data = initialQrData!;
         Map<String, dynamic>? byPayload;
@@ -78,25 +82,37 @@ class ShelfPageVM extends ChangeNotifier {
         try {
           final parsed = jsonDecode(data);
           if (parsed is Map && parsed['shelf_id'] != null) {
-            byPayload = await _supabase
-                .from('shelf')
-                .select('shelf_id,name,store_id,qr_code')
-                .eq('shelf_id', (parsed['shelf_id'] as num).toInt())
-                .maybeSingle();
+            final shelfIdFromQr = (parsed['shelf_id'] as num).toInt();
+            final response = await http.get(
+              Uri.parse('$apiBaseUrl/shelves?shelf_id=$shelfIdFromQr'),
+            );
+
+            if (response.statusCode == 200) {
+              final data = jsonDecode(response.body);
+              final shelves = data['reviews'] as List;
+              byPayload = shelves.isNotEmpty ? shelves.first : null;
+            }
           }
         } catch (_) {
           // pas du JSON → on tentera par qr_code
         }
 
         // b) Fallback : recherche par égalité sur la DataURL (rare)
-        shelfRow = byPayload ??
-            await _supabase
-                .from('shelf')
-                .select('shelf_id,name,store_id,qr_code')
-                .eq('qr_code', data)
-                .maybeSingle();
+        if (byPayload == null) {
+          final response = await http.get(
+            Uri.parse('$apiBaseUrl/shelves?qr_code=${Uri.encodeComponent(data)}'),
+          );
+
+          if (response.statusCode == 200) {
+            final data = jsonDecode(response.body);
+            final shelves = data['reviews'] as List;
+            shelfRow = shelves.isNotEmpty ? shelves.first : null;
+          }
+        } else {
+          shelfRow = byPayload;
+        }
       } else {
-        // c) Recherche par (store_id, name) si on vient d’un clic interne
+        // c) Recherche par (store_id, name) si on vient d'un clic interne
         final currentStoreId = await CurrentStoreService.getCurrentStoreId();
         if (currentStoreId == null) {
           error = 'Store non sélectionné.';
@@ -104,12 +120,16 @@ class ShelfPageVM extends ChangeNotifier {
           notifyListeners();
           return;
         }
-        shelfRow = await _supabase
-            .from('shelf')
-            .select('shelf_id,name,store_id,qr_code')
-            .eq('store_id', currentStoreId)
-            .eq('name', initialShelfName)
-            .maybeSingle();
+
+        final response = await http.get(
+          Uri.parse('$apiBaseUrl/shelves?store_id=$currentStoreId&name=${Uri.encodeComponent(initialShelfName)}'),
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final shelves = data['reviews'] as List;
+          shelfRow = shelves.isNotEmpty ? shelves.first : null;
+        }
       }
 
       if (shelfRow == null) {
@@ -131,15 +151,19 @@ class ShelfPageVM extends ChangeNotifier {
         return;
       }
 
-      // ── 2) Récupérer les produits de l’étagère
-      final sp = await _supabase
-          .from('shelf_place')
-          .select('product_id')
-          .eq('shelf_id', shelfId!);
+      // ── 2) Récupérer les produits de l'étagère
+      final response = await http.get(
+        Uri.parse('$apiBaseUrl/shelf-places?shelf_id=$shelfId'),
+      );
 
-      final productIds = <int>[
-        for (final r in (sp as List)) (r['product_id'] as int),
-      ];
+      List<int> productIds = [];
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final shelfPlaces = data['shelfPlaces'] as List;
+        productIds = [
+          for (final r in shelfPlaces) (r['product_id'] as int),
+        ];
+      }
 
       if (productIds.isEmpty) {
         items = [];
@@ -149,26 +173,40 @@ class ShelfPageVM extends ChangeNotifier {
       }
 
       // ── 3) Noms des produits
-      final prows = await _supabase
-          .from('product')
-          .select('product_id,name')
-          .inFilter('product_id', productIds);
+      final nameById = <int, String>{};
+      for (final pid in productIds) {
+        final productResponse = await http.get(
+          Uri.parse('$apiBaseUrl/products?product_id=$pid'),
+        );
 
-      final nameById = <int, String>{
-        for (final r in (prows as List))
-          (r['product_id'] as int): (r['name'] as String?) ?? 'Unnamed',
-      };
+        if (productResponse.statusCode == 200) {
+          final data = jsonDecode(productResponse.body);
+          final products = data['reviews'] as List;  // Contrôleur renvoie 'reviews'
+          if (products.isNotEmpty) {
+            nameById[pid] = (products.first['name'] as String?) ?? 'Unnamed';
+          }
+        }
+      }
 
       // ── 4) Prix des produits pour ce store
-      final priceRows = await _supabase
-          .from('priced_product')
-          .select('product_id,amount,currency')
-          .eq('store_id', storeId!) // non-null
-          .inFilter('product_id', productIds);
+      // Récupérer tous les prix pour ce magasin et filtrer côté client
+      final priceResponse = await http.get(
+        Uri.parse('$apiBaseUrl/priced-products?store_id=$storeId'),
+      );
 
-      final priceById = <int, Map<String, dynamic>>{
-        for (final r in (priceRows as List)) (r['product_id'] as int): r,
-      };
+      final priceById = <int, Map<String, dynamic>>{};
+      if (priceResponse.statusCode == 200) {
+        final data = jsonDecode(priceResponse.body);
+        final pricedProducts = data['pricedProducts'] as List;
+
+        // Filtrer les prix pour ne garder que ceux des produits qui nous intéressent
+        for (final r in pricedProducts) {
+          final pid = r['product_id'] as int;
+          if (productIds.contains(pid)) {
+            priceById[pid] = r;
+          }
+        }
+      }
 
       // ── 5) Build items
       items = productIds
@@ -196,8 +234,8 @@ class ShelfPageVM extends ChangeNotifier {
     }
   }
 
-  /// Génère un PDF en réutilisant **exactement** l’image DataURL stockée en BD.
-  /// Si absente, fallback sur un QR régénéré à partir d’un payload déterministe.
+  /// Génère un PDF en réutilisant **exactement** l'image DataURL stockée en BD.
+  /// Si absente, fallback sur un QR régénéré à partir d'un payload déterministe.
   Future<void> downloadQrPdf() async {
     final doc = pw.Document();
     final title = shelfName ?? initialShelfName;
@@ -210,7 +248,7 @@ class ShelfPageVM extends ChangeNotifier {
       final img = pw.MemoryImage(bytes);
       qrWidget = pw.Image(img, width: 240, height: 240);
     } else {
-      // Fallback (rare) : QR à partir d’un payload stable
+      // Fallback (rare) : QR à partir d'un payload stable
       final payload = 'shelf:${shelfId ?? title}';
       qrWidget = pw.BarcodeWidget(
         barcode: pw.Barcode.qrCode(),
@@ -246,7 +284,7 @@ class ShelfPageVM extends ChangeNotifier {
   /// Refresh l'étagère après l'ajout d'éléments.
   Future<void> reload() async {
     try {
-      // Si on n’a pas l’info minimale, retombe sur init()
+      // Si on n'a pas l'info minimale, retombe sur init()
       if (shelfId == null || storeId == null) {
         await init();
         return;
@@ -254,34 +292,54 @@ class ShelfPageVM extends ChangeNotifier {
 
       error = null;
 
-      final sp = await _supabase
-          .from('shelf_place')
-          .select('product_id')
-          .eq('shelf_id', shelfId!);
+      // Récupérer les produits de l'étagère
+      final spResponse = await http.get(
+        Uri.parse('$apiBaseUrl/shelf-places?shelf_id=$shelfId'),
+      );
 
-      final productIds = <int>[
-        for (final r in (sp as List)) r['product_id'] as int,
-      ];
+      List<int> productIds = [];
+      if (spResponse.statusCode == 200) {
+        final data = jsonDecode(spResponse.body);
+        final shelfPlaces = data['shelfPlaces'] as List;
+        productIds = [
+          for (final r in shelfPlaces) r['product_id'] as int,
+        ];
+      }
 
-      final prows = await _supabase
-          .from('product')
-          .select('product_id,name')
-          .inFilter('product_id', productIds);
+      // Récupérer les noms des produits
+      final nameById = <int, String>{};
+      for (final pid in productIds) {
+        final productResponse = await http.get(
+          Uri.parse('$apiBaseUrl/products?product_id=$pid'),
+        );
 
-      final nameById = <int, String>{
-        for (final r in (prows as List))
-          (r['product_id'] as int): (r['name'] as String?) ?? 'Unnamed',
-      };
+        if (productResponse.statusCode == 200) {
+          final data = jsonDecode(productResponse.body);
+          final products = data['reviews'] as List;
+          if (products.isNotEmpty) {
+            nameById[pid] = (products.first['name'] as String?) ?? 'Unnamed';
+          }
+        }
+      }
 
-      final priceRows = await _supabase
-          .from('priced_product')
-          .select('product_id,amount,currency')
-          .eq('store_id', storeId!)
-          .inFilter('product_id', productIds);
+      // Récupérer les prix des produits
+      final priceResponse = await http.get(
+        Uri.parse('$apiBaseUrl/priced-products?store_id=$storeId'),
+      );
 
-      final priceById = <int, Map<String, dynamic>>{
-        for (final r in (priceRows as List)) (r['product_id'] as int): r,
-      };
+      final priceById = <int, Map<String, dynamic>>{};
+      if (priceResponse.statusCode == 200) {
+        final data = jsonDecode(priceResponse.body);
+        final pricedProducts = data['pricedProducts'] as List;
+
+        // Filtrer côté client
+        for (final r in pricedProducts) {
+          final pid = r['product_id'] as int;
+          if (productIds.contains(pid)) {
+            priceById[pid] = r;
+          }
+        }
+      }
 
       items = productIds
           .map((pid) => ShelfItem(
@@ -299,7 +357,6 @@ class ShelfPageVM extends ChangeNotifier {
       notifyListeners();
     }
   }
-
 
   // Helpers
   Uint8List _dataUrlToBytes(String dataUrl) {

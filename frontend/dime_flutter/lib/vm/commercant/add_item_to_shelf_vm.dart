@@ -2,8 +2,7 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:http/http.dart' as http;
 import '../current_store.dart';
 import '../current_connected_account_vm.dart';
 
@@ -33,8 +32,6 @@ class AddItemToShelfVM extends ChangeNotifier {
 
   final int shelfId;
   final String shelfName;
-
-  final SupabaseClient _sb = Supabase.instance.client;
 
   // Mode
   AddItemMode _mode = AddItemMode.search;
@@ -80,14 +77,21 @@ class AddItemToShelfVM extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> _loadShelfExisting() async {
-    final rows = await _sb
-        .from('shelf_place')
-        .select('product_id')
-        .eq('shelf_id', shelfId);
 
-    alreadyOnShelf = rows.map<int>((e) => e['product_id'] as int).toSet();
+
+  Future<void> _loadShelfExisting() async {
+    final url = Uri.parse('http://localhost:3001/shelf-places?shelf_id=$shelfId');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final shelfPlaces = data['shelfPlaces'] as List<dynamic>;
+      alreadyOnShelf = shelfPlaces.map<int>((e) => e['product_id'] as int).toSet();
+    } else {
+      alreadyOnShelf = {};
+    }
   }
+
 
   /* ─────────── SEARCH ─────────── */
   void onQueryChanged(String q) {
@@ -112,24 +116,51 @@ class AddItemToShelfVM extends ChangeNotifier {
   Future<List<SearchResult>> _search(String q) async {
     if (_storeId == null) return const [];
     // 1) Tous les product_id vendus par ce store
-    final idsRows = await _sb
-        .from('priced_product')
-        .select('product_id')
-        .eq('store_id', _storeId!)
-        .limit(800); // garde une borne
-
+    final url = Uri.parse('http://localhost:3001/priced-products?store_id=$_storeId');
+    var response = await http.get(url);
+    print(response.body);
+    print(response.statusCode);
+    final idsRows;
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final pricedProducts = data['pricedProducts'] as List<dynamic>;
+      idsRows = pricedProducts
+          .map((e) => {'product_id': e['product_id']})
+          .take(800)
+          .toList();
+    } else {
+      idsRows = <Map<String, dynamic>>[];
+    }
     final ids = idsRows.map<int>((e) => e['product_id'] as int).toSet().toList();
     if (ids.isEmpty) return const [];
 
     // 2) Cherche dans product parmi ces ids
-    final base = _sb
-        .from('product')
-        .select('product_id, name')
-        .inFilter('product_id', ids);
+
+    final uri = Uri.http(
+      'localhost:3001',
+      '/products',
+      {'product_id': ids.map((id) => id.toString()).toList()},
+    );
+    response = await http.get(uri);
+    print(uri);
+    print(response.body);
+    print(response.statusCode);
+    List<dynamic> base = [];
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      //la clé de la réponse est `reviews` côté backend
+      base = data['reviews'] as List<dynamic>;
+    } else {
+      base = [];
+    }
+
 
     final rows = q.isEmpty
-        ? await base.limit(50)
-        : await base.filter('name', 'ilike', '%$q%').limit(50);
+        ? base.take(50).toList()
+        : base.where((e) =>
+    (e['name'] as String?)?.toLowerCase().contains(q.toLowerCase()) ?? false
+    ).take(50).toList();
+
 
     return rows.map<SearchResult>((e) {
       return SearchResult(
@@ -153,12 +184,17 @@ class AddItemToShelfVM extends ChangeNotifier {
     if (_storeId == null) {
       return const AddOutcome.fail('No store selected');
     }
-    final row = await _sb
-        .from('priced_product')
-        .select('product_id')
-        .eq('store_id', _storeId!)
-        .eq('product_id', productId)
-        .maybeSingle();
+
+    final url = Uri.parse('http://localhost:3001/priced-products?store_id=$_storeId&product_id=$productId');
+    final response = await http.get(url);
+    Map<String, dynamic>? row;
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final products = data['pricedProducts'] as List<dynamic>;
+      row = products.isNotEmpty ? products.first as Map<String, dynamic> : null;
+    } else {
+      row = null;
+    }
 
     if (row == null) {
       return const AddOutcome.fail('This product is not sold by your store');
@@ -202,7 +238,20 @@ class AddItemToShelfVM extends ChangeNotifier {
         };
       }).toList();
 
-      await _sb.from('shelf_place').insert(payload);
+      final url = Uri.parse('http://localhost:3001/shelf-places');
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+      print(url);
+      print( jsonEncode(payload));
+      print(response.body);
+      print(response.statusCode);
+      if (response.statusCode != 201) {
+        throw Exception('Erreur lors de l\'insertion: ${response.body}');
+      }
+
       alreadyOnShelf.addAll(selected.keys);
       selected.clear();
 
@@ -272,8 +321,8 @@ class AddItemToShelfVM extends ChangeNotifier {
     if (capture.barcodes.isNotEmpty) {
       final b = capture.barcodes.first;
       final rr = _rawRectFromBarcode(b);
-      if (rr != null && capture.size != null) {
-        _qrRect = _mapImageRectToPreview(rr, capture.size!, previewSize, boxFit);
+      if (rr != null) {
+        _qrRect = _mapImageRectToPreview(rr, capture.size, previewSize, boxFit);
         notifyListeners();
       }
     }
@@ -300,12 +349,16 @@ class AddItemToShelfVM extends ChangeNotifier {
         _busy = true;
 
         // fetch name for overlay
-        final p = await _sb
-            .from('product')
-            .select('name')
-            .eq('product_id', pid)
-            .maybeSingle();
-
+        final url = Uri.parse('http://localhost:3001/products?product_id=$pid');
+        final response = await http.get(url);
+        Map<String, dynamic>? p;
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final products = data['reviews'] as List<dynamic>;
+          p = products.isNotEmpty ? products.first as Map<String, dynamic> : null;
+        } else {
+          p = null;
+        }
         overlayProduct = ProductLite(pid, p?['name'] as String?);
         notifyListeners();
       } catch (_) {

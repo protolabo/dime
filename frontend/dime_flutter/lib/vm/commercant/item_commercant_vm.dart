@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:flutter/foundation.dart';
@@ -9,6 +8,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import 'package:http/http.dart' as http;
 import 'package:dime_flutter/vm/current_store.dart';
 
 class ItemShelfRef {
@@ -19,8 +19,7 @@ class ItemShelfRef {
 
 class ItemCommercantVM extends ChangeNotifier {
   ItemCommercantVM({required this.productId, required this.initialProductName});
-
-  final SupabaseClient _supabase = Supabase.instance.client;
+  static const String apiBaseUrl = 'http://localhost:3001';
 
   final int productId;
   final String initialProductName;
@@ -42,73 +41,65 @@ class ItemCommercantVM extends ChangeNotifier {
     _loading = true;
     notifyListeners();
     try {
-      // 1) product
-      final prod = await _supabase
-          .from('product')
-          .select('name, description, qr_code')
-          .eq('product_id', productId)
-          .maybeSingle();
-
-      if (prod != null) {
-        productName = (prod['name'] as String?)?.trim();
-        description = prod['description'] as String?;
-        qrDataUrl = prod['qr_code'] as String?;
+      // product
+      final prodResponse = await http.get(Uri.parse('$apiBaseUrl/products?product_id=$productId'));
+      if (prodResponse.statusCode == 200) {
+        final data = jsonDecode(prodResponse.body);
+        final product = (data['reviews'] as List).isNotEmpty ? data['reviews'][0] : null;
+        if (product != null) {
+          productName = (product['name'] as String?)?.trim();
+          description = product['description'] as String?;
+          qrDataUrl = product['qr_code'] as String?;
+        }
       }
 
-      // 2) store-specific
+      // store
       final storeId = await CurrentStoreService.getCurrentStoreId();
       if (storeId != null) {
-        // price
-        final priced = await _supabase
-            .from('priced_product')
-            .select('amount, currency')
-            .eq('store_id', storeId)
-            .eq('product_id', productId)
-            .maybeSingle();
-
-        if (priced != null) {
-          final amt = priced['amount'];
-          price = (amt is num) ? amt.toDouble() : double.tryParse('$amt');
-          currency = priced['currency'] as String?;
+        // Price
+        final priceResponseonse = await http.get(Uri.parse('$apiBaseUrl/priced-products?store_id=$storeId&product_id=$productId'));
+        if (priceResponseonse.statusCode == 200) {
+          final data = jsonDecode(priceResponseonse.body);
+          final priced = (data['pricedProducts'] as List).isNotEmpty ? data['pricedProducts'][0] : null;
+          if (priced != null) {
+            final amt = priced['amount'];
+            price = (amt is num) ? amt.toDouble() : double.tryParse('$amt');
+            currency = priced['currency'] as String?;
+          }
         }
 
-        // shelves
-        final shelfPlaceRows = await _supabase
-            .from('shelf_place')
-            .select('shelf_id')
-            .eq('product_id', productId);
-
-        final ids = <int>{};
-        for (final r in shelfPlaceRows as List) {
-          final v = r['shelf_id'];
-          if (v is int) ids.add(v);
-        }
-
-        if (ids.isNotEmpty) {
-          final shelfRows = await _supabase
-              .from('shelf')
-              .select('shelf_id, name')
-              .eq('store_id', storeId)
-              .inFilter('shelf_id', ids.toList());
-
-          shelves = (shelfRows as List)
-              .map((e) => ItemShelfRef(
-            shelfId: e['shelf_id'] as int,
-            name: (e['name'] as String?)?.trim().isNotEmpty == true
-                ? (e['name'] as String).trim()
-                : 'Shelf #${e['shelf_id']}',
-          ))
-              .toList();
-        } else {
-          shelves = [];
+        // Shelves
+        final shelfPlaceResponse = await http.get(Uri.parse('$apiBaseUrl/shelf-places?product_id=$productId'));
+        if (shelfPlaceResponse.statusCode == 200) {
+          final data = jsonDecode(shelfPlaceResponse.body);
+          final shelfPlaces = data['shelfPlaces'] as List;
+          final ids = <int>{};
+          for (final r in shelfPlaces) {
+            final v = r['shelf_id'];
+            if (v is int) ids.add(v);
+          }
+          if (ids.isNotEmpty) {
+            final shelfIds = ids.join('&shelf_id=');
+            final shelfResponseonse = await http.get(Uri.parse('$apiBaseUrl/shelves?store_id=$storeId&shelf_id=$shelfIds'));
+            if (shelfResponseonse.statusCode == 200) {
+              final data = jsonDecode(shelfResponseonse.body);
+              shelves = (data['reviews'] as List)
+                  .map((e) => ItemShelfRef(
+                shelfId: e['shelf_id'] as int,
+                name: (e['name'] as String?)?.trim().isNotEmpty == true
+                    ? (e['name'] as String).trim()
+                    : 'Shelf #${e['shelf_id']}',
+              ))
+                  .toList();
+            }
+          } else {
+            shelves = [];
+          }
         }
       }
     } catch (e, st) {
       errorMessage = 'Failed to load item: $e';
-      if (kDebugMode) {
-        // ignore: avoid_print
-        print('item vm init error: $e\n$st');
-      }
+      if (kDebugMode) print('item vm init error: $e\n$st');
     } finally {
       _loading = false;
       notifyListeners();
@@ -120,20 +111,28 @@ class ItemCommercantVM extends ChangeNotifier {
     if (name.isEmpty) return;
 
     try {
-      await _supabase
-          .from('product')
-          .update({
-        'name': name,
-        'last_updated_at': DateTime.now().toIso8601String(),
-      })
-          .eq('product_id', productId);
+      final response = await http.put(
+        Uri.parse('$apiBaseUrl/products/$productId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'name': name,
+          'last_updated_by': DateTime.now().toIso8601String(),
+        }),
+      );
 
-      productName = name;
+      if (response.statusCode == 200) {
+        productName = name;
+        errorMessage = null;
+      } else {
+        final data = jsonDecode(response.body);
+        errorMessage = data['error'] ?? '';
+      }
     } catch (e) {
       errorMessage = 'Impossible de mettre à jour le nom: $e';
     }
     notifyListeners();
   }
+
 /// Modifie le prix d'un item en question.
   Future<void> updatePrice(double newAmount, {String currencyCode = 'CAD'}) async {
     final storeId = await CurrentStoreService.getCurrentStoreId();
@@ -147,51 +146,68 @@ class ItemCommercantVM extends ChangeNotifier {
       final merchant = await CurrentActorService.getCurrentMerchant();
       final email = merchant.email;
 
-      // Vérifier si l'enregistrement existe déjà
-      final existing = await _supabase
-          .from('priced_product')
-          .select('store_id')
-          .eq('store_id', storeId)
-          .eq('product_id', productId)
-          .maybeSingle();
+      // Vérifier si l'enregistrement existe déjà via l'API
+      final checkResponse = await http.get(Uri.parse(
+        '$apiBaseUrl/priced-products?store_id=$storeId&product_id=$productId',
+      ));
 
-      if (existing != null) {
-        // UPDATE - l'enregistrement existe
-        await _supabase
-            .from('priced_product')
-            .update({
-          'amount': newAmount,
-          'currency': currencyCode,
-          'last_updated_by': email,
-          // Ne pas inclure created_by lors d'un UPDATE
-        })
-            .eq('store_id', storeId)
-            .eq('product_id', productId);
+      if (checkResponse.statusCode == 200) {
+        final data = jsonDecode(checkResponse.body);
+        final exists = (data['pricedProducts'] as List).isNotEmpty;
+
+        if (exists) {
+          // UPDATE
+          final updateResponse = await http.put(
+            Uri.parse('$apiBaseUrl/priced-products'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'store_id': storeId,
+              'product_id': productId,
+              'amount': newAmount,
+              'currency': currencyCode,
+              'last_updated_by': email,
+            }),
+          );
+          if (updateResponse.statusCode != 200) {
+            final error = jsonDecode(updateResponse.body);
+            errorMessage = error['error'] ?? 'Erreur lors de la mise à jour du prix';
+            notifyListeners();
+            return;
+          }
+        } else {
+          // INSERT
+          final insertResponse = await http.post(
+            Uri.parse('$apiBaseUrl/priced-products'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'store_id': storeId,
+              'product_id': productId,
+              'amount': newAmount,
+              'currency': currencyCode,
+              'created_by': email,
+              'last_updated_by': email,
+            }),
+          );
+          if (insertResponse.statusCode != 201) {
+            final error = jsonDecode(insertResponse.body);
+            errorMessage = error['error'] ?? 'Erreur lors de la création du prix';
+            notifyListeners();
+            return;
+          }
+        }
+
+        price = newAmount;
+        currency = currencyCode;
+        errorMessage = null;
       } else {
-        // INSERT - nouvel enregistrement
-        await _supabase
-            .from('priced_product')
-            .insert({
-          'store_id': storeId,
-          'product_id': productId,
-          'amount': newAmount,
-          'currency': currencyCode,
-          'created_by': email,
-          'last_updated_by': email,
-          // created_at et last_updated_at seront gérés automatiquement
-        });
+        errorMessage = 'Erreur lors de la vérification du prix';
       }
-
-      price = newAmount;
-      currency = currencyCode;
-      errorMessage = null;
     } catch (e) {
       errorMessage = 'Impossible de mettre à jour le prix: $e';
     }
     notifyListeners();
   }
-
-
+  
   /// Supprime l’item de CE magasin : efface son prix et le retire des étagères du store.
   Future<bool> removeFromCurrentStore() async {
     final storeId = await CurrentStoreService.getCurrentStoreId();
@@ -202,26 +218,56 @@ class ItemCommercantVM extends ChangeNotifier {
     }
 
     try {
-      // 1) priced_product
-      await _supabase
-          .from('priced_product')
-          .delete()
-          .eq('store_id', storeId)
-          .eq('product_id', productId);
+      // 1) Supprimer le prix du produit pour ce magasin
+      final priceResponse = await http.delete(
+        Uri.parse('$apiBaseUrl/priced-products'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'store_id': storeId,
+          'product_id': productId,
+        }),
+      );
+      //print('price delete response: ${priceResponse.statusCode} - ${priceResponse.body}');
+      if (priceResponse.statusCode != 200) {
+        final error = jsonDecode(priceResponse.body);
+        errorMessage = error['error'] ?? 'Erreur lors de la suppression du prix';
+        notifyListeners();
+        return false;
+      }
 
-      // 2) shelf_place pour les shelves de ce store
-      final shelfRows = await _supabase
-          .from('shelf')
-          .select('shelf_id')
-          .eq('store_id', storeId);
+      // 2) Récupérer les shelf_id du store
+      final shelfResponse = await http.get(
+        Uri.parse('$apiBaseUrl/shelves?store_id=$storeId'),
+      );
+      //print('shelf fetch response: ${shelfResponse.statusCode} - ${shelfResponse.body}');
+      if (shelfResponse.statusCode != 200) {
+        final error = jsonDecode(shelfResponse.body);
+        errorMessage = error['error'] ?? 'Erreur lors de la récupération des étagères';
+        notifyListeners();
+        return false;
+      }
+      final shelfData = jsonDecode(shelfResponse.body);
+      final shelfIds = (shelfData['reviews'] as List)
+          .map<int>((e) => e['shelf_id'] as int)
+          .toList();
 
-      final ids = (shelfRows as List).map<int>((e) => e['shelf_id'] as int).toList();
-      if (ids.isNotEmpty) {
-        await _supabase
-            .from('shelf_place')
-            .delete()
-            .eq('product_id', productId)
-            .inFilter('shelf_id', ids);
+      // 3) Supprimer les shelf_places pour ce produit sur ces étagères
+      for (final shelfId in shelfIds) {
+        final deleteResponse = await http.delete(
+          Uri.parse('$apiBaseUrl/shelf-places'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'shelf_id': shelfId,
+            'product_id': productId,
+          }),
+        );
+        //print('shelf_place delete response for shelf $shelfId: ${deleteResponse.statusCode} - ${deleteResponse.body}');
+        if (deleteResponse.statusCode != 200 && deleteResponse.statusCode != 404) {
+          final error = jsonDecode(deleteResponse.body);
+          errorMessage = error['error'] ?? 'Erreur lors de la suppression de shelf_place';
+          notifyListeners();
+          return false;
+        }
       }
 
       shelves = [];

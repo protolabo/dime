@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
+import 'package:http/http.dart' as http;
 import '../current_connected_account_vm.dart';
 import '../favorite_product_vm.dart';
 import '../favorite_store_vm.dart';
@@ -61,28 +60,48 @@ class FavoriteMenuVM extends ChangeNotifier {
   }
 
   /* ───────────── persistance BD ───────────── */
+
   Future<void> persistDeletions() async {
     if (_client == null) return;
-    final sb = Supabase.instance.client;
+
+    final actorId = _client!.actorId;
 
     // produits
-    for (final e in favoriteProductStates.entries) {
+    final productsToDelete = favoriteProductStates.entries.where((e) => !e.value).toList();
+    for (final e in productsToDelete) {
       if (!e.value) {
-        await sb.from('favorite_product')
-            .delete()
-            .eq('actor_id', _client!.actorId)
-            .eq('product_id', e.key);
+        try {
+          final uri = Uri.parse('http://localhost:3001/favorite-products/$actorId/${e.key}');
+          final response = await http.delete(uri);
+          if (response.statusCode != 200) {
+            throw Exception('Failed to delete favorite product: ${response.body}');
+          } else {
+            favoriteProductStates.remove(e.key);
+          }
+        } catch (e) {
+          _error = 'Error deleting favorite product: $e';
+          notifyListeners();
+        }
       }
     }
 
-    // commerces
-    for (final e in favoriteStoreStates.entries) {
-      if (!e.value) {
-        await sb.from('favorite_store')
-            .delete()
-            .eq('actor_id', _client!.actorId)
-            .eq('store_id', e.key);
+
+    //commerces
+    final storesToDelete = favoriteStoreStates.entries.where((e) => !e.value).toList();
+    for (final e in storesToDelete) {
+      try {
+        final uri = Uri.parse('http://localhost:3001/favorite-stores/$actorId/${e.key}');
+        final response = await http.delete(uri);
+        if (response.statusCode != 200) {
+          throw Exception('Failed to delete favorite store: ${response.body}');
+        } else {
+          favoriteStoreStates.remove(e.key);
+        }
+      } catch (e) {
+        _error = 'Error deleting favorite store: $e';
+        notifyListeners();
       }
     }
+
   }
 }

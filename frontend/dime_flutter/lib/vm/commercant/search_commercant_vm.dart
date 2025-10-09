@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 
 import 'package:dime_flutter/vm/current_store.dart';
 
@@ -37,7 +38,7 @@ class ShelfResult {
 }
 
 class SearchCommercantVM extends ChangeNotifier {
-  final supabase = Supabase.instance.client;
+  static const String apiBaseUrl = 'http://localhost:3001';
 
   final TextEditingController searchController = TextEditingController();
 
@@ -48,6 +49,7 @@ class SearchCommercantVM extends ChangeNotifier {
   int? get storeId => _storeId;
 
   Timer? _debounce;
+   String get lastQuery => _lastQuery;
 
   List<ProductResult> _products = [];
   List<ProductResult> get products => _products;
@@ -72,7 +74,7 @@ class SearchCommercantVM extends ChangeNotifier {
   Future<void> search(String query) async {
     _lastQuery = query;
 
-    final sid = _storeId; // <- promotion en locale pour éviter int?
+    final sid = _storeId;
     if (sid == null) {
       _products = [];
       _shelves = [];
@@ -92,33 +94,42 @@ class SearchCommercantVM extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final pattern = '%$q%';
+      // 1) Recherche produits (par nom ou code-barres)
+      //print('🔍 Recherche produits pour "$q" dans store $sid');
+      final prodResponse = await http.get(
+        Uri.parse('$apiBaseUrl/products?queryCommercant=${Uri.encodeComponent(q)}')
+      );
 
-      // 1) Produits qui matchent par nom ou code-barres
-      final prodRows = await supabase
-          .from('product')
-          .select('product_id, name, image_url, bar_code')
-          .or('name.ilike.$pattern,bar_code.ilike.$pattern');
+      if (prodResponse.statusCode != 200) {
+        throw Exception('Erreur produits: ${prodResponse.statusCode}');
+      }
 
-      final list = (prodRows as List<dynamic>);
-      final productIds = list.map((e) => e['product_id'] as int).toList();
+      final prodData = jsonDecode(prodResponse.body);
+      final prodList = (prodData['reviews'] as List?) ?? [];
+      final productIds = prodList.map((e) => e['product_id'] as int).toList();
 
       final productById = <int, Map<String, dynamic>>{
-        for (final e in list) (e['product_id'] as int): (e as Map<String, dynamic>)
+        for (final e in prodList) (e['product_id'] as int): (e as Map<String, dynamic>)
       };
 
-      List<dynamic> pricedRows = [];
+      // 2) Récupère les prix pour ce store
+      List<dynamic> pricedList = [];
       if (productIds.isNotEmpty) {
-        pricedRows = await supabase
-            .from('priced_product')
-            .select('product_id, amount, currency, pricing_unit')
-            .eq('store_id', sid) // <- utilise la locale non-null
-            .inFilter('product_id', productIds);
+        final pricedResponse = await http.get(
+          Uri.parse('$apiBaseUrl/priced-products?store_id=$sid'));
+
+        if (pricedResponse.statusCode == 200) {
+          final pricedData = jsonDecode(pricedResponse.body);
+          pricedList = (pricedData['pricedProducts'] as List?) ?? [];
+        }
       }
 
       final pricedByPid = <int, Map<String, dynamic>>{};
-      for (final r in pricedRows) {
-        pricedByPid[r['product_id'] as int] = (r as Map<String, dynamic>);
+      for (final r in pricedList) {
+        final pid = r['product_id'] as int;
+        if (productIds.contains(pid)) {
+          pricedByPid[pid] = r as Map<String, dynamic>;
+        }
       }
 
       final productResults = <ProductResult>[];
@@ -140,20 +151,23 @@ class SearchCommercantVM extends ChangeNotifier {
         );
       }
 
-      // 2) Étagères du store, filtrées par nom/location
-      final shelfRows = await supabase
-          .from('shelf')
-          .select('shelf_id, name, location')
-          .eq('store_id', sid) // <- utilise la locale non-null
-          .or('name.ilike.$pattern,location.ilike.$pattern');
+      // 3) Recherche étagères (par nom ou location)
+      final shelfResponse = await http.get(
+        Uri.parse('$apiBaseUrl/shelves?store_id=$sid&queryCommercant=${Uri.encodeComponent(q)}')
+      );
 
-      final shelfResults = (shelfRows as List<dynamic>).map((s) {
-        return ShelfResult(
-          shelfId: s['shelf_id'] as int,
-          name: (s['name'] as String?) ?? 'Unnamed shelf',
-          location: s['location'] as String?,
-        );
-      }).toList();
+      List<ShelfResult> shelfResults = [];
+      if (shelfResponse.statusCode == 200) {
+        final shelfData = jsonDecode(shelfResponse.body);
+        final shelfList = (shelfData['reviews'] as List?) ?? [];
+        shelfResults = shelfList.map((s) {
+          return ShelfResult(
+            shelfId: s['shelf_id'] as int,
+            name: (s['name'] as String?) ?? 'Unnamed shelf',
+            location: s['location'] as String?,
+          );
+        }).toList();
+      }
 
       productResults.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
       shelfResults.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -163,7 +177,7 @@ class SearchCommercantVM extends ChangeNotifier {
     } catch (e) {
       _products = [];
       _shelves = [];
-      // print(e);
+      //print('Erreur de recherche: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

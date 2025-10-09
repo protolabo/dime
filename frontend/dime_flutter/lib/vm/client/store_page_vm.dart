@@ -1,12 +1,10 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 class StorePageVM extends ChangeNotifier {
-  final SupabaseClient _c = Supabase.instance.client;
-
+  final baseUrl = 'http://localhost:3001';
   /* ───────── infos magasin ───────── */
   String? storeName;
   String? address;
@@ -21,141 +19,150 @@ class StorePageVM extends ChangeNotifier {
 
   /// Charge toutes les données nécessaires à l’écran.
   Future<void> load(int storeId) async {
-    try {
-      /* ---------- acteur courant ---------- */
-      final actor = await CurrentActorService.getCurrentActor();
-      final int userId = actor.actorId;
+  try {
+    final actor = await CurrentActorService.getCurrentActor();
+    final int userId = actor.actorId;
 
-      /* ---------- détails du magasin ---------- */
-      final s = await _c
-          .from('store')
-          .select('name,address,city,postal_code')
-          .eq('store_id', storeId)
-          .maybeSingle();
-
-      if (s == null) {
-        error = 'Magasin introuvable';
-        isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      storeName = s['name'] as String?;
-      address = [
-        if ((s['address'] ?? '').toString().isNotEmpty) s['address'],
-        if ((s['city'] ?? '').toString().isNotEmpty)    s['city'],
-        if ((s['postal_code'] ?? '').toString().isNotEmpty) s['postal_code'],
-      ].whereType<String>().join(', ');
-
-      /* ---------- est‐ce un favori ? ---------- */
-      final favStore = await _c
-          .from('favorite_store')
-          .select('store_id')
-          .eq('actor_id', userId)
-          .eq('store_id', storeId)
-          .maybeSingle();
-      isStoreFavorite = favStore != null;
-
-      /* ---------- produits favoris ---------- */
-      final favRows = await _c
-          .from('favorite_product')
-          .select('product_id')
-          .eq('actor_id', userId);
-      final favIds = favRows.map<int>((e) => e['product_id'] as int).toSet();
-
-      /* ---------- barcodes des favoris ---------- */
-      Set<String> favBarcodes = {};
-      if (favIds.isNotEmpty) {
-        final allFavs =
-        await _c.from('product').select('product_id,bar_code');
-        favBarcodes = allFavs
-            .where((r) => favIds.contains(r['product_id']))
-            .map<String>((r) => r['bar_code'] as String? ?? '')
-            .toSet();
-      }
-
-      /* ---------- produits vendus dans ce magasin ---------- */
-      final priced = await _c
-          .from('priced_product')
-          .select('product_id')
-          .eq('store_id', storeId);
-      final storeProdIds =
-      priced.map<int>((r) => r['product_id'] as int).toSet();
-
-      if (storeProdIds.isEmpty) {
-        recos = [];
-        isLoading = false;
-        notifyListeners();
-        return;
-      }
-
-      /* ---------- récupération + tri ---------- */
-      final allProds =
-      await _c.from('product').select('product_id,name,category,bar_code');
-
-      final b1 = <Map<String, dynamic>>[];
-      final b2 = <Map<String, dynamic>>[];
-      final b3 = <Map<String, dynamic>>[];
-
-      for (final p in allProds) {
-        final pid = p['product_id'] as int;
-        if (!storeProdIds.contains(pid)) continue;
-
-        final bc = p['bar_code'] ?? '';
-        final map = {
-          'id': pid,
-          'title': p['name'],
-          'subtitle': p['category'] ?? '',
-          'isFav': favIds.contains(pid),
-        };
-
-        if (favIds.contains(pid)) {
-          b1.add(map);
-        } else if (bc.isNotEmpty && favBarcodes.contains(bc)) {
-          b2.add(map);
-        } else {
-          b3.add(map);
-        }
-      }
-
-      recos = [...b1, ...b2, ...b3].take(6).toList();
+    // 1. Détails du magasin
+    final storeResponse = await http.get(Uri.parse('$baseUrl/stores?store_id=$storeId'));
+    if (storeResponse.statusCode != 200) {
+      error = 'Magasin introuvable';
       isLoading = false;
       notifyListeners();
-    } catch (e, st) {
-      error = e.toString();
-      isLoading = false;
-      log('StorePageVM.load error: $e\n$st');
-      notifyListeners();
+      return;
     }
+    final storeData = jsonDecode(storeResponse.body);
+    final favorites = storeData['favorites'];
+    final s = (favorites is List && favorites.isNotEmpty) ? favorites[0] : null;
+    if (s == null) {
+      error = 'Magasin introuvable';
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    storeName = s['name'] as String?;
+    address = [
+      if ((s['address'] ?? '').toString().isNotEmpty) s['address'],
+      if ((s['city'] ?? '').toString().isNotEmpty)    s['city'],
+      if ((s['postal_code'] ?? '').toString().isNotEmpty) s['postal_code'],
+    ].whereType<String>().join(', ');
+
+    // 2. Est-ce un favori ?
+    final favStoreResponse = await http.get(Uri.parse('$baseUrl/favorite-stores?actor_id=$userId&store_id=$storeId'));
+    final favStoreData = jsonDecode(favStoreResponse.body);
+    isStoreFavorite = (favStoreData['favoriteStores'] as List).isNotEmpty;
+
+    // 3. Produits favoris
+    final favProdResponse = await http.get(Uri.parse('$baseUrl/favorite-products?actor_id=$userId'));
+    final favProdData = jsonDecode(favProdResponse.body);
+    final favIds = (favProdData['favorites'] as List)
+        .map<int>((e) => e['product_id'] as int)
+        .toSet();
+
+    // 4. Barcodes des favoris
+    Set<String> favBarcodes = {};
+    if (favIds.isNotEmpty) {
+      final favtIdParams = favIds.map((id) => 'product_id=$id').join('&');
+      final allFavsResponse = await http.get(Uri.parse('$baseUrl/products?$favtIdParams'));
+      final allFavsData = jsonDecode(allFavsResponse.body);
+      favBarcodes = (allFavsData['reviews'] as List)
+          .where((r) => favIds.contains(r['product_id']))
+          .map<String>((r) => r['bar_code'] as String? ?? '')
+          .toSet();
+    }
+
+    // 5. Produits vendus dans ce magasin
+    final pricedResponse = await http.get(Uri.parse('$baseUrl/priced-products?store_id=$storeId'));
+    final pricedData = jsonDecode(pricedResponse.body);
+    final storeProdIds = (pricedData['pricedProducts'] as List)
+        .map<int>((r) => r['product_id'] as int)
+        .toSet();
+
+    if (storeProdIds.isEmpty) {
+      recos = [];
+      isLoading = false;
+      notifyListeners();
+      return;
+    }
+
+    // 6. Récupération + tri
+    final allProdsResponse = await http.get(Uri.parse('$baseUrl/products'));
+    final allProdsData = jsonDecode(allProdsResponse.body);
+    final allProds = allProdsData['reviews'] as List;
+
+    final b1 = <Map<String, dynamic>>[];
+    final b2 = <Map<String, dynamic>>[];
+    final b3 = <Map<String, dynamic>>[];
+
+    for (final p in allProds) {
+      final pid = p['product_id'] as int;
+      if (!storeProdIds.contains(pid)) continue;
+
+      final bc = p['bar_code'] ?? '';
+      final map = {
+        'id': pid,
+        'title': p['name'],
+        'subtitle': p['category'] ?? '',
+        'isFav': favIds.contains(pid),
+      };
+
+      if (favIds.contains(pid)) {
+        b1.add(map);
+      } else if (bc.isNotEmpty && favBarcodes.contains(bc)) {
+        b2.add(map);
+      } else {
+        b3.add(map);
+      }
+    }
+
+    recos = [...b1, ...b2, ...b3].take(6).toList();
+    isLoading = false;
+    notifyListeners();
+  } catch (e, st) {
+    error = e.toString();
+    isLoading = false;
+    log('StorePageVM.load error: $e\n$st');
+    notifyListeners();
   }
+}
 
 
   /* ───────── ajout / retrait fav ───────── */
   /// Ajoute ou retire le store des favoris
   Future<void> toggleFavorite(int storeId) async {
-    final actor = await CurrentActorService.getCurrentActor();
-    final userId = actor.actorId;
-    final userEmail = actor.email;
+  final actor = await CurrentActorService.getCurrentActor();
+  final userId = actor.actorId;
+  final userEmail = actor.email ?? '${actor.firstName} ${actor.lastName}';
 
-    if (isStoreFavorite) {
-      // ➖ RETIRER
-      await Supabase.instance.client
-          .from('favorite_store')
-          .delete()
-          .eq('actor_id', userId)
-          .eq('store_id', storeId);
+  if (isStoreFavorite) {
+    // ➖ RETIRER
+    final res = await http.delete(
+      Uri.parse('$baseUrl/favorite-stores/$userId/$storeId'),
+    );
+    if (res.statusCode == 200) {
       isStoreFavorite = false;
     } else {
-      // ➕ AJOUTER  (👉 on ajoute created_by)
-      await Supabase.instance.client.from('favorite_store').insert({
-        'actor_id'   : userId,
-        'store_id'   : storeId,
-        'created_by' : actor.email ?? '${actor.firstName} ${actor.lastName}',
-      });
-      isStoreFavorite = true;
+      error = 'Erreur lors du retrait des favoris';
     }
-
-    notifyListeners();
+  } else {
+    // ➕ AJOUTER
+    final res = await http.post(
+      Uri.parse('$baseUrl/favorite-stores'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'actor_id': userId,
+        'store_id': storeId,
+        'created_by' : actor.email ?? '${actor.firstName} ${actor.lastName}',
+      }),
+    );
+    if (res.statusCode == 201) {
+      isStoreFavorite = true;
+    } else {
+      error = 'Erreur lors de l\'ajout aux favoris';
+    }
   }
+  notifyListeners();
+}
 
 }

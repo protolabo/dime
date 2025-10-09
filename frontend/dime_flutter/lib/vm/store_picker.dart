@@ -1,7 +1,7 @@
-/* Ce fichier est seulement présent en bus de tests. Ce fichier nous permet de choisir facilement le magasin qu'on veut que le client soit présent.*/
+/* Ce fichier est seulement présent en bus de tests. Ce fichier nous permet de
+choisir facilement le magasin qu'on veut que le client soit présent.*/
 
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dime_flutter/vm/current_store.dart';
 
 class StorePickerPage extends StatefulWidget {
@@ -12,7 +12,6 @@ class StorePickerPage extends StatefulWidget {
 }
 
 class _StorePickerPageState extends State<StorePickerPage> {
-  final _sb = Supabase.instance.client;
   List<Map<String, dynamic>> _stores = [];
   int? _selectedId;
 
@@ -25,7 +24,7 @@ class _StorePickerPageState extends State<StorePickerPage> {
   /// Récuoère tous les magasins du système
   Future<void> _load() async {
     // récupère TOUS les magasins (store_id + name)
-    final rows = await _sb.from('store').select('store_id, name');
+    final rows = await CurrentStoreService.fetchAllStores();
     final current = await CurrentStoreService.getCurrentStoreId();
 
     setState(() {
