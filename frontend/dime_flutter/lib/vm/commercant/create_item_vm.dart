@@ -5,19 +5,28 @@ import 'package:http/http.dart' as http;
 
 import 'package:dime_flutter/vm/current_store.dart';
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
+import 'package:dime_flutter/vm/components/open_food_facts_service.dart';
 
 /// ViewModel utilisé par `CreateItemPage`.
 /// – Enregistre l’article dans le backend Express (/item/new)
 /// – Récupère l’image QR au format data-URL renvoyée par l’EJS du backend
 class CreateItemViewModel extends ChangeNotifier {
   /* ─────────────── Public state ─────────────── */
-  String? qrDataUrl;       //  <img src="data:image/png;base64,…">
+  String? qrDataUrl;
   String? errorMessage;
 
   bool _isSaving = false;
   bool get isSaving => _isSaving;
 
   /* ─────────────── Main action ─────────────── */
+  Future<OffProduct?> lookupBarcode(String barcode) async {
+    try {
+      return await OpenFoodFactsService.fetchProduct(barcode);
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> saveItem({
     required BuildContext context,
     required String name,

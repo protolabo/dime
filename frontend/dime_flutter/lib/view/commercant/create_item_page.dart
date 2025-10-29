@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-
 import 'package:dime_flutter/view/components/header_commercant.dart';
 import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_item_vm.dart';
+import 'package:dime_flutter/vm/components/barcode_scanner_vm.dart';
 
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
 
-/* ────────────────────────────────────────────────────────────────
-   Page permettant au commerçant d’ajouter un nouvel item
-   ──────────────────────────────────────────────────────────────── */
 class CreateItemPage extends StatefulWidget {
   const CreateItemPage({super.key});
 
@@ -22,9 +19,9 @@ class CreateItemPage extends StatefulWidget {
 }
 
 class _CreateItemPageState extends State<CreateItemPage> {
-  final _nameC        = TextEditingController();
-  final _barCodeC     = TextEditingController();
-  final _priceC       = TextEditingController();
+  final _nameC = TextEditingController();
+  final _barCodeC = TextEditingController();
+  final _priceC = TextEditingController();
   final _descriptionC = TextEditingController();
 
   @override
@@ -38,13 +35,15 @@ class _CreateItemPageState extends State<CreateItemPage> {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CreateItemViewModel(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => CreateItemViewModel()),
+        ChangeNotifierProvider(create: (_) => BarcodeScannerVM()),
+      ],
       child: Consumer<CreateItemViewModel>(
         builder: (context, vm, _) => Scaffold(
           backgroundColor: AppColors.searchBg,
           appBar: const HeaderCommercant(),
-
           body: SingleChildScrollView(
             padding: AppPadding.horizontal.copyWith(top: 20),
             child: Column(
@@ -65,8 +64,32 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 _InputField(label: 'Name', controller: _nameC),
                 const SizedBox(height: 16),
 
-                _InputField(label: 'Barcode', controller: _barCodeC),
-                const SizedBox(height: 16),
+                BarcodeField(
+                  controller: _barCodeC,
+                  label: 'Barcode',
+                  hint: 'Scannez ou entrez le code',
+                  onScan: (barcode) async {
+                    final off = await vm.lookupBarcode(barcode);
+                    if (off != null) {
+                      final name = off.name ?? '';
+                      final desc = off.description ?? '';
+                      if (name.isNotEmpty) _nameC.text = name;
+                      if (desc.isNotEmpty) _descriptionC.text = desc;
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Produit trouvé sur Open Food Facts')),
+                        );
+                      }
+                    } else {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Produit introuvable sur Open Food Facts')),
+                        );
+                      }
+                    }
+                  }, // nouveau callback
+                ),
+                const SizedBox(height: 10),
 
                 _InputField(
                   label: 'Price',
@@ -93,7 +116,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    style: AppButtonStyles.primary, // ✅ bouton vert centralisé
+                    style: AppButtonStyles.primary,
                     onPressed: vm.isSaving
                         ? null
                         : () => vm.saveItem(
@@ -109,19 +132,15 @@ class _CreateItemPageState extends State<CreateItemPage> {
                       height: 20,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white, // lisible sur le vert
+                        color: Colors.white,
                       ),
                     )
                         : Text('Save', style: AppTextStyles.button),
                   ),
-
-
                 ),
               ],
             ),
           ),
-
-          // ⬇️ Ajout: barre de navigation commerçant (My Team sélectionné)
           bottomNavigationBar: navbar_commercant(
             currentIndex: 0,
             onTap: (index) {
@@ -129,8 +148,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
               } else if (index == 2) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
-              }
-              else if (index == 4) {
+              } else if (index == 4) {
                 Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
               }
             },
@@ -141,7 +159,6 @@ class _CreateItemPageState extends State<CreateItemPage> {
   }
 }
 
-/* Widget réutilisable pour les TextField */
 class _InputField extends StatelessWidget {
   const _InputField({
     required this.label,
@@ -149,6 +166,7 @@ class _InputField extends StatelessWidget {
     this.keyboardType,
     this.maxLines = 1,
     this.inputFormatters,
+    super.key,
   });
 
   final String label;
@@ -167,6 +185,75 @@ class _InputField extends StatelessWidget {
       decoration: const InputDecoration(
         border: OutlineInputBorder(borderRadius: AppRadius.border),
       ).copyWith(labelText: label),
+    );
+  }
+}
+
+class BarcodeField extends StatefulWidget {
+  const BarcodeField({
+    required this.controller,
+    this.label = 'Barcode',
+    this.hint,
+    this.onScan, // ajout
+    super.key,
+  });
+
+  final TextEditingController controller;
+  final String label;
+  final String? hint;
+  final Future<void> Function(String barcode)? onScan; // ajout
+
+  @override
+  State<BarcodeField> createState() => _BarcodeFieldState();
+}
+
+class _BarcodeFieldState extends State<BarcodeField> {
+  bool _scanning = false;
+  Future<void> _openScanner() async {
+    if (_scanning) return;
+    setState(() => _scanning = true);
+
+    final scannerVm = Provider.of<BarcodeScannerVM>(context, listen: false);
+    final result = await scannerVm.scan(context);
+
+    if (result != null && result.isNotEmpty) {
+      widget.controller.text = result;
+      widget.controller.selection = TextSelection.fromPosition(
+        TextPosition(offset: widget.controller.text.length),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Code scanné')),
+        );
+      }
+      // Déclenche le pré-remplissage OFF
+      if (widget.onScan != null) {
+        await widget.onScan!(result);
+      }
+    }
+
+    setState(() => _scanning = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: widget.controller,
+      decoration: InputDecoration(
+        labelText: widget.label,
+        hintText: widget.hint,
+        border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.qr_code_scanner),
+          tooltip: 'Scanner un code',
+          onPressed: _openScanner,
+        ),
+      ),
+      onSubmitted: (value) async {
+        if (value.isNotEmpty && widget.onScan != null) {
+          await widget.onScan!(value);
+        }
+      },
     );
   }
 }
