@@ -38,57 +38,26 @@ class _ScanClientPageBody extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Caméra visible par défaut ; retirée seulement si étagère plein écran
-          if (!(vm.kind == ScanOverlayKind.shelf && vm.expanded))
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final previewSize = constraints.biggest;
-                const fit = BoxFit.cover;
-                return MobileScanner(
-                  fit: fit,
-                  controller: vm.scanner,
-                  onDetect: (capture) => vm.onDetect(
-                    capture,
-                    context,
-                    previewSize: previewSize,
-                    boxFit: fit,
-                  ),
-                );
-              },
-            )
-          else
-            Container(color: Colors.black),
+          // caméra
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final previewSize = constraints.biggest;
+              const fit = BoxFit.cover;
+              return MobileScanner(
+                fit: fit,
+                controller: vm.scanner,
+                onDetect: (capture) => vm.onDetect(
+                  capture,
+                  context,
+                  previewSize: previewSize,
+                  boxFit: fit,
+                ),
+              );
+            },
+          ),
 
-          // Overlay PRODUIT (sous le QR quand possible)
-          if (vm.kind == ScanOverlayKind.product)
-            Positioned(
-              top: vm.qrRect != null
-                  ? _clampTopForProduct(
-                  media.size.height, media.padding, vm.qrRect!.bottom + 12)
-                  : null,
-              bottom: vm.qrRect == null ? 40 : null,
-              left: 20, right: 20,
-              child: _buildProductOverlay(context, vm),
-            ),
-
-          // Overlay ÉTAGÈRE (sous le QR en compact, plein écran si expand)
-          if (vm.kind == ScanOverlayKind.shelf)
-            Positioned(
-              top: vm.expanded
-                  ? 0
-                  : (vm.qrRect != null
-                  ? _clampTopForShelf(
-                media.size.height,
-                media.padding,
-                vm.qrRect!.bottom + 12,
-                vm.shelfItems,
-              )
-                  : null),
-              bottom: vm.expanded ? 0 : (vm.qrRect == null ? 20 : null),
-              left: vm.expanded ? 0 : 16,
-              right: vm.expanded ? 0 : 16,
-              child: _buildShelfOverlay(context, vm),
-            ),
+          // overlays empilés depuis le bas (on passe le context)
+          ..._buildStackedOverlays(context, vm, media),
         ],
       ),
       bottomNavigationBar: navbar_client(
@@ -104,34 +73,48 @@ class _ScanClientPageBody extends StatelessWidget {
     );
   }
 
-  // Empêche l’overlay produit de dépasser en bas
-  double _clampTopForProduct(double screenH, EdgeInsets viewInsets, double desiredTop) {
-    const estHeight = 100.0; // carte produit approx
-    final maxTop = screenH - viewInsets.bottom - 16.0 - estHeight;
-    return desiredTop.clamp(viewInsets.top + 16.0, maxTop);
+  List<Widget> _buildStackedOverlays(BuildContext context, ScanPageVM vm, MediaQueryData media) {
+    final baseBottom = media.padding.bottom + 16.0;
+    final spacing = 8.0;
+    final List<Widget> widgets = [];
+    final keys = vm.stackKeys;
+    for (var i = 0; i < keys.length; i++) {
+      final key = keys[i];
+      final data = vm.overlays[key];
+      if (data == null) continue;
+
+      double estHeight;
+      Widget child;
+      if (data['kind'] == 'product') {
+        estHeight = 100.0;
+        child = _buildProductOverlayFromDataPlaceholder(context, vm, key, data);
+        widgets.add(Positioned(
+          bottom: baseBottom + i * (estHeight + spacing),
+          left: 20,
+          right: 20,
+          child: child,
+        ));
+      } else if (data['kind'] == 'shelf') {
+        final items = (data['items'] as List).cast<ShelfItemVM>();
+        final previewMax = 5;
+        final rows = items.length < previewMax ? items.length : previewMax;
+        estHeight = (56.0 * rows + 80.0).clamp(140.0, MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.height * .55);
+        child = _buildShelfOverlayFromDataPlaceholder(context, vm, key, data);
+        widgets.add(Positioned(
+          bottom: baseBottom + i * (estHeight + spacing),
+          left: 16,
+          right: 16,
+          child: child,
+        ));
+      }
+    }
+    return widgets;
   }
 
-  // Empêche l’overlay étagère (compact) de dépasser en bas
-  double _clampTopForShelf(
-      double screenH,
-      EdgeInsets viewInsets,
-      double desiredTop,
-      List<ShelfItemVM> items,
-      ) {
-    final previewMax = 5;
-    final rows = items.length < previewMax ? items.length : previewMax;
-    final estHeight = 56.0 * rows + 80.0; // rows + header/padding approx
-    final maxTop = screenH - viewInsets.bottom - 16.0 - estHeight;
-    return desiredTop.clamp(viewInsets.top + 16.0, maxTop);
-  }
-
-  /* ─────────── OVERLAY PRODUIT ─────────── */
-  Widget _buildProductOverlay(BuildContext context, ScanPageVM vm) {
-    final data = vm.overlayData!;
+  Widget _buildProductOverlayFromDataPlaceholder(BuildContext context, ScanPageVM vm, String key, Map<String, dynamic> data) {
     final num? amount = data['amount'] as num?;
     final String currency = data['currency'] as String? ?? '\$';
     final num? promo = data['promo'] as num?;
-
     return Container(
       padding: AppPadding.all,
       decoration: BoxDecoration(
@@ -149,7 +132,7 @@ class _ScanClientPageBody extends StatelessWidget {
                   onTap: () {
                     final pid = data['id'] as int?;
                     if (pid != null) {
-                      vm.clearOverlay();
+                      vm.clearOverlay(key);
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => ItemPageCustomer(productId: pid)),
@@ -185,77 +168,67 @@ class _ScanClientPageBody extends StatelessWidget {
               ],
             ),
           ),
-          IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: vm.clearOverlay),
+          IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => vm.clearOverlay(key)),
         ],
       ),
     );
   }
 
-  /* ─────────── OVERLAY ÉTAGÈRE ─────────── */
-  Widget _buildShelfOverlay(BuildContext context, ScanPageVM vm) {
-    final items = vm.shelfItems;
+  Widget _buildShelfOverlayFromDataPlaceholder(BuildContext context, ScanPageVM vm, String key, Map<String, dynamic> data) {
+    final List<ShelfItemVM> items = (data['items'] as List).cast<ShelfItemVM>();
     final previewMax = 5;
-    final visible = vm.expanded ? items : items.take(previewMax).toList();
+    final visible = items.length <= previewMax ? items : items.take(previewMax).toList();
 
     final decoration = BoxDecoration(
-      color: Colors.black.withOpacity(vm.expanded ? 0.92 : 0.75),
-      borderRadius: vm.expanded ? BorderRadius.zero : AppRadius.border,
+      color: Colors.black.withOpacity(0.75),
+      borderRadius: AppRadius.border,
     );
 
     final compactMaxHeight =
-    (56.0 * visible.length + 80.0).clamp(140.0, MediaQuery.of(context).size.height * .55);
+    (56.0 * visible.length + 80.0).clamp(140.0, MediaQueryData.fromWindow(WidgetsBinding.instance.window).size.height * .55);
 
     final listWidget = ListView.separated(
       physics: const ClampingScrollPhysics(),
-      shrinkWrap: vm.expanded ? false : true,
-      itemBuilder: (_, i) => _shelfItemTile(context, vm, visible[i]),
+      shrinkWrap: true,
+      itemBuilder: (ctx, i) => _shelfItemTilePlaceholder(ctx, vm, visible[i]),
       separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
       itemCount: visible.length,
     );
 
     return Container(
-      padding: vm.expanded ? const EdgeInsets.only(top: 8, left: 12, right: 12, bottom: 12) : AppPadding.all,
+      padding: AppPadding.all,
       decoration: decoration,
       child: SafeArea(
         bottom: true,
         child: Column(
-          mainAxisSize: vm.expanded ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
                   child: Text(
-                    vm.shelfName ?? 'Shelf',
+                    data['shelfName'] as String? ?? 'Shelf',
                     overflow: TextOverflow.ellipsis,
                     style: AppTextStyles.subtitle.copyWith(color: Colors.white),
                   ),
                 ),
                 IconButton(
-                  icon: Icon(vm.expanded ? Icons.close_fullscreen : Icons.open_in_full, color: Colors.white),
-                  tooltip: vm.expanded ? 'Réduire' : 'Agrandir',
-                  onPressed: vm.toggleExpanded,
-                ),
-                IconButton(
                   icon: const Icon(Icons.close, color: Colors.white),
-                  onPressed: vm.clearOverlay,
+                  onPressed: () => vm.clearOverlay(key),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-
             if (items.isEmpty)
               Text('Aucun produit sur cette étagère',
                   style: AppTextStyles.body.copyWith(color: Colors.white70))
             else
-              (vm.expanded)
-                  ? Expanded(child: listWidget)
-                  : ConstrainedBox(
+              ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: compactMaxHeight),
                 child: listWidget,
               ),
-
-            if (!vm.expanded && items.length > visible.length)
+            if (items.length > visible.length)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
@@ -269,13 +242,13 @@ class _ScanClientPageBody extends StatelessWidget {
     );
   }
 
-  Widget _shelfItemTile(BuildContext context, ScanPageVM vm, ShelfItemVM it) {
+  Widget _shelfItemTilePlaceholder(BuildContext context, ScanPageVM vm, ShelfItemVM it) {
     final price = it.price;
     final promo = it.promoPrice;
 
     return InkWell(
       onTap: () {
-        vm.clearOverlay();
+        vm.clearOverlay(); // ferme tous ou spécifier key si besoin
         Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => ItemPageCustomer(productId: it.productId)),

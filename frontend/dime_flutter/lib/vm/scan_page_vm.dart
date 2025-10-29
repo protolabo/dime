@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -27,111 +28,154 @@ class ShelfItemVM {
 }
 
 class ScanPageVM extends ChangeNotifier {
-  final MobileScannerController scanner = MobileScannerController();
+  final MobileScannerController scanner = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    formats: const [
+      BarcodeFormat.qrCode,
+      BarcodeFormat.ean13,
+      BarcodeFormat.ean8,
+      BarcodeFormat.upcA,
+      BarcodeFormat.code128,
+      BarcodeFormat.code39,
+    ],
+  );
   static const _baseUrl = 'http://localhost:3001';
-  // Type d’overlay
-  ScanOverlayKind _kind = ScanOverlayKind.none;
-  ScanOverlayKind get kind => _kind;
 
-  // Produit (overlay compact)
-  Map<String, dynamic>? _productOverlay; // {id, name, amount, currency, promo?}
-  Map<String, dynamic>? get overlayData => _productOverlay;
+  // multi overlays: key -> data
+  final Map<String, Map<String, dynamic>> _overlays = {};
+  Map<String, Map<String, dynamic>> get overlays => _overlays;
 
-  // Étagère
-  String? _shelfName;
-  List<ShelfItemVM> _shelfItems = const [];
-  String? get shelfName => _shelfName;
-  List<ShelfItemVM> get shelfItems => _shelfItems;
+  // order stack (premier détecté = bas de la pile)
+  final List<String> _stackKeys = [];
+  List<String> get stackKeys => List.unmodifiable(_stackKeys);
 
-  // UI
-  bool _expanded = false; // étagère plein écran
-  bool get expanded => _expanded;
+  // geometry per key
+  final Map<String, Rect> _qrRects = {};
+  Rect? qrRectFor(String key) => _qrRects[key];
 
-  // Géométrie du QR en coordonnées écran
-  Rect? _qrRect;
-  Rect? get qrRect => _qrRect;
+  // per-key busy and dedupe
+  final Set<String> _busyKeys = {};
+  final Map<String, DateTime> _lastSeen = {};
 
-  // anti re-entrance / throttle / clé courante
-  bool _busy = false;
-  String? _lastRaw;
-  DateTime _lastTime = DateTime.now();
-  String? _currentKey; // "product:123" / "shelf:45"
+  // legacy single fields kept for compatibility (not used for multi)
+  String? _currentKey;
 
-  /* ─────────── SCAN CALLBACK ─────────── */
-  /// Fonction lorsque la caméra détecte un code QR
+  // visibilité
+  static const Duration _visibilityTimeout = Duration(milliseconds: 1600);
+  Timer? _visibilityTimer;
+
+  ScanPageVM() {
+    _startVisibilityTimer();
+  }
+
+  void _startVisibilityTimer() {
+    _visibilityTimer = Timer.periodic(const Duration(milliseconds: 600), (_) {
+      final now = DateTime.now();
+      final List<String> toRemove = [];
+      _overlays.forEach((key, _) {
+        final last = _lastSeen[key];
+        if (last == null || now.difference(last) > _visibilityTimeout) {
+          toRemove.add(key);
+        }
+      });
+      if (toRemove.isNotEmpty) {
+        for (final k in toRemove) {
+          clearOverlay(k);
+        }
+      }
+    });
+  }
+
   Future<void> onDetect(
       BarcodeCapture capture,
       BuildContext context, {
         required Size previewSize,
         BoxFit boxFit = BoxFit.cover,
       }) async {
-    // En plein écran d’étagère, on ignore (caméra est stoppée)
-    if (_busy || (_kind == ScanOverlayKind.shelf && _expanded)) return;
+    if (capture.barcodes.isEmpty || capture.size == null) return;
 
-    // Estimer la position du QR sur l’écran pour placer l’overlay
-    if (capture.barcodes.isNotEmpty) {
-      final b = capture.barcodes.first;
+    // première passe : mappe les rects pour l'affichage (utilise une clé normalisée previewKey)
+    for (final b in capture.barcodes) {
       final rawRect = _rawRectFromBarcode(b);
-      if (rawRect != null && capture.size != null) {
-        _qrRect = _mapImageRectToPreview(
-          rawRect,
-          capture.size,   // taille image de la frame
-          previewSize,    // taille du widget MobileScanner
-          boxFit,
-        );
-        if (_kind == ScanOverlayKind.none) notifyListeners();
+      if (rawRect != null) {
+        final rect = _mapImageRectToPreview(rawRect, capture.size!, previewSize, boxFit);
+        final raw = b.rawValue ?? '';
+        String previewKey = 'barcode:$raw';
+        try {
+          final parsed = jsonDecode(raw);
+          if (parsed is Map) {
+            final String? type = parsed['type'] as String?;
+            final int? pid = type == 'product' ? parsed['product_id'] as int? : null;
+            final int? sid = type == 'shelf' ? parsed['shelf_id'] as int? : null;
+            if (pid != null) previewKey = 'product:$pid';
+            else if (sid != null) previewKey = 'shelf:$sid';
+          }
+        } catch (_) {}
+        _qrRects[previewKey] = rect;
       }
     }
+    notifyListeners();
 
-    for (final code in capture.barcodes) {
-      final raw = code.rawValue;
+    // seconde passe : traite chaque code (normalise la clé en newKey)
+    for (final b in capture.barcodes) {
+      final raw = b.rawValue;
       if (raw == null) continue;
 
+      String type = '';
+      int? pid;
+      int? sid;
       try {
         final data = jsonDecode(raw);
-        if (data is! Map) continue;
-
-        final String? type = data['type'] as String?;
-        final int? pid = type == 'product' ? data['product_id'] as int? : null;
-        final int? sid = type == 'shelf' ? data['shelf_id'] as int? : null;
-
-        final String newKey = (type == 'product' && pid != null)
-            ? 'product:$pid'
-            : (type == 'shelf' && sid != null)
-            ? 'shelf:$sid'
-            : '';
-
-        if (newKey.isEmpty) continue;
-        if (_currentKey == newKey) return; // même QR -> ne rien faire
-
-        // petit throttle
-        final now = DateTime.now();
-        if (raw == _lastRaw && now.difference(_lastTime) < const Duration(milliseconds: 500)) {
-          return;
+        if (data is Map) {
+          type = (data['type'] as String?) ?? '';
+          pid = type == 'product' ? data['product_id'] as int? : null;
+          sid = type == 'shelf' ? data['shelf_id'] as int? : null;
         }
-        _lastRaw = raw;
-        _lastTime = now;
+      } catch (_) {}
 
-        _busy = true;
-        if (pid != null && type == 'product') {
-          await _handleProduct(pid);
-        } else if (sid != null && type == 'shelf') {
-          await _handleShelf(sid);
-        }
-      } catch (_) {
-        // ignore QR non reconnu
-      } finally {
-        _busy = false;
+      final String newKey = (type == 'product' && pid != null)
+          ? 'product:$pid'
+          : (type == 'shelf' && sid != null)
+          ? 'shelf:$sid'
+          : 'barcode:$raw';
+
+      final now = DateTime.now();
+      final last = _lastSeen[newKey];
+      if (last != null && now.difference(last) < const Duration(milliseconds: 1000)) {
+        _lastSeen[newKey] = now; // rafraîchit timestamp même en cas de dédup
+        continue;
       }
-      break; // on traite un seul code par frame
+      _lastSeen[newKey] = now;
+
+      if (_overlays.containsKey(newKey)) continue;
+      if (_busyKeys.contains(newKey)) continue;
+
+      if (_busyKeys.length >= 3) continue;
+
+      _busyKeys.add(newKey);
+      _processCode(newKey, raw, pid, sid);
     }
   }
 
-  /* ─────────── Helpers géométrie ─────────── */
+  Future<void> _processCode(String key, String raw, int? pid, int? sid) async {
+    try {
+      if (pid != null) {
+        await _handleProduct(pid, key);
+      } else if (sid != null) {
+        await _handleShelf(sid, key);
+      } else {
+        await _handleBarcode(raw, key);
+      }
+    } catch (_) {
+      // ignore errors per key
+    } finally {
+      _busyKeys.remove(key);
+      notifyListeners();
+    }
+  }
 
-  // Calcule un Rect en espace image à partir des coins (List<Offset>)
   Rect? _rawRectFromBarcode(Barcode b) {
-    final corners = b.corners; // List<Offset>
+    final corners = b.corners;
     if (corners.isEmpty) return null;
 
     double minX = corners.first.dx, minY = corners.first.dy;
@@ -146,7 +190,6 @@ class ScanPageVM extends ChangeNotifier {
     return Rect.fromLTRB(minX, minY, maxX, maxY);
   }
 
-  // Mappe un rect "image" → "preview" selon le BoxFit utilisé
   Rect _mapImageRectToPreview(Rect raw, Size input, Size preview, BoxFit fit) {
     double scale;
     if (fit == BoxFit.cover) {
@@ -154,7 +197,6 @@ class ScanPageVM extends ChangeNotifier {
     } else if (fit == BoxFit.contain) {
       scale = math.min(preview.width / input.width, preview.height / input.height);
     } else {
-      // fallback raisonnable
       scale = math.min(preview.width / input.width, preview.height / input.height);
     }
 
@@ -171,28 +213,27 @@ class ScanPageVM extends ChangeNotifier {
     );
   }
 
-  /* ─────────── PRODUIT ─────────── */
-
-  /// Requêtes nécessaires pour la fenêtre d'un code QR d'un produit
-  Future<void> _handleProduct(int id) async {
+  Future<void> _handleProduct(int id, String key) async {
     final int? storeId = await CurrentStoreService.getCurrentStoreId();
-    if (storeId == null) return;
+    if (storeId == null) {
+      _overlays[key] = {'kind': 'product', 'id': id, 'name': 'Item', 'error': 'no-store'};
+      if (!_stackKeys.contains(key)) _stackKeys.add(key);
+      notifyListeners();
+      return;
+    }
 
     try {
-      // 1. Récupérer le produit
       dynamic product;
-      final productResponse = await http.get(
-        Uri.parse('$_baseUrl/products?product_id=$id'),
-      );
-      if (productResponse.statusCode == 200){
+      final productResponse = await http.get(Uri.parse('$_baseUrl/products?product_id=$id'));
+      if (productResponse.statusCode == 200) {
         final productData = jsonDecode(productResponse.body);
         final List<dynamic> products = productData['reviews'] ?? [];
-        product = products.first;
         if (products.isEmpty) return;
+        product = products.first;
       } else {
-        throw Exception('Failed to load product');
+        return;
       }
-      // 2. Récupérer le prix
+
       final priceResponse = await http.get(
         Uri.parse('$_baseUrl/priced-products?product_id=$id&store_id=$storeId'),
       );
@@ -202,16 +243,10 @@ class ScanPageVM extends ChangeNotifier {
         final List<dynamic> prices = priceData['pricedProducts'] ?? [];
         if (prices.isNotEmpty) priceRow = prices.first;
       }
-      else {
-        throw Exception('Failed to load price');
-      }
-      _kind = ScanOverlayKind.product;
-      _expanded = false;
-      _shelfName = null;
-      _shelfItems = const [];
-      _currentKey = 'product:$id';
 
-      _productOverlay = {
+      _currentKey = key;
+      _overlays[key] = {
+        'kind': 'product',
         'id': id,
         'name': product['name'],
         'amount': priceRow?['amount'],
@@ -219,19 +254,54 @@ class ScanPageVM extends ChangeNotifier {
         if (priceRow?['promotion_price'] != null) 'promo': priceRow!['promotion_price'],
         'promotion_id': priceRow?['promotion_id'],
       };
+      if (!_stackKeys.contains(key)) _stackKeys.add(key);
       notifyListeners();
     } catch (_) {}
   }
 
-
-
-  /// Requêtes nécessaires pour la fenêtre d'un code QR d'une étagère
-  Future<void> _handleShelf(int shelfId) async {
+  Future<void> _handleBarcode(String barcode, String key) async {
     final int? storeId = await CurrentStoreService.getCurrentStoreId();
     if (storeId == null) return;
 
     try {
-      // 1. Récupérer l’étagère
+      final resp = await http.get(Uri.parse('$_baseUrl/products?bar_code=$barcode'));
+      if (resp.statusCode != 200) return;
+      final data = jsonDecode(resp.body);
+      final List<dynamic> products = data['reviews'] ?? [];
+      if (products.isEmpty) return;
+      final product = products.first;
+      final int id = product['product_id'] as int;
+
+      final priceResponse = await http.get(
+        Uri.parse('$_baseUrl/priced-products?product_id=$id&store_id=$storeId'),
+      );
+      Map<String, dynamic>? priceRow;
+      if (priceResponse.statusCode == 200) {
+        final priceData = jsonDecode(priceResponse.body);
+        final List<dynamic> prices = priceData['pricedProducts'] ?? [];
+        if (prices.isNotEmpty) priceRow = prices.first;
+      }
+
+      _currentKey = 'product:$id';
+      _overlays[key] = {
+        'kind': 'product',
+        'id': id,
+        'name': product['name'],
+        'amount': priceRow?['amount'],
+        'currency': priceRow?['currency'] ?? '\$',
+        if (priceRow?['promotion_price'] != null) 'promo': priceRow!['promotion_price'],
+        'promotion_id': priceRow?['promotion_id'],
+      };
+      if (!_stackKeys.contains(key)) _stackKeys.add(key);
+      notifyListeners();
+    } catch (_) {}
+  }
+
+  Future<void> _handleShelf(int shelfId, String key) async {
+    final int? storeId = await CurrentStoreService.getCurrentStoreId();
+    if (storeId == null) return;
+
+    try {
       final shelfResponse = await http.get(Uri.parse('$_baseUrl/shelves?shelf_id=$shelfId'));
       if (shelfResponse.statusCode != 200) return;
       final shelfData = jsonDecode(shelfResponse.body);
@@ -240,25 +310,20 @@ class ScanPageVM extends ChangeNotifier {
         orElse: () => null,
       );
       if (shelf == null) return;
-      _shelfName = shelf['name'] as String? ?? 'Shelf #$shelfId';
+      final String shelfName = shelf['name'] as String? ?? 'Shelf #$shelfId';
 
-      // 2. Récupérer les produits sur l’étagère
       final spResponse = await http.get(Uri.parse('$_baseUrl/shelf-places?shelf_id=$shelfId'));
       if (spResponse.statusCode != 200) return;
       final spData = jsonDecode(spResponse.body);
       final List<dynamic> sp = spData['shelfPlaces'] ?? [];
       if (sp.isEmpty) {
-        _kind = ScanOverlayKind.shelf;
-        _currentKey = 'shelf:$shelfId';
-        _shelfItems = const [];
-        _expanded = false;
-        _productOverlay = null;
+        _overlays[key] = {'kind': 'shelf', 'shelfName': shelfName, 'items': <ShelfItemVM>[]};
+        if (!_stackKeys.contains(key)) _stackKeys.add(key);
         notifyListeners();
         return;
       }
       final List<int> productIds = sp.map((e) => e['product_id'] as int).toList();
 
-      // 3. Récupérer les infos produits
       final productsResponse = await http.get(Uri.parse(
         '$_baseUrl/products?${productIds.map((id) => 'product_id=$id').join('&')}',
       ));
@@ -266,7 +331,6 @@ class ScanPageVM extends ChangeNotifier {
       final productsData = jsonDecode(productsResponse.body);
       final List<dynamic> products = productsData['reviews'] ?? [];
 
-      // 4. Récupérer les prix
       final pricedResponse = await http.get(Uri.parse(
         '$_baseUrl/priced-products?store_id=$storeId&${productIds.map((id) => 'product_id=$id').join('&')}',
       ));
@@ -278,7 +342,6 @@ class ScanPageVM extends ChangeNotifier {
         for (final row in priceRows) row['product_id'] as int: row as Map<String, dynamic>
       };
 
-      // 5. Récupérer les promotions si besoin
       final promoIds = priceRows
           .map((e) => e['promotion_id'])
           .where((e) => e != null)
@@ -301,7 +364,7 @@ class ScanPageVM extends ChangeNotifier {
 
       final now = DateTime.now();
 
-      _shelfItems = products.map((p) {
+      final shelfItems = products.map((p) {
         final pid = p['product_id'] as int;
         final name = p['name'] as String? ?? 'Item $pid';
         final priceRow = priceByPid[pid];
@@ -340,41 +403,39 @@ class ScanPageVM extends ChangeNotifier {
         );
       }).toList();
 
-      _kind = ScanOverlayKind.shelf;
-      _currentKey = 'shelf:$shelfId';
-      _expanded = false;
-      _productOverlay = null;
+      _overlays[key] = {
+        'kind': 'shelf',
+        'shelfName': shelfName,
+        'items': shelfItems,
+      };
+      if (!_stackKeys.contains(key)) _stackKeys.add(key);
       notifyListeners();
     } catch (_) {}
   }
 
-
-  /* ─────────── HELPERS ─────────── */
-  void clearOverlay() {
-    _kind = ScanOverlayKind.none;
-    _productOverlay = null;
-    _shelfName = null;
-    _shelfItems = const [];
-    _expanded = false;
-    _currentKey = null;
-    scanner.start(); // relance la cam si besoin
-    notifyListeners();
-  }
-
-  void toggleExpanded() {
-    _expanded = !_expanded;
-    if (_kind == ScanOverlayKind.shelf) {
-      if (_expanded) {
-        scanner.stop();
-      } else {
-        scanner.start();
-      }
+  void clearOverlay([String? key]) {
+    if (key == null) {
+      _overlays.clear();
+      _qrRects.clear();
+      _busyKeys.clear();
+      _currentKey = null;
+      _stackKeys.clear();
+      _lastSeen.clear();
+    } else {
+      _overlays.remove(key);
+      _qrRects.remove(key);
+      _busyKeys.remove(key);
+      _stackKeys.remove(key);
+      _lastSeen.remove(key);
+      if (_currentKey == key) _currentKey = null;
     }
+    scanner.start(); // relance la cam si besoin
     notifyListeners();
   }
 
   @override
   void dispose() {
+    _visibilityTimer?.cancel();
     scanner.dispose();
     super.dispose();
   }
