@@ -1,6 +1,7 @@
 // backend/dime-express/database/qrCode.js
 const path = require('path');
 const fs = require('fs');
+const FormData = require('form-data');
 const QRCode = require('qrcode');
 const axios = require('axios');
 const qrBaseDir = path.join(__dirname, '../QR-CODE-GENERATOR/public/qr');
@@ -18,25 +19,55 @@ async function getStoreName(store_id) {
     return store.name;
 }
 
-async function generateAndSaveQR(type, id, store_id) {
+// async function generateAndSaveQR(type, id, store_id) {
+//     const rawStoreName = await getStoreName(store_id);
+//     // Pour enelver les accents des noms de magasins
+//     const storeName = rawStoreName
+//         .normalize('NFD')
+//         .replace(/[\u0300-\u036f]/g, '');
+//     const storeQrDir = path.join(qrBaseDir, storeName);
+//     if (!fs.existsSync(storeQrDir)) {
+//         fs.mkdirSync(storeQrDir, { recursive: true });
+//     }
+//
+//     const qrPayload = JSON.stringify({ type, [`${type}_id`]: id });
+//     const fileName = `${type}-${id}.png`;
+//     const filePath = path.join(storeQrDir, fileName);
+//
+//     await QRCode.toFile(filePath, qrPayload);
+//     const dataUrl = await QRCode.toDataURL(qrPayload);
+//
+//     return { dataUrl, fileName, relativePath: `/qr/${storeName}/${fileName}` };
+// }
+
+
+
+async function generateAndSaveQRToCloudflare(type, id, store_id) {
     const rawStoreName = await getStoreName(store_id);
-    // Pour enelver les accents des noms de magasins
     const storeName = rawStoreName
         .normalize('NFD')
         .replace(/[\u0300-\u036f]/g, '');
-    const storeQrDir = path.join(qrBaseDir, storeName);
-    if (!fs.existsSync(storeQrDir)) {
-        fs.mkdirSync(storeQrDir, { recursive: true });
-    }
-
     const qrPayload = JSON.stringify({ type, [`${type}_id`]: id });
     const fileName = `${type}-${id}.png`;
-    const filePath = path.join(storeQrDir, fileName);
 
-    await QRCode.toFile(filePath, qrPayload);
-    const dataUrl = await QRCode.toDataURL(qrPayload);
+    const qrBuffer = await QRCode.toBuffer(qrPayload);
 
-    return { dataUrl, fileName, relativePath: `/qr/${storeName}/${fileName}` };
+    const cloudflareAccountId = '18867c89dfbd402b3e2af59050d8caf6';
+    const cloudflareApiToken = 'LY1FpNIpblhnz_PO_q-L0cclpxLHt3cnDdSkdkxe';
+    const url = `https://api.cloudflare.com/client/v4/accounts/${cloudflareAccountId}/images/v1`;
+
+    const formData = new FormData();
+    formData.append('file', qrBuffer, { filename: fileName, contentType: 'image/png' });
+
+    const response = await axios.post(url, formData, {
+        headers: {
+            'Authorization': `Bearer ${cloudflareApiToken}`,
+            ...formData.getHeaders()
+        }
+    });
+
+    const imageUrl = response.data.result.variants[0];
+    return { imageUrl, fileName };
 }
 
-module.exports = { generateAndSaveQR,type };
+module.exports = { generateAndSaveQRToCloudflare,type };

@@ -1,5 +1,5 @@
 const supabase = require('../../supabaseClient');
-const {generateAndSaveQR,type} = require("../qrCode");
+const {generateAndSaveQRToCloudflare,type} = require("../qrCode");
 // GET /shelves
 const getShelves = async (_req, res) => {
     try {
@@ -67,13 +67,13 @@ const createShelf = async (req, res) => {
     // 2) Generate QR code and update shelf
     const shelf = shelfRows[0];
     if (shelf && shelf.shelf_id) {
-        const { dataUrl, fileName } = await generateAndSaveQR(type.SHELF, shelf.shelf_id,storeId);
+        const { imageUrl, fileName } = await generateAndSaveQRToCloudflare(type.SHELF, shelf.shelf_id,storeId);
         await supabase
             .from('shelf')
-            .update({ qr_code: dataUrl })
+            .update({ qr_code: imageUrl })
             .eq('shelf_id', shelf.shelf_id);
-        shelf.qr_code = dataUrl;
-        shelf.qr_png_url = `/qr/${fileName}`;
+        shelf.qr_code = imageUrl;
+        shelf.qr_png_url = imageUrl;
     }
     return res.status(201).json({ ok: true, shelf });
 };

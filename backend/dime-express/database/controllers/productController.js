@@ -1,10 +1,10 @@
 const supabase = require('../../supabaseClient');
-const {generateAndSaveQR,type} = require("../qrCode");
+const {generateAndSaveQRToCloudflare,type} = require("../qrCode");
 
 //GET /products
 const getProducts = async (_req, res) => {
   try {
-    const {product_id, queryClient,queryCommercant} = _req.query;
+    const {product_id, queryClient,queryCommercant,bar_code} = _req.query;
     let query = supabase.from('product').select('*');
 
     if (product_id) {
@@ -13,6 +13,9 @@ const getProducts = async (_req, res) => {
       } else {
         query = query.eq('product_id', Number(product_id));
       }
+    }
+    if (bar_code) {
+        query = query.eq('bar_code', bar_code);
     }
 
     // Nouvelle logique de recherche textuelle pour les clients
@@ -100,13 +103,13 @@ const createProduct = async (req, res) => {
   const product = prodRows[0];
   // Génère le QR code et met à jour le produit
   if (product && product.product_id) {
-    const { dataUrl, fileName } = await generateAndSaveQR(type.PRODUCT, product.product_id, storeId);
+    const { imageUrl, fileName } = await generateAndSaveQRToCloudflare(type.PRODUCT, product.product_id, storeId);
     await supabase
         .from('product')
-        .update({ qr_code: dataUrl })
+        .update({ qr_code: imageUrl })
         .eq('product_id', product.product_id);
-    product.qr_code = dataUrl;
-    product.qr_png_url = `/qr/${fileName}`;
+    product.qr_code = imageUrl;
+    product.qr_png_url = imageUrl;
   }
 
   res.status(201).json({ success: true, product });

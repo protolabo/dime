@@ -3,7 +3,6 @@ import 'dart:convert';
 
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -289,7 +288,7 @@ class ItemCommercantVM extends ChangeNotifier {
       return;
     }
 
-    final pngBytes = _dataUrlToBytes(dataUrl);
+    final img = await networkImage(dataUrl);
     final doc = pw.Document();
 
     doc.addPage(
@@ -311,7 +310,7 @@ class ItemCommercantVM extends ChangeNotifier {
                 decoration: pw.BoxDecoration(
                   border: pw.Border.all(color: PdfColors.black, width: 1),
                 ),
-                child: pw.Center(child: pw.Image(pw.MemoryImage(pngBytes))),
+                child: pw.Center(child: pw.Image(img)),
               ),
             ],
           );
@@ -326,10 +325,4 @@ class ItemCommercantVM extends ChangeNotifier {
     );
   }
 
-  // Helpers
-  Uint8List _dataUrlToBytes(String dataUrl) {
-    final idx = dataUrl.indexOf(',');
-    final b64 = idx >= 0 ? dataUrl.substring(idx + 1) : dataUrl;
-    return base64Decode(b64);
-  }
 }
