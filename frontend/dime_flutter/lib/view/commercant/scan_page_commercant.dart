@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -76,6 +78,17 @@ class _ScanCommercantPageBody extends StatelessWidget {
     final spacing = 8.0;
     final List<Widget> widgets = [];
     final keys = vm.stackKeys;
+    final screenW = media.size.width;
+    final screenH = media.size.height;
+    final margin = 8.0;
+    final minTop = media.padding.top + margin;
+    final maxBottom = screenH - media.padding.bottom - margin;
+
+    final List<Rect> placedRects = [];
+    int stackCount = 0;
+
+    bool collides(Rect r) => placedRects.any((p) => p.overlaps(r));
+
     for (var i = 0; i < keys.length; i++) {
       final key = keys[i];
       final data = vm.overlays[key];
@@ -86,28 +99,85 @@ class _ScanCommercantPageBody extends StatelessWidget {
       if (data['kind'] == 'product') {
         estHeight = 100.0;
         child = _buildProductOverlayFromDataPlaceholder(context, vm, key, data);
-        widgets.add(Positioned(
-          bottom: baseBottom + i * (estHeight + spacing),
-          left: 20,
-          right: 20,
-          child: child,
-        ));
-      } else if (data['kind'] == 'shelf') {
+      } else {
         final items = (data['items'] as List).cast<ShelfItemVM>();
         final previewMax = 5;
         final rows = items.length < previewMax ? items.length : previewMax;
         estHeight = 56.0 * rows + 80.0;
         child = _buildShelfOverlayFromDataPlaceholder(context, vm, key, data);
+      }
+
+      final qr = vm.qrRectFor(key);
+      bool placed = false;
+
+      if (qr != null) {
+        // allow overlay to be wider than the QR and center it
+        final maxAllowed = screenW - 32.0;
+        final double overlayWidth = math.min(maxAllowed, math.max(qr.width, 280.0));
+        final left = ((screenW - overlayWidth) / 2.0).clamp(8.0, screenW - overlayWidth - 8.0).toDouble();
+
+        // 1) tentative au‑dessus
+        double top = qr.top - estHeight - margin;
+        if (top >= minTop) {
+          final candidate = Rect.fromLTWH(left, top, overlayWidth, estHeight);
+          if (!collides(candidate) && candidate.bottom <= maxBottom) {
+            widgets.add(Positioned(
+              left: left,
+              top: top,
+              width: overlayWidth,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: estHeight),
+                child: SizedBox(height: estHeight, child: child),
+              ),
+            ));
+            placedRects.add(candidate);
+            placed = true;
+          }
+        }
+
+        // 2) sinon en dessous
+        if (!placed) {
+          final top2 = qr.bottom + margin;
+          final candidate2 = Rect.fromLTWH(left, top2, overlayWidth, estHeight);
+          if (top2 + estHeight <= maxBottom && !collides(candidate2)) {
+            widgets.add(Positioned(
+              left: left,
+              top: top2,
+              width: overlayWidth,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: estHeight),
+                child: SizedBox(height: estHeight, child: child),
+              ),
+            ));
+            placedRects.add(candidate2);
+            placed = true;
+          }
+        }
+      }
+
+
+      // 3) fallback: pile en bas (évite toute superposition)
+      if (!placed) {
+        final bottomVal = baseBottom + stackCount * (estHeight + spacing);
+        final leftPad = data['kind'] == 'product' ? 20.0 : 16.0;
+        final rightPad = leftPad;
+        final width = screenW - leftPad - rightPad;
+        final topY = screenH - (bottomVal + estHeight);
         widgets.add(Positioned(
-          bottom: baseBottom + i * (estHeight + spacing),
-          left: 16,
-          right: 16,
-          child: child,
+          bottom: bottomVal,
+          left: leftPad,
+          right: rightPad,
+          child: SizedBox(height: estHeight, child: child),
         ));
+        placedRects.add(Rect.fromLTWH(leftPad, topY, width, estHeight));
+        stackCount++;
       }
     }
     return widgets;
   }
+
+
+
 
   Widget _buildProductOverlayFromDataPlaceholder(BuildContext context, ScanPageVM vm, String key, Map<String, dynamic> data) {
     final num? amount = data['amount'] as num?;

@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
@@ -60,32 +59,7 @@ class ScanPageVM extends ChangeNotifier {
   // legacy single fields kept for compatibility (not used for multi)
   String? _currentKey;
 
-  // visibilité
-  static const Duration _visibilityTimeout = Duration(milliseconds: 1600);
-  Timer? _visibilityTimer;
-
-  ScanPageVM() {
-    _startVisibilityTimer();
-  }
-
-  void _startVisibilityTimer() {
-    _visibilityTimer = Timer.periodic(const Duration(milliseconds: 600), (_) {
-      final now = DateTime.now();
-      final List<String> toRemove = [];
-      _overlays.forEach((key, _) {
-        final last = _lastSeen[key];
-        if (last == null || now.difference(last) > _visibilityTimeout) {
-          toRemove.add(key);
-        }
-      });
-      if (toRemove.isNotEmpty) {
-        for (final k in toRemove) {
-          clearOverlay(k);
-        }
-      }
-    });
-  }
-
+  /* ─────────── SCAN CALLBACK ─────────── */
   Future<void> onDetect(
       BarcodeCapture capture,
       BuildContext context, {
@@ -94,7 +68,6 @@ class ScanPageVM extends ChangeNotifier {
       }) async {
     if (capture.barcodes.isEmpty || capture.size == null) return;
 
-    // première passe : mappe les rects pour l'affichage (utilise une clé normalisée previewKey)
     for (final b in capture.barcodes) {
       final rawRect = _rawRectFromBarcode(b);
       if (rawRect != null) {
@@ -116,7 +89,6 @@ class ScanPageVM extends ChangeNotifier {
     }
     notifyListeners();
 
-    // seconde passe : traite chaque code (normalise la clé en newKey)
     for (final b in capture.barcodes) {
       final raw = b.rawValue;
       if (raw == null) continue;
@@ -140,12 +112,11 @@ class ScanPageVM extends ChangeNotifier {
           : 'barcode:$raw';
 
       final now = DateTime.now();
-      final last = _lastSeen[newKey];
-      if (last != null && now.difference(last) < const Duration(milliseconds: 1000)) {
-        _lastSeen[newKey] = now; // rafraîchit timestamp même en cas de dédup
+      final last = _lastSeen[raw];
+      if (last != null && now.difference(last) < const Duration(milliseconds: 500)) {
         continue;
       }
-      _lastSeen[newKey] = now;
+      _lastSeen[raw] = now;
 
       if (_overlays.containsKey(newKey)) continue;
       if (_busyKeys.contains(newKey)) continue;
@@ -173,6 +144,8 @@ class ScanPageVM extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /* ─────────── Helpers géométrie ─────────── */
 
   Rect? _rawRectFromBarcode(Barcode b) {
     final corners = b.corners;
@@ -212,6 +185,8 @@ class ScanPageVM extends ChangeNotifier {
       dy + raw.bottom * scale,
     );
   }
+
+  /* ─────────── PRODUIT / BARCODE / ÉTAGÈRE ─────────── */
 
   Future<void> _handleProduct(int id, String key) async {
     final int? storeId = await CurrentStoreService.getCurrentStoreId();
@@ -413,6 +388,7 @@ class ScanPageVM extends ChangeNotifier {
     } catch (_) {}
   }
 
+  /* ─────────── HELPERS ─────────── */
   void clearOverlay([String? key]) {
     if (key == null) {
       _overlays.clear();
@@ -420,13 +396,11 @@ class ScanPageVM extends ChangeNotifier {
       _busyKeys.clear();
       _currentKey = null;
       _stackKeys.clear();
-      _lastSeen.clear();
     } else {
       _overlays.remove(key);
       _qrRects.remove(key);
       _busyKeys.remove(key);
       _stackKeys.remove(key);
-      _lastSeen.remove(key);
       if (_currentKey == key) _currentKey = null;
     }
     scanner.start(); // relance la cam si besoin
@@ -435,7 +409,6 @@ class ScanPageVM extends ChangeNotifier {
 
   @override
   void dispose() {
-    _visibilityTimer?.cancel();
     scanner.dispose();
     super.dispose();
   }
