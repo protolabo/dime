@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/components/header_client_vm.dart';
-import 'package:dime_flutter/vm/store_picker.dart'; // adapte au besoin
+import 'package:dime_flutter/view/store_picker.dart'; // adapte au besoin
 import 'package:dime_flutter/main.dart';
 
 class Header extends StatelessWidget implements PreferredSizeWidget {

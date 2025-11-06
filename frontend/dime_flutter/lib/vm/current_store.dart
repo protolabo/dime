@@ -64,6 +64,8 @@ class CurrentStoreService {
         return {
           'store_id': row['store_id'],
           'name': row['name'],
+          'latitude': row['latitude'],
+          'longitude': row['longitude'],
         };
       }).toList();
     } else {
