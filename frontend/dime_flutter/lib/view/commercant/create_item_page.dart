@@ -69,6 +69,9 @@ class _CreateItemPageState extends State<CreateItemPage> {
                   label: 'Barcode',
                   hint: 'Scannez ou entrez le code',
                   onScan: (barcode) async {
+                    _nameC.text = '';
+                    _descriptionC.text = '';
+                    _priceC.text = '';
                     final off = await vm.lookupBarcode(barcode);
                     if (off != null) {
                       final name = off.name ?? '';
