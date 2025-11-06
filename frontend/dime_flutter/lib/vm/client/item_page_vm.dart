@@ -153,7 +153,7 @@ class ItemPageViewModel extends ChangeNotifier {
     try {
       // 1) Récupère les produits avec le même code-barre
       final productRes = await http.get(
-        Uri.parse('$_baseUrl/products?query=$barCode'),
+        Uri.parse('$_baseUrl/products?bar_code=$barCode'),
       );
       if (productRes.statusCode != 200) throw Exception('Erreur produits');
       final productJson = jsonDecode(productRes.body);
