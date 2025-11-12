@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import '../../auth_viewmodel.dart';
 import '../current_connected_account_vm.dart';
 import '../favorite_product_vm.dart';
 import '../favorite_store_vm.dart';
 
 /// View-Model pour la page `FavoriteMenuPage`
 class FavoriteMenuVM extends ChangeNotifier {
+  final AuthViewModel auth;
+  FavoriteMenuVM({required this.auth});
   /* ────────────── état interne ────────────── */
   Client? _client;
   bool _loading = true;
@@ -24,7 +27,7 @@ class FavoriteMenuVM extends ChangeNotifier {
   /* ───────────── initialisation ───────────── */
   Future<void> init() async {
     try {
-      final actor   = await CurrentActorService.getCurrentActor();
+      final actor   = await CurrentActorService.getCurrentActor(auth: auth);
       final products = await FavoriteProductService.fetchFavorites(actor.actorId);
       final stores   = await FavoriteStoreService.fetchFavorites(actor.actorId);
 

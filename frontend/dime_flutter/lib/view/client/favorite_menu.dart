@@ -13,6 +13,8 @@ import 'package:dime_flutter/view/client/search_page_client.dart';
 
 import 'package:dime_flutter/vm/client/favorite_menu_vm.dart';
 
+import '../../auth_viewmodel.dart';
+
 class FavoriteMenuPage extends StatefulWidget {
   const FavoriteMenuPage({super.key});
 
@@ -26,7 +28,7 @@ class _FavoriteMenuPageState extends State<FavoriteMenuPage> {
   @override
   void initState() {
     super.initState();
-    _vm = FavoriteMenuVM()..init();
+    _vm = FavoriteMenuVM(auth: context.read<AuthViewModel>())..init();
   }
 
   @override

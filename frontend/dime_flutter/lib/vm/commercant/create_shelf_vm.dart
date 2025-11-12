@@ -6,9 +6,14 @@ import 'package:http/http.dart' as http;
 import 'package:dime_flutter/vm/current_store.dart';
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 
+import '../../auth_viewmodel.dart';
+
 class CreateShelfViewModel extends ChangeNotifier {
+  final AuthViewModel auth;
   String? qrDataUrl;
   String? errorMessage;
+
+  CreateShelfViewModel({required this.auth});
 
   bool _isSaving = false;
   bool get isSaving => _isSaving;
@@ -42,7 +47,7 @@ class CreateShelfViewModel extends ChangeNotifier {
       }
 
       // Commerçant courant (pour created_by)
-      final merchant = await CurrentActorService.getCurrentMerchant();
+      final merchant = await CurrentActorService.getCurrentMerchant(auth: auth);
       final createdBy = merchant.email; // on envoie l'email
 
       // Appel backend Express (même hôte que create_item_vm)

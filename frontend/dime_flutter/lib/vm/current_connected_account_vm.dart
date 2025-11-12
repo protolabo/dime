@@ -1,4 +1,8 @@
+// dart
+// File: frontend/dime_flutter/lib/vm/current_connected_account_vm.dart
+
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../auth_viewmodel.dart';
 
 /// Représente un acteur (utilisateur) de l’application.
 class Client {
@@ -28,34 +32,37 @@ class CurrentActorService {
   *
   * */
 
-
-
-
-
-  /*─────────────────── IDs de test ────────────────────*/
-  // 1 → compte client (déjà utilisé partout dans l’app)
-  static const int _testActorId       = 4;
-  // 2 → compte commerçant (nouveau pour le côté merchant)
-  static const int _testMerchantId    = 2;
-
-
-  /// Retourne un acteur du rôle client
-  static Future<Client> getCurrentActor() async {
+  /// Retourne un acteur du rôle client en utilisant l'AuthViewModel pour obtenir l'ID courant.
+  static Future<Client> getCurrentActor({required AuthViewModel auth}) async {
+    final actorId = _extractActorId(auth);
     return _fetchActor(
-      actorId: _testActorId,
+      actorId: actorId,
       expectedRole: 'client',
       roleLabel: 'client',
     );
   }
 
-
-  /// Retourne un acteur du rôle client
-  static Future<Client> getCurrentMerchant() async {
+  /// Retourne un acteur du rôle merchant en utilisant l'AuthViewModel pour obtenir l'ID courant.
+  static Future<Client> getCurrentMerchant({required AuthViewModel auth}) async {
+    final actorId = _extractActorId(auth);
     return _fetchActor(
-      actorId: _testMerchantId,
-      expectedRole: 'merchant',
-      roleLabel: 'merchant',
+      actorId: actorId,
+      expectedRole: 'owner',
+      roleLabel: 'owner',
     );
+  }
+
+  /// Helper pour extraire l'actorId depuis AuthViewModel et vérifier la présence.
+  static int _extractActorId(AuthViewModel auth) {
+    try {
+      final id = auth.actorId;
+      if (id == null) {
+        throw Exception('Aucun utilisateur connecté (actor_id absent).');
+      }
+      return id;
+    } catch (e) {
+      throw Exception('Impossible d\'extraire actorId depuis le service d\'authentification: $e');
+    }
   }
 
   /// Fait la requête pour avoir les éléments de l'acteur demandé
@@ -68,7 +75,7 @@ class CurrentActorService {
 
     final response = await supabase
         .from('actor')
-         .select('actor_id, first_name, last_name, role, email')
+        .select('actor_id, first_name, last_name, role, email')
         .eq('actor_id', actorId)
         .maybeSingle();
 
@@ -86,7 +93,7 @@ class CurrentActorService {
 
     if (actor.role != expectedRole) {
       throw Exception(
-        'Accès refusé : rôle « ${actor.role} », attendu « $roleLabel ».',
+        'Accès refusé : rôle \\« ${actor.role} \\», attendu \\« $roleLabel \\».',
       );
     }
 

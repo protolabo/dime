@@ -7,6 +7,8 @@ import 'package:dime_flutter/vm/current_store.dart';
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:dime_flutter/vm/components/open_food_facts_service.dart';
 
+import '../../auth_viewmodel.dart';
+
 /// ViewModel utilisé par `CreateItemPage`.
 /// – Enregistre l’article dans le backend Express (/item/new)
 /// – Récupère l’image QR au format data-URL renvoyée par l’EJS du backend
@@ -14,6 +16,8 @@ class CreateItemViewModel extends ChangeNotifier {
   /* ─────────────── Public state ─────────────── */
   String? qrDataUrl;
   String? errorMessage;
+  final AuthViewModel auth;
+  CreateItemViewModel({required this.auth});
 
   bool _isSaving = false;
   bool get isSaving => _isSaving;
@@ -41,7 +45,7 @@ class CreateItemViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final merchant = await CurrentActorService.getCurrentMerchant();
+      final merchant = await CurrentActorService.getCurrentMerchant(auth: auth);
       final storeId = await CurrentStoreService.getCurrentStoreId();
 
       if (storeId == null) {

@@ -6,6 +6,7 @@ import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_shelf_vm.dart';
 
+import '../../auth_viewmodel.dart';
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
@@ -29,7 +30,7 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => CreateShelfViewModel(),
+      create: (_) => CreateShelfViewModel(auth: context.read<AuthViewModel>()),
       child: Consumer<CreateShelfViewModel>(
         builder: (context, vm, _) {
           return Scaffold(

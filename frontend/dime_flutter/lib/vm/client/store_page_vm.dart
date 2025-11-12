@@ -3,12 +3,17 @@ import 'package:flutter/foundation.dart';
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+
+import '../../auth_viewmodel.dart';
 class StorePageVM extends ChangeNotifier {
+  final AuthViewModel auth;
   final baseUrl = 'http://localhost:3001';
   /* ───────── infos magasin ───────── */
   String? storeName;
   String? address;
   bool   isStoreFavorite = false;
+
+  StorePageVM({required this.auth});
 
   /* ───────── état UI ───────── */
   bool   isLoading = true;
@@ -20,7 +25,7 @@ class StorePageVM extends ChangeNotifier {
   /// Charge toutes les données nécessaires à l’écran.
   Future<void> load(int storeId) async {
   try {
-    final actor = await CurrentActorService.getCurrentActor();
+    final actor = await CurrentActorService.getCurrentActor(auth: auth);
     final int userId = actor.actorId;
 
     // 1. Détails du magasin
@@ -131,7 +136,7 @@ class StorePageVM extends ChangeNotifier {
   /* ───────── ajout / retrait fav ───────── */
   /// Ajoute ou retire le store des favoris
   Future<void> toggleFavorite(int storeId) async {
-  final actor = await CurrentActorService.getCurrentActor();
+  final actor = await CurrentActorService.getCurrentActor(auth: auth);
   final userId = actor.actorId;
   final userEmail = actor.email ?? '${actor.firstName} ${actor.lastName}';
 

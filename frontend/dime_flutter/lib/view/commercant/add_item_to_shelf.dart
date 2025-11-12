@@ -8,6 +8,8 @@ import 'package:dime_flutter/view/components/header_commercant.dart';
 
 import 'package:dime_flutter/vm/commercant/add_item_to_shelf_vm.dart';
 
+import '../../auth_viewmodel.dart';
+
 class AddItemToShelfPage extends StatelessWidget {
   const AddItemToShelfPage({
     super.key,
@@ -21,7 +23,7 @@ class AddItemToShelfPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AddItemToShelfVM(shelfId: shelfId, shelfName: shelfName)..init(),
+      create: (_) => AddItemToShelfVM(shelfId: shelfId, shelfName: shelfName,auth: context.read<AuthViewModel>())..init(),
       child: const _AddItemToShelfBody(),
     );
   }

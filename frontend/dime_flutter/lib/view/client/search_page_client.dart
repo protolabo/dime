@@ -13,6 +13,8 @@ import 'package:dime_flutter/view/fenetre/fav_commerce_fenetre.dart';
 import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 
+import '../../auth_viewmodel.dart';
+
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
   @override
@@ -46,7 +48,7 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => SearchViewModel(),
+      create: (_) => SearchViewModel(auth: context.read<AuthViewModel>()),
       child: Consumer<SearchViewModel>(
         builder: (ctx, vm, _) => Scaffold(
           backgroundColor: AppColors.searchBg,

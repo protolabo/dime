@@ -7,6 +7,7 @@ import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_item_vm.dart';
 import 'package:dime_flutter/vm/components/barcode_scanner_vm.dart';
 
+import '../../auth_viewmodel.dart';
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
@@ -37,7 +38,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => CreateItemViewModel()),
+        ChangeNotifierProvider(create: (_) => CreateItemViewModel(auth: context.read<AuthViewModel>())),
         ChangeNotifierProvider(create: (_) => BarcodeScannerVM()),
       ],
       child: Consumer<CreateItemViewModel>(

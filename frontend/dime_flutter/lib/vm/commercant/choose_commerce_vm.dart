@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import '../../auth_viewmodel.dart';
 import '../current_connected_account_vm.dart';
 import '../current_store.dart';
 import '../../view/commercant/create_qr_menu.dart';
@@ -11,13 +12,13 @@ class ChooseCommerceViewModel extends ChangeNotifier {
   bool   isLoading = true;
   String? error;
   List<Map<String, dynamic>> stores = []; // [{store_id, name}]
-
-  ChooseCommerceViewModel() {
+  final AuthViewModel auth;
+  ChooseCommerceViewModel({required this.auth}) {
     _loadStores();
   }
 
   Future<void> _loadStores() async {
-    final actor = await CurrentActorService.getCurrentMerchant();
+    final actor = await CurrentActorService.getCurrentMerchant(auth: auth);
     try {
 
       final int actorId = actor.actorId; // A CHANGER

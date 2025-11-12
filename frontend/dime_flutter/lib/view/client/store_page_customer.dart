@@ -11,6 +11,8 @@ import 'package:dime_flutter/view/client/favorite_menu.dart';
 import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/client/search_page_client.dart';
 
+import '../../auth_viewmodel.dart';
+
 const _bg = AppColors.searchBg;
 
 class StorePageCustomer extends StatelessWidget {
@@ -20,7 +22,7 @@ class StorePageCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => StorePageVM()..load(storeId),
+      create: (_) => StorePageVM(auth: context.read<AuthViewModel>())..load(storeId),
       child: Consumer<StorePageVM>(
         builder: (ctx, vm, _) {
           if (vm.isLoading) {

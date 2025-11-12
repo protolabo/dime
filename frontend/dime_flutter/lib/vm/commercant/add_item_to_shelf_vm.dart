@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:http/http.dart' as http;
+import '../../auth_viewmodel.dart';
 import '../current_store.dart';
 import '../current_connected_account_vm.dart';
 
@@ -28,7 +29,8 @@ class AddOutcome {
 }
 
 class AddItemToShelfVM extends ChangeNotifier {
-  AddItemToShelfVM({required this.shelfId, required this.shelfName});
+  final AuthViewModel auth;
+  AddItemToShelfVM({required this.shelfId, required this.shelfName, required this.auth});
 
   final int shelfId;
   final String shelfName;
@@ -221,7 +223,7 @@ class AddItemToShelfVM extends ChangeNotifier {
     try {
       String? email;
       try {
-        final actor = await CurrentActorService.getCurrentActor();
+        final actor = await CurrentActorService.getCurrentActor(auth: auth);
         // ignore: invalid_use_of_protected_member
         final e = (actor as dynamic).email; // tolerant à l’absence d’email
         if (e is String) email = e;

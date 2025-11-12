@@ -3,11 +3,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dime_flutter/vm/current_store.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../auth_viewmodel.dart';
 import '../current_connected_account_vm.dart';
 
 class ItemPageViewModel extends ChangeNotifier {
+  final AuthViewModel auth;
   /* ───────────── ctor ───────────── */
-  ItemPageViewModel({required this.productId}) {
+  ItemPageViewModel({required this.productId, required this.auth}) {
     _init();
   }
   static const _baseUrl = 'http://localhost:3001';
@@ -82,7 +84,7 @@ class ItemPageViewModel extends ChangeNotifier {
 
   /* ─────── favoris (stores) ─────── */
   Future<void> _fetchFavoriteStores() async {
-    final actor = await CurrentActorService.getCurrentActor();
+    final actor = await CurrentActorService.getCurrentActor(auth: auth);
     final response = await http.get(
       Uri.parse('$_baseUrl/favorite-stores?actor_id=${actor.actorId}')
     );
@@ -100,7 +102,7 @@ class ItemPageViewModel extends ChangeNotifier {
 
   /* ─────── favoris (produit) ─────── */
    Future<void> _checkFavoriteProduct() async {
-     final actor = await CurrentActorService.getCurrentActor();
+     final actor = await CurrentActorService.getCurrentActor(auth: auth);
      final response = await http.get(
        Uri.parse('$_baseUrl/favorite-products?actor_id=${actor.actorId}&product_id=$productId')
      );
@@ -115,7 +117,7 @@ class ItemPageViewModel extends ChangeNotifier {
    }
 
   Future<void> toggleFavorite() async {
-    final actor = await CurrentActorService.getCurrentActor();
+    final actor = await CurrentActorService.getCurrentActor(auth: auth);
 
     if (isFavorite) {
       // Supprime le favori via l’API Express

@@ -10,6 +10,8 @@ import 'package:printing/printing.dart';
 import 'package:http/http.dart' as http;
 import 'package:dime_flutter/vm/current_store.dart';
 
+import '../../auth_viewmodel.dart';
+
 class ItemShelfRef {
   final int shelfId;
   final String name;
@@ -17,7 +19,8 @@ class ItemShelfRef {
 }
 
 class ItemCommercantVM extends ChangeNotifier {
-  ItemCommercantVM({required this.productId, required this.initialProductName});
+  final AuthViewModel auth;
+  ItemCommercantVM({required this.productId, required this.initialProductName,required this.auth});
   static const String apiBaseUrl = 'http://localhost:3001';
 
   final int productId;
@@ -142,7 +145,7 @@ class ItemCommercantVM extends ChangeNotifier {
     }
 
     try {
-      final merchant = await CurrentActorService.getCurrentMerchant();
+      final merchant = await CurrentActorService.getCurrentMerchant(auth: auth);
       final email = merchant.email;
 
       // Vérifier si l'enregistrement existe déjà via l'API

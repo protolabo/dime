@@ -7,6 +7,8 @@ import 'package:dime_flutter/view/commercant/choose_commerce.dart';
 import 'package:dime_flutter/vm/components/header_commercant_vm.dart';
 import 'package:dime_flutter/main.dart';
 
+import '../../auth_viewmodel.dart';
+
 class HeaderCommercant extends StatelessWidget implements PreferredSizeWidget {
   const HeaderCommercant({super.key});
 
@@ -16,7 +18,7 @@ class HeaderCommercant extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => HeaderCommercantVM()..load(),
+      create: (_) => HeaderCommercantVM(auth: context.read<AuthViewModel>())..load(),
       child: const _HeaderCommercantView(),
     );
   }
@@ -58,23 +60,7 @@ class _HeaderCommercantView extends StatelessWidget {
                       style: AppTextStyles.subtitle.copyWith(fontSize: 16),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ChooseCommercePage(),
-                        ),
-                      ),
-                      child: Text(
-                        'Change commerce',
-                        style: AppTextStyles.body.copyWith(
-                          fontSize: 13,
-                          decoration: TextDecoration.underline,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
+                    )
                   ],
                 ),
               ),

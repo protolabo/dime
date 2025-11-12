@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../auth_viewmodel.dart';
 import '../../vm/commercant/choose_commerce_vm.dart';
 import '../styles.dart';
 
@@ -10,7 +11,7 @@ class ChooseCommercePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ChooseCommerceViewModel(),
+      create: (_) => ChooseCommerceViewModel(auth: context.read<AuthViewModel>()),
       child: Consumer<ChooseCommerceViewModel>(
         builder: (context, vm, _) {
           if (vm.isLoading) {

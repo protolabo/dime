@@ -7,6 +7,7 @@ import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/commercant/shelf_page.dart';
 import 'package:dime_flutter/vm/commercant/item_commercant_vm.dart';
 
+import '../../auth_viewmodel.dart';
 import '../../vm/commercant/search_commercant_vm.dart';
 import 'create_qr_menu.dart';
 import 'scan_page_commercant.dart';
@@ -27,7 +28,7 @@ class ItemCommercantPage extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => ItemCommercantVM(
         productId: productId,
-        initialProductName: productName,
+        initialProductName: productName,auth: context.read<AuthViewModel>()
       )..init(),
       child: const _ItemBody(),
     );

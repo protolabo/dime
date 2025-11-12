@@ -10,6 +10,8 @@ import 'package:dime_flutter/view/client/scan_page_client.dart';
 import 'package:dime_flutter/view/client/store_page_customer.dart';
 import 'package:dime_flutter/view/client/search_page_client.dart';
 
+import '../../auth_viewmodel.dart';
+
 class ItemPageCustomer extends StatelessWidget {
   final int productId;
   final String? locatedStoreName; // optionnel
@@ -23,7 +25,7 @@ class ItemPageCustomer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => ItemPageViewModel(productId: productId),
+      create: (_) => ItemPageViewModel(productId: productId,auth: context.read<AuthViewModel>()),
       child: Consumer<ItemPageViewModel>(
         builder: (context, vm, _) {
           if (vm.isLoading) {

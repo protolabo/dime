@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../auth_viewmodel.dart';
 import '../current_connected_account_vm.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -9,8 +10,8 @@ class SearchViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> recos   = [];
   List<Map<String, dynamic>> results = [];
   bool isLoading = false;
-
-  SearchViewModel() {
+  final AuthViewModel auth;
+  SearchViewModel({required this.auth}) {
     _loadRecommendations();
   }
 
@@ -18,7 +19,7 @@ class SearchViewModel extends ChangeNotifier {
 
 
   Future<void> _loadRecommendations() async {
-    final actor = await CurrentActorService.getCurrentActor();
+    final actor = await CurrentActorService.getCurrentActor(auth: auth);
     final userId = actor.actorId;
 
     // 1. Récupérer les favoris
@@ -138,7 +139,7 @@ class SearchViewModel extends ChangeNotifier {
   // en haut du fichier (où tu veux, p.ex. juste sous le constructeur)
   /*────────── toggle favoris ──────────*/
   Future<void> toggleFavoriteProduct(int productId, bool nowFav) async {
-    final actor = await CurrentActorService.getCurrentActor();
+    final actor = await CurrentActorService.getCurrentActor(auth: auth);
     final userId    = actor.actorId;
     final userEmail = actor.email;
 
@@ -169,7 +170,7 @@ class SearchViewModel extends ChangeNotifier {
   }
 
   Future<void> toggleFavoriteStore(int storeId, bool nowFav) async {
-    final actor = await CurrentActorService.getCurrentActor();
+    final actor = await CurrentActorService.getCurrentActor(auth: auth);
     final userId    = actor.actorId;
     final userEmail = actor.email;
 
