@@ -51,7 +51,7 @@ const createProduct = async (req, res) => {
     currency = 'CAD',
     pricing_unit = 'unit',
   } = req.body;
-
+  console.log('Creating product with data:', req.body);
   if (!name || !barcode) {
     return res.status(400).json({ ok: false, error: 'name et barcode sont requis.' });
   }
@@ -71,7 +71,7 @@ const createProduct = async (req, res) => {
       })
       .select('product_id')
       .limit(1);
-
+  console.log('Product insert result:', prodRows, prodErr);
   if (prodErr) {
     return res.status(500).json({ ok: false, error: `product insert: ${prodErr.message}` });
   }
