@@ -11,6 +11,7 @@ import 'package:dime_flutter/view/commercant/create_qr_menu.dart';
 import 'package:dime_flutter/view/commercant/shelf_page.dart';
 
 import 'item_commercant.dart';
+import 'myTeam.dart';
 
 class SearchPageCommercant extends StatelessWidget {
   const SearchPageCommercant({super.key});
@@ -42,7 +43,13 @@ class _SearchCommercantBody extends StatelessWidget {
               context,
               MaterialPageRoute(builder: (_) => const CreateQrMenuPage()),
             );
-          } else if (index == 2) {
+          }
+          else if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ManageTeamPage()),
+            );
+          }else if (index == 2) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ScanCommercantPage()),

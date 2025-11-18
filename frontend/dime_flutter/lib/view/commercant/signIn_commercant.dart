@@ -41,11 +41,9 @@ class _SignInCommercantPageState extends State<SignInCommercantPage> {
 
     bool success;
     if (_useEmployeeCode) {
-      //impleeeementation
-       success = true;
-       // await authVM.employeeSignIn(
-       //   code: _employeeCodeController.text.trim(),
-       // );
+      success = await authVM.employeeSignIn(
+        code: _employeeCodeController.text.trim(),
+      );
     } else {
       success = await authVM.commercantSignIn(
         email: _emailController.text.trim(),
@@ -55,8 +53,17 @@ class _SignInCommercantPageState extends State<SignInCommercantPage> {
 
     setState(() => _isLoading = false);
     if (!mounted) return;
-    await CurrentStoreService.setCurrentStore(authVM.stores?[0]['store_id']);
+
     if (success) {
+      // Gérer différemment selon le type d'utilisateur
+      final stores = authVM.stores;
+      if (stores != null && stores.isNotEmpty) {
+        final storeId = stores[0]['store_id'] as int?;
+        if (storeId != null) {
+          await CurrentStoreService.setCurrentStore(storeId);
+        }
+      }
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => CreateQrMenuPage()),
@@ -67,6 +74,7 @@ class _SignInCommercantPageState extends State<SignInCommercantPage> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

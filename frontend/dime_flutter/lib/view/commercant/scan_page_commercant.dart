@@ -10,6 +10,7 @@ import 'package:dime_flutter/vm/scan_page_vm.dart';
 import '../components/header_commercant.dart';
 import '../components/nav_bar_commercant.dart';
 import 'create_qr_menu.dart';
+import 'myTeam.dart';
 import 'shelf_page.dart';
 import 'search_page_commercant.dart';
 import 'item_commercant.dart';
@@ -39,6 +40,7 @@ class _ScanCommercantPageBody extends StatelessWidget {
       appBar: const HeaderCommercant(),
       body: Stack(
         children: [
+          Container(color: Colors.white),
           LayoutBuilder(
             builder: (context, constraints) {
               final previewSize = constraints.biggest;
@@ -65,7 +67,9 @@ class _ScanCommercantPageBody extends StatelessWidget {
         onTap: (index) {
           if (index == 0) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
-          } else if (index == 4) {
+          } else if (index == 1) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageTeamPage()));
+          }else if (index == 4) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
           }
         },

@@ -64,20 +64,12 @@ class CreateShelfViewModel extends ChangeNotifier {
         }),
 
       );
-      // print('Status: ${response.statusCode}');
-      // print('Body: ${response.body}');
+
       if (response.statusCode == 201) {
-        final html = response.body;
-        final match = RegExp(r'src="(data:image[^"]+)"').firstMatch(html);
-        if (match != null) {
-          qrDataUrl = match.group(1);
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Shelf created ✔')),
-            );
-          }
-        } else {
-          errorMessage = 'QR not found in server response.';
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Shelf created ✔')),
+          );
         }
       } else {
         errorMessage = 'Server error (${response.statusCode})';

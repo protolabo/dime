@@ -17,7 +17,7 @@ class Client {
     required this.firstName,
     required this.lastName,
     required this.role,
-    required this.email,
+    required  this.email ,
   });
 }
 
@@ -37,8 +37,8 @@ class CurrentActorService {
     final actorId = _extractActorId(auth);
     return _fetchActor(
       actorId: actorId,
-      expectedRole: 'client',
-      roleLabel: 'client',
+      expectedRole: ['client'],
+      roleLabel: ['client'],
     );
   }
 
@@ -47,8 +47,8 @@ class CurrentActorService {
     final actorId = _extractActorId(auth);
     return _fetchActor(
       actorId: actorId,
-      expectedRole: 'owner',
-      roleLabel: 'owner',
+      expectedRole: ['owner', 'employee'],
+      roleLabel: ['owner', 'employee'],
     );
   }
 
@@ -68,21 +68,18 @@ class CurrentActorService {
   /// Fait la requête pour avoir les éléments de l'acteur demandé
   static Future<Client> _fetchActor({
     required int actorId,
-    required String expectedRole,
-    required String roleLabel,
+    required List<String> expectedRole,
+    required List<String> roleLabel,
   }) async {
     final supabase = Supabase.instance.client;
-
     final response = await supabase
         .from('actor')
         .select('actor_id, first_name, last_name, role, email')
         .eq('actor_id', actorId)
         .maybeSingle();
-
     if (response == null) {
       throw Exception('Aucun acteur trouvé pour ID $actorId');
     }
-
     final actor = Client(
       actorId: response['actor_id'] as int,
       firstName: response['first_name'] as String,
@@ -90,8 +87,8 @@ class CurrentActorService {
       role: response['role'] as String,
       email: response['email'] as String,
     );
-
-    if (actor.role != expectedRole) {
+    print(actor.role);
+    if (expectedRole.contains(actor.role) == false) {
       throw Exception(
         'Accès refusé : rôle \\« ${actor.role} \\», attendu \\« $roleLabel \\».',
       );

@@ -38,7 +38,7 @@ class _ScanClientPageBody extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // caméra
+          Container(color: Colors.white),
           LayoutBuilder(
             builder: (context, constraints) {
               final previewSize = constraints.biggest;

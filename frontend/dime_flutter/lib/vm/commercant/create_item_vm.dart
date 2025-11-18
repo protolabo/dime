@@ -45,8 +45,8 @@ class CreateItemViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final merchant = await CurrentActorService.getCurrentMerchant(auth: auth);
       final storeId = await CurrentStoreService.getCurrentStoreId();
+      final merchant = await CurrentActorService.getCurrentMerchant(auth: auth);
 
       if (storeId == null) {
         errorMessage = 'Aucun commerce sélectionné. Sélectionne un commerce d’abord.';
@@ -63,11 +63,9 @@ class CreateItemViewModel extends ChangeNotifier {
             'price': price ?? '',
             'description': description ?? '',
             'store_id': storeId.toString(),
-            'created_by': merchant.email,
+            'created_by': merchant.email==null ? merchant.firstName + ' ' + merchant.lastName : merchant.email,
           }),
       );
-
-
       if (response.statusCode == 201) {
         final json = Map<String, dynamic>.from(jsonDecode(response.body));
         final product = json['product'] as Map<String, dynamic>?;

@@ -1,3 +1,4 @@
+import 'package:dime_flutter/view/commercant/myTeam.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -81,7 +82,14 @@ class CreateQrMenuPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (_) => const ScanCommercantPage()),
                   );
-                } else if (i == 4) {
+
+                }
+                else if (i == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ManageTeamPage()),
+                  );
+                }else if (i == 4) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const SearchPageCommercant()),

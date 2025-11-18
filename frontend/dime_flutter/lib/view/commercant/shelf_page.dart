@@ -1,3 +1,4 @@
+import 'package:dime_flutter/view/commercant/myTeam.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -57,7 +58,10 @@ class _ShelfPageBodyState extends State<_ShelfPageBody> {
         onTap: (index) {
           if (index == 0) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
-          } else if (index == 2) {
+          }else if (index == 1) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageTeamPage()));
+          }
+          else if (index == 2) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
           }
           else if (index == 4) {

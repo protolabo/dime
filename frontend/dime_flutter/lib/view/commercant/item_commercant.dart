@@ -10,6 +10,7 @@ import 'package:dime_flutter/vm/commercant/item_commercant_vm.dart';
 import '../../auth_viewmodel.dart';
 import '../../vm/commercant/search_commercant_vm.dart';
 import 'create_qr_menu.dart';
+import 'myTeam.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
 
@@ -90,7 +91,10 @@ class _ItemBodyState extends State<_ItemBody> with TickerProviderStateMixin {
         onTap: (index) {
           if (index == 0) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
-          } else if (index == 2) {
+          }
+          else if (index == 1) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageTeamPage()));
+          }else if (index == 2) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
           } else if (index == 4) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));

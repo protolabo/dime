@@ -20,6 +20,7 @@ class AuthViewModel extends ChangeNotifier {
   // Helper getters
   int get actorId => _currentUser?['actor_id'];
   String? get userType => _currentUser?['user_type'];
+  String? get userRole => _currentUser?['role'];
   String? get userEmail=> _currentUser?['email'];
   String? get firstName => _currentUser?['first_name'];
   String? get lastName => _currentUser?['last_name'];
@@ -264,4 +265,117 @@ class AuthViewModel extends ChangeNotifier {
       debugPrint('Load session error: $e');
     }
   }
+
+// Employee Sign In
+  Future<bool> employeeSignIn({required String code}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/employee/signin'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'code': code}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        _token = data['session']['access_token'];
+        _currentUser = data['user'];
+        await _saveSession();
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        final data = jsonDecode(response.body);
+        _errorMessage = data['error'] ?? 'Sign in failed';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'Network error: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+// Add Team Member
+  Future<Map<String, dynamic>?> addTeamMember({
+    required String firstName,
+    required String lastName,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/team/add'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+        body: jsonEncode({
+          'firstName': firstName,
+          'lastName': lastName,
+        }),
+      );
+
+      _isLoading = false;
+      notifyListeners();
+
+      if (response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        return data['employee'];
+      } else {
+        final data = jsonDecode(response.body);
+        _errorMessage = data['error'] ?? 'Failed to add team member';
+        return null;
+      }
+    } catch (e) {
+      _errorMessage = 'Network error: $e';
+      _isLoading = false;
+      notifyListeners();
+      return null;
+    }
+  }
+
+// Récupérer tous les membres de l'équipe
+  Future<List<Map<String, dynamic>>> getTeamMembers() async {
+    // _isLoading = true;
+    // _errorMessage = null;
+    // notifyListeners();
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/team/members'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_token',
+        },
+      );
+
+      // _isLoading = false;
+      // notifyListeners();
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data['employees']);
+      } else {
+        final data = jsonDecode(response.body);
+        _errorMessage = data['error'] ?? 'Failed to fetch team members';
+        return [];
+      }
+    } catch (e) {
+      _errorMessage = 'Network error: $e';
+      // _isLoading = false;
+      // notifyListeners();
+      return [];
+    }
+  }
+
+
 }

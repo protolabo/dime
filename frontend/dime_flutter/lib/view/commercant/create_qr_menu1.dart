@@ -6,6 +6,7 @@ import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_qr_menu_vm.dart';
 
+import 'myTeam.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
 
@@ -145,7 +146,13 @@ class CreateQrMenuPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (_) => const ScanCommercantPage()),
                   );
-                } else if (i == 4) {
+                }
+                else if (i == 1) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ManageTeamPage()),
+                  );
+                }else if (i == 4) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const SearchPageCommercant()),
