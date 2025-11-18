@@ -48,23 +48,41 @@ class ItemPageCustomer extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      /* mini-mock image */
                       Container(
                         width: 80,
                         height: 80,
                         decoration: BoxDecoration(
-                          color: Colors.amber[100],
-                          border: Border.all(color: Colors.black),
+                          color: Colors.grey[200],
+                          border: Border.all(color: Colors.black12),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
-                            Text(
-                              'picture item',
-                              style: TextStyle(fontSize: 10),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: vm.product?['image_url'] != null
+                              ? Image.network(
+                            vm.product!['image_url'],
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) => Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(Icons.broken_image, size: 24, color: Colors.grey),
+                                SizedBox(height: 4),
+                                Text('Image\nindisponible',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(fontSize: 9, color: Colors.grey)),
+                              ],
                             ),
-                            Icon(Icons.photo_camera, size: 18),
-                          ],
+                          )
+                              : Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(Icons.photo_camera, size: 24, color: Colors.grey),
+                              SizedBox(height: 4),
+                              Text('Pas de\nphoto',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontSize: 9, color: Colors.grey)),
+                            ],
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),

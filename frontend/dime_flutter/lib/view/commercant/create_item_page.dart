@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:dime_flutter/view/components/header_commercant.dart';
 import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
@@ -117,6 +120,36 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 ),
 
                 const SizedBox(height: 32),
+                if (vm.selectedImage != null)
+                  FutureBuilder<Uint8List>(
+                    future: vm.selectedImage!.readAsBytes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.memory(
+                            snapshot.data!,
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      }
+                      return const CircularProgressIndicator();
+                    },
+                  ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  icon: const Icon(Icons.add_photo_alternate),
+                  label: Text(vm.selectedImage == null ? 'Ajouter une photo' : 'Changer la photo'),
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      vm.setImage(image);
+                    }
+                  },
+                ),
 
                 SizedBox(
                   width: double.infinity,

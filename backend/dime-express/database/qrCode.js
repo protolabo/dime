@@ -1,4 +1,3 @@
-// backend/dime-express/database/qrCode.js
 const path = require('path');
 const fs = require('fs');
 const FormData = require('form-data');

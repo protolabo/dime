@@ -1,5 +1,11 @@
 const supabase = require('../../supabaseClient');
 const {generateAndSaveQRToCloudflare,type} = require("../qrCode");
+const multer = require('multer');
+const { uploadImageToCloudflare } = require('../cloudflareImageService');
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB max
+});
 
 //GET /products
 const getProducts = async (_req, res) => {
@@ -38,26 +44,49 @@ const getProducts = async (_req, res) => {
   }
 };
 
-//POST /products
+// POST /products
 const createProduct = async (req, res) => {
   const {
     name,
     barcode,
-    price,                 // optionnel
+    price,
     description,
-    store_id,              // attendu du VM
-    created_by,            // attendu du VM (email ou actor)
+    store_id,
+    created_by,
     category = 'default',
     currency = 'CAD',
     pricing_unit = 'unit',
   } = req.body;
-  console.log('Creating product with data:', req.body);
+
+  console.log('Requête création produit:', req.body);
   if (!name || !barcode) {
     return res.status(400).json({ ok: false, error: 'name et barcode sont requis.' });
   }
 
   const auditCreatedBy = created_by || 'unknown';
-  const storeId        = Number(store_id) || null;
+  const storeId = Number(store_id) || null;
+  console.log('Valeurs reçues:', {
+    price,
+    store_id,
+    storeId,
+    'price != null': price != null,
+    'storeId != null': storeId != null,
+    'condition complete': price != null && storeId != null,
+  });
+  let image_url = null;
+
+  // Upload de l'image si présente
+  if (req.file) {
+    try {
+      image_url = await uploadImageToCloudflare(
+          req.file.buffer,
+          `product-${Date.now()}-${req.file.originalname}`
+      );
+    } catch (error) {
+      console.error('Erreur upload image:', error);
+      return res.status(500).json({ ok: false, error: 'Échec upload image' });
+    }
+  }
 
   // 1) Insert product
   const { data: prodRows, error: prodErr } = await supabase
@@ -67,20 +96,22 @@ const createProduct = async (req, res) => {
         description: description ?? '',
         category,
         bar_code: barcode,
+        image_url,
         created_by: auditCreatedBy,
       })
       .select('product_id')
       .limit(1);
-  console.log('Product insert result:', prodRows, prodErr);
+
   if (prodErr) {
     return res.status(500).json({ ok: false, error: `product insert: ${prodErr.message}` });
   }
+
   const product_id = prodRows?.[0]?.product_id;
   if (!product_id) {
     return res.status(500).json({ ok: false, error: 'product_id manquant après insertion.' });
   }
 
-  // 2) Optionnel: priced_product si price fourni ET store_id fourni
+  // 2) Priced product si nécessaire
   if (price != null && storeId != null) {
     const amount = parseFloat(price);
     if (!Number.isNaN(amount)) {
@@ -91,19 +122,20 @@ const createProduct = async (req, res) => {
         currency,
         pricing_unit,
         created_by: auditCreatedBy,
-        avaible: 1, // garde l’orthographe telle qu’en BD si c’est ce qui existe
+        available: 1,
       };
       const { error: priceErr } = await supabase.from('priced_product').insert(pricedPayload);
       if (priceErr) {
-        // On log mais on ne bloque pas la création de l’item
-        console.error('❌ priced_product insert error:', priceErr);
+        console.error('priced_product insert error:', priceErr);
       }
     }
   }
+
   const product = prodRows[0];
-  // Génère le QR code et met à jour le produit
+
+  // 3) Génération QR code
   if (product && product.product_id) {
-    const { imageUrl, fileName } = await generateAndSaveQRToCloudflare(type.PRODUCT, product.product_id, storeId);
+    const { imageUrl } = await generateAndSaveQRToCloudflare(type.PRODUCT, product.product_id, storeId);
     await supabase
         .from('product')
         .update({ qr_code: imageUrl })
@@ -145,4 +177,4 @@ const deleteProduct = async (req, res) => {
   res.status(200).json({ success: true, message: 'Product deleted successfully' });
 };
 
-module.exports = { getProducts, createProduct, updateProduct, deleteProduct };
+module.exports = { getProducts, createProduct, updateProduct, deleteProduct, upload };

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -6,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:dime_flutter/vm/current_store.dart';
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:dime_flutter/vm/components/open_food_facts_service.dart';
-
+import 'package:image_picker/image_picker.dart';
 import '../../auth_viewmodel.dart';
 
 /// ViewModel utilisé par `CreateItemPage`.
@@ -18,7 +19,8 @@ class CreateItemViewModel extends ChangeNotifier {
   String? errorMessage;
   final AuthViewModel auth;
   CreateItemViewModel({required this.auth});
-
+  XFile? _selectedImage;
+  XFile? get selectedImage => _selectedImage;
   bool _isSaving = false;
   bool get isSaving => _isSaving;
 
@@ -29,6 +31,10 @@ class CreateItemViewModel extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+  void setImage(XFile? image) {
+    _selectedImage = image;
+    notifyListeners();
   }
 
   Future<void> saveItem({
@@ -49,33 +55,41 @@ class CreateItemViewModel extends ChangeNotifier {
       final merchant = await CurrentActorService.getCurrentMerchant(auth: auth);
 
       if (storeId == null) {
-        errorMessage = 'Aucun commerce sélectionné. Sélectionne un commerce d’abord.';
+        errorMessage = 'Aucun commerce sélectionné.';
         return;
       }
 
       final uri = Uri.parse('http://localhost:3001/products');
-      final response = await http.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({
-            'name': name,
-            'barcode': barCode,
-            'price': price ?? '',
-            'description': description ?? '',
-            'store_id': storeId.toString(),
-            'created_by': merchant.email==null ? merchant.firstName + ' ' + merchant.lastName : merchant.email,
-          }),
-      );
+      final request = http.MultipartRequest('POST', uri);
+
+      request.fields['name'] = name;
+      request.fields['barcode'] = barCode;
+      request.fields['price'] = price ?? '';
+      request.fields['description'] = description ?? '';
+      request.fields['store_id'] = storeId.toString();
+      request.fields['created_by'] = merchant.email ?? '${merchant.firstName} ${merchant.lastName}';
+      if (_selectedImage != null) {
+        final bytes = await _selectedImage!.readAsBytes();
+        request.files.add(
+          http.MultipartFile.fromBytes(
+            'image',
+            bytes,
+            filename: _selectedImage!.name,
+          ),
+        );
+      }
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode == 201) {
         final json = Map<String, dynamic>.from(jsonDecode(response.body));
         final product = json['product'] as Map<String, dynamic>?;
         qrDataUrl = product?['qr_code'] as String?;
-        if (qrDataUrl != null && context.mounted) {
+        _selectedImage = null;
+
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Produit enregistré ✔')),
           );
-        } else {
-          errorMessage = 'QR introuvable dans la réponse serveur.';
         }
       } else {
         errorMessage = 'Erreur serveur (${response.statusCode})';
@@ -87,4 +101,6 @@ class CreateItemViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
 }
+
