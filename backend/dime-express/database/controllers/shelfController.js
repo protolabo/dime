@@ -110,4 +110,53 @@ const deleteShelf = async (req, res) => {
     res.status(200).json({ success: true, message: 'Shelf deleted successfully' });
 };
 
-module.exports = { getShelves, createShelf, updateShelf, deleteShelf };
+const updateShelfImage = async (req, res) => {
+    const { shelf_id } = req.params;
+
+    if (!req.file) {
+        return res.status(400).json({ error: 'Aucune image fournie' });
+    }
+
+    try {
+        const { uploadImageToCloudflare } = require('../cloudflareImageService');
+
+        // Upload vers Cloudflare
+        const image_url = await uploadImageToCloudflare(
+            req.file.buffer,
+            `shelf-${shelf_id}-${Date.now()}-${req.file.originalname}`
+        );
+
+        // Mise à jour dans Supabase
+        const { data, error } = await supabase
+            .from('shelf')
+            .update({ image_url })
+            .eq('shelf_id', shelf_id)
+            .select('shelf_id, image_url')
+            .single();
+
+        if (error) {
+            return res.status(500).json({ error: error.message });
+        }
+
+        if (!data) {
+            return res.status(404).json({ error: 'Étagère introuvable' });
+        }
+
+        res.status(200).json({
+            success: true,
+            image_url: data.image_url
+        });
+
+    } catch (error) {
+        console.error('Erreur upload image:', error);
+        res.status(500).json({ error: 'Échec de la mise à jour de l\'image' });
+    }
+};
+
+module.exports = {
+    getShelves,
+    createShelf,
+    updateShelf,
+    deleteShelf,
+    updateShelfImage
+};

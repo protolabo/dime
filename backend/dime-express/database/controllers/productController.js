@@ -177,4 +177,47 @@ const deleteProduct = async (req, res) => {
   res.status(200).json({ success: true, message: 'Product deleted successfully' });
 };
 
-module.exports = { getProducts, createProduct, updateProduct, deleteProduct, upload };
+// PUT /products/:product_id/image
+const updateProductImage = async (req, res) => {
+  const { product_id } = req.params;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Aucune image fournie' });
+  }
+
+  try {
+    // Upload vers Cloudflare
+    const image_url = await uploadImageToCloudflare(
+        req.file.buffer,
+        `product-${product_id}-${Date.now()}-${req.file.originalname}`
+    );
+
+    // Mise à jour dans Supabase
+    const { data, error } = await supabase
+        .from('product')
+        .update({ image_url })
+        .eq('product_id', product_id)
+        .select('product_id, image_url')
+        .single();
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    if (!data) {
+      return res.status(404).json({ error: 'Produit introuvable' });
+    }
+
+    res.status(200).json({
+      success: true,
+      image_url: data.image_url
+    });
+
+  } catch (error) {
+    console.error('Erreur upload image:', error);
+    res.status(500).json({ error: 'Échec de la mise à jour de l\'image' });
+  }
+};
+
+
+module.exports = { getProducts, createProduct, updateProduct, deleteProduct, upload ,updateProductImage};
