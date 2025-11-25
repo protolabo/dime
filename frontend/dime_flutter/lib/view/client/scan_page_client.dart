@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -112,16 +114,24 @@ class _ScanClientPageBody extends StatelessWidget {
       bool placed = false;
 
       if (qr != null) {
-        final overlayWidth = (qr.width).clamp(120.0, screenW - 32.0).toDouble();
-        final leftUnclamped = qr.center.dx - overlayWidth / 2.0;
-        final left = leftUnclamped.clamp(8.0, screenW - overlayWidth - 8.0).toDouble();
+        final maxAllowed = screenW - 32.0;
+        final double overlayWidth = math.min(maxAllowed, math.max(qr.width, 280.0));
+        final left = ((screenW - overlayWidth) / 2.0).clamp(8.0, screenW - overlayWidth - 8.0).toDouble();
 
         // 1) tentative au‑dessus
         double top = qr.top - estHeight - margin;
         if (top >= minTop) {
           final candidate = Rect.fromLTWH(left, top, overlayWidth, estHeight);
           if (!collides(candidate) && candidate.bottom <= maxBottom) {
-            widgets.add(Positioned(left: left, top: top, width: overlayWidth, child: SizedBox(height: estHeight, child: child)));
+            widgets.add(Positioned(
+              left: left,
+              top: top,
+              width: overlayWidth,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: estHeight),
+                child: SizedBox(height: estHeight, child: child),
+              ),
+            ));
             placedRects.add(candidate);
             placed = true;
           }
@@ -132,12 +142,21 @@ class _ScanClientPageBody extends StatelessWidget {
           final top2 = qr.bottom + margin;
           final candidate2 = Rect.fromLTWH(left, top2, overlayWidth, estHeight);
           if (top2 + estHeight <= maxBottom && !collides(candidate2)) {
-            widgets.add(Positioned(left: left, top: top2, width: overlayWidth, child: SizedBox(height: estHeight, child: child)));
+            widgets.add(Positioned(
+              left: left,
+              top: top2,
+              width: overlayWidth,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: estHeight),
+                child: SizedBox(height: estHeight, child: child),
+              ),
+            ));
             placedRects.add(candidate2);
             placed = true;
           }
         }
       }
+
 
       // 3) fallback: pile en bas (évite toute superposition)
       if (!placed) {

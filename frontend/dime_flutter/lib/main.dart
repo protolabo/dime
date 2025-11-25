@@ -45,6 +45,8 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: ThemeData(
           textTheme: GoogleFonts.lexendDecaTextTheme(Theme.of(context).textTheme),
+          scaffoldBackgroundColor: AppColors.background,
+          primarySwatch: Colors.grey,
         ),
         home: const HomePage(),
       ),

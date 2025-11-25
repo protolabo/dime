@@ -21,11 +21,13 @@ class ItemPageViewModel extends ChangeNotifier {
 
   bool isLoading = true;
   String? error;
-
+  String shelfImageUrl = '';
   // Produit
   Map<String, dynamic>? product;
   String productName = '';
   String barCode = '';
+  int shelfId = -1;
+  String shelfName='';
 
   // Magasin courant
   String currentStoreName = '';
@@ -49,6 +51,7 @@ class ItemPageViewModel extends ChangeNotifier {
       await _fetchFavoriteStores();
       await _checkFavoriteProduct();
       await _fetchStoresWithPrices();
+      await _fetchShelf();
     } catch (e) {
       error = e.toString();
     }
@@ -75,6 +78,32 @@ class ItemPageViewModel extends ChangeNotifier {
     }
   }
 
+  Future<void> _fetchShelf() async {
+    final shelfPlacesResponse = await http.get(
+      Uri.parse('$_baseUrl/shelf-places?product_id=$productId'));
+    if (shelfPlacesResponse.statusCode == 200) {
+      final json = jsonDecode(shelfPlacesResponse.body);
+      final data = (json['shelfPlaces'] as List).isNotEmpty ? json['shelfPlaces'][0] : null;
+      if (data != null) {
+        shelfId = data['shelf_id'] ?? '';
+      }
+    }
+    if (shelfId != -1) {
+      final shelfResponse = await http.get(
+        Uri.parse('$_baseUrl/shelves?shelf_id=$shelfId'));
+      if (shelfResponse.statusCode == 200) {
+        final json = jsonDecode(shelfResponse.body);
+        final data = (json['reviews'] as List).isNotEmpty ? json['reviews'][0] : null;
+        if (data != null) {
+          shelfName = data['name'] ?? '';
+          shelfImageUrl = (data['image_url'] ?? '') as String;
+        }
+      }
+    }
+
+  }
+
+
 
   /* ─────────── magasin courant ─────────── */
   Future<void> _fetchCurrentStoreName() async {
@@ -91,13 +120,17 @@ class ItemPageViewModel extends ChangeNotifier {
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body);
-      final data = (json['favorites'] as List?) ?? [];
+      final data = (json['favoriteStores'] as List?) ?? [];
       favoriteStoreIds = data
           .map<int>((r) => r['store_id'] as int)
           .toList();
+
     } else {
       throw Exception('Erreur lors du chargement des magasins favoris');
     }
+    print(response.statusCode);
+    print('Favoris magasins: $favoriteStoreIds');
+
   }
 
   /* ─────── favoris (produit) ─────── */

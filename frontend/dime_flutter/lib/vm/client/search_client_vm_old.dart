@@ -13,12 +13,12 @@ class SearchPageViewModel extends ChangeNotifier {
   List<Map<String, dynamic>> filteredProducts = [];
   List<Map<String, dynamic>> availableStores = [];
 
-  // For search/autocomplete
+  // Pour l'autocomplete de recherche
   List<Map<String, dynamic>> searchResults = [];
   bool isSearching = false;
 
   bool isLoading = false;
-  String _currentFilter = 'Products';
+  String _currentFilter = 'All';
 
   // Store filter
   bool storeFilterEnabled = false;
@@ -29,8 +29,8 @@ class SearchPageViewModel extends ChangeNotifier {
     _loadProducts();
   }
 
-/* ──────────── SEARCH / AUTOCOMPLETE ──────────── */
-  Future<void> query(String input, String filter) async {
+  /* ──────────── SEARCH / AUTOCOMPLETE ──────────── */
+  Future<void> query(String input) async {
     final q = input.trim();
     if (q.isEmpty) {
       searchResults = [];
@@ -43,21 +43,21 @@ class SearchPageViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Search products
+      // Recherche produits
       final prodResponse = await http.get(
         Uri.parse('$baseUrl/products?queryClient=${Uri.encodeComponent(q)}'),
       );
       final prodData = jsonDecode(prodResponse.body);
       final List prodList = (prodData['reviews'] as List).take(10).toList();
 
-      // Search stores
+      // Recherche magasins
       final storeResponse = await http.get(
-        Uri.parse('$baseUrl/stores?queryClient=${Uri.encodeComponent(q)}'),
+        Uri.parse('$baseUrl/stores?query=${Uri.encodeComponent(q)}'),
       );
       final storeData = jsonDecode(storeResponse.body);
       final List storeList = (storeData['favorites'] as List).take(10).toList();
 
-      // Get favorites
+      // Récupérer les favoris
       final actor = await CurrentActorService.getCurrentActor(auth: auth);
       final userId = actor.actorId;
 
@@ -77,35 +77,13 @@ class SearchPageViewModel extends ChangeNotifier {
           .map<int>((e) => e['store_id'] as int)
           .toSet();
 
-      // Get priced products to get store_id for each product
-      final pricedProductsResponse = await http.get(
-        Uri.parse('$baseUrl/priced-products'),
-      );
-      final pricedProductsData = jsonDecode(pricedProductsResponse.body);
-
-      // Create map of product_id -> store_id
-      final Map<int, int> productStoreMap = {};
-      if (pricedProductsData['pricedProducts'] != null) {
-        for (var priced in pricedProductsData['pricedProducts']) {
-          final productId = priced['product_id'] as int;
-          final storeId = priced['store_id'] as int?;
-          if (storeId != null) {
-            productStoreMap[productId] = storeId;
-          }
-        }
-      }
-
       searchResults = [
-        ...prodList.map((p) {
-          final productId = p['product_id'] as int;
-          return {
-            'type': 'product',
-            'id': productId,
-            'title': p['name'],
-            'subtitle': p['category'] ?? p['bar_code'] ?? '',
-            'isFav': favProdIds.contains(productId),
-            'store_id': productStoreMap[productId],
-          };
+        ...prodList.map((p) => {
+          'type': 'product',
+          'id': p['product_id'],
+          'title': p['name'],
+          'subtitle': p['category'] ?? p['bar_code'] ?? '',
+          'isFav': favProdIds.contains(p['product_id']),
         }),
         ...storeList.map((s) => {
           'type': 'store',
@@ -115,30 +93,14 @@ class SearchPageViewModel extends ChangeNotifier {
           'isFav': favStoreIds.contains(s['store_id']),
         }),
       ];
-
-      // Apply filter by type (Products/Stores)
-      if (filter == 'Products') {
-        searchResults = searchResults.where((item) => item['type'] == 'product').toList();
-      } else if (filter == 'Stores') {
-        searchResults = searchResults.where((item) => item['type'] == 'store').toList();
-      }
-
-      // Apply store filter if enabled
-      if (storeFilterEnabled && selectedStoreId != null && filter == 'Products') {
-        searchResults = searchResults.where((item) {
-          if (item['type'] != 'product') return true;
-          return item['store_id'] == selectedStoreId;
-        }).toList();
-      }
     } catch (e) {
-      log('❌ Error searching: $e');
+      log('Error searching: $e');
       searchResults = [];
     }
 
     isSearching = false;
     notifyListeners();
   }
-
 
   /* ──────────── TOGGLE FAVORITES IN SEARCH ──────────── */
   Future<void> toggleFavoriteProduct(int productId, bool nowFav) async {
@@ -163,28 +125,22 @@ class SearchPageViewModel extends ChangeNotifier {
         );
       }
 
-      // Update search results
+      // Mettre à jour les résultats de recherche
       for (final item in searchResults) {
         if (item['type'] == 'product' && item['id'] == productId) {
           item['isFav'] = nowFav;
         }
       }
 
-      // Update filtered products
+      // Mettre à jour les produits filtrés
       final index = filteredProducts.indexWhere((p) => p['id'] == productId);
       if (index != -1) {
         filteredProducts[index]['isFavorite'] = nowFav;
       }
 
-      // Update all products
-      final allIndex = _allProducts.indexWhere((p) => p['id'] == productId);
-      if (allIndex != -1) {
-        _allProducts[allIndex]['isFavorite'] = nowFav;
-      }
-
       notifyListeners();
     } catch (e) {
-      log('❌ Error toggling favorite product: $e');
+      log('Error toggling favorite product: $e');
     }
   }
 
@@ -210,7 +166,7 @@ class SearchPageViewModel extends ChangeNotifier {
         );
       }
 
-      // Update search results
+      // Mettre à jour les résultats de recherche
       for (final item in searchResults) {
         if (item['type'] == 'store' && item['id'] == storeId) {
           item['isFav'] = nowFav;
@@ -219,14 +175,48 @@ class SearchPageViewModel extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      log('❌ Error toggling favorite store: $e');
+      log('Error toggling favorite store: $e');
     }
   }
 
-  /* ──────────── SHOW ALL STORES (called when Stores filter is clicked) ──────────── */
-  void showAllStores() {
-    _currentFilter = 'Stores';
-    notifyListeners();
+  /* ──────────── LOAD ALL STORES ──────────── */
+  Future<void> loadAllStores() async {
+    try {
+      final actor = await CurrentActorService.getCurrentActor(auth: auth);
+      final userId = actor.actorId;
+
+      // Récupérer tous les magasins
+      final storesResponse = await http.get(
+        Uri.parse('$baseUrl/stores'),
+      );
+      final storesData = jsonDecode(storesResponse.body);
+
+      // Récupérer les favoris
+      final favStoresResponse = await http.get(
+        Uri.parse('$baseUrl/favorite-stores?actor_id=$userId'),
+      );
+      final favStoresData = jsonDecode(favStoresResponse.body);
+      final favStoreIds = (favStoresData['favoriteStores'] as List)
+          .map<int>((e) => e['store_id'] as int)
+          .toSet();
+
+      searchResults = [];
+      if (storesData['favorites'] != null) {
+        for (var store in storesData['favorites']) {
+          searchResults.add({
+            'type': 'store',
+            'id': store['store_id'],
+            'title': store['name'],
+            'subtitle': '${store['city'] ?? ''} ${store['postal_code'] ?? ''} ${store['country'] ?? ''}',
+            'isFav': favStoreIds.contains(store['store_id']),
+          });
+        }
+      }
+
+      notifyListeners();
+    } catch (e) {
+      log('Error loading all stores: $e');
+    }
   }
 
   /* ──────────── LOAD PRODUCTS ──────────── */
@@ -238,52 +228,45 @@ class SearchPageViewModel extends ChangeNotifier {
       final actor = await CurrentActorService.getCurrentActor(auth: auth);
       final userId = actor.actorId;
 
-      // Fetch products
       final productsResponse = await http.get(
         Uri.parse('$baseUrl/products'),
       );
       final productsData = jsonDecode(productsResponse.body);
 
-      // Fetch priced products (to get prices)
       final pricedProductsResponse = await http.get(
         Uri.parse('$baseUrl/priced-products'),
       );
       final pricedProductsData = jsonDecode(pricedProductsResponse.body);
 
-      // Fetch stores
       final storesResponse = await http.get(
         Uri.parse('$baseUrl/stores'),
       );
       final storesData = jsonDecode(storesResponse.body);
 
-      // Fetch favorite products
       final favoritesResponse = await http.get(
         Uri.parse('$baseUrl/favorite-products?actor_id=$userId'),
       );
       final favoritesData = jsonDecode(favoritesResponse.body);
 
-      // Create a map of product_id -> price info
       final Map<int, Map<String, dynamic>> priceMap = {};
       if (pricedProductsData['pricedProducts'] != null) {
         for (var priced in pricedProductsData['pricedProducts']) {
           final productId = priced['product_id'] as int;
           final amount = priced['amount'];
 
-          // Store the lowest price or first price found
           if (!priceMap.containsKey(productId)) {
             priceMap[productId] = {
               'amount': _parsePrice(amount),
-              'currency': priced['currency'] ?? 'CAD',
+              'currency': priced['currency'] ?? 'USD',
               'store_id': priced['store_id'],
             };
           } else {
-            // Keep the lowest price
             final currentPrice = priceMap[productId]!['amount'];
             final newPrice = _parsePrice(amount);
             if (newPrice < currentPrice) {
               priceMap[productId] = {
                 'amount': newPrice,
-                'currency': priced['currency'] ?? 'CAD',
+                'currency': priced['currency'] ?? 'USD',
                 'store_id': priced['store_id'],
               };
             }
@@ -291,7 +274,6 @@ class SearchPageViewModel extends ChangeNotifier {
         }
       }
 
-      // Create a set of favorite product IDs
       final favoriteProductIds = <int>{};
       if (favoritesData['favorites'] != null) {
         for (var fav in favoritesData['favorites']) {
@@ -299,7 +281,6 @@ class SearchPageViewModel extends ChangeNotifier {
         }
       }
 
-      // Process stores
       availableStores = [];
       if (storesData['favorites'] != null) {
         for (var store in storesData['favorites']) {
@@ -312,7 +293,6 @@ class SearchPageViewModel extends ChangeNotifier {
         }
       }
 
-      // Map products with prices and favorite status
       _allProducts = [];
       if (productsData['reviews'] != null) {
         for (var product in productsData['reviews']) {
@@ -334,13 +314,11 @@ class SearchPageViewModel extends ChangeNotifier {
         }
       }
 
-      // Sort by most recent (if created_at exists)
-      // _allProducts.sort((a, b) {
-      //   final aDate = a['created_at'] ?? '';
-      //   final bDate = b['created_at'] ?? '';
-      //   return bDate.toString().compareTo(aDate.toString());
-      // });
-      _allProducts.shuffle();
+      _allProducts.sort((a, b) {
+        final aDate = a['created_at'] ?? '';
+        final bDate = b['created_at'] ?? '';
+        return bDate.toString().compareTo(aDate.toString());
+      });
 
       filteredProducts = List.from(_allProducts);
       log('Loaded ${_allProducts.length} products');
@@ -382,15 +360,16 @@ class SearchPageViewModel extends ChangeNotifier {
   void _applyFilters() {
     List<Map<String, dynamic>> temp = List.from(_allProducts);
 
-    // Apply type filter (but not for Stores view, which shows stores list)
     if (_currentFilter == 'Products') {
       temp = temp
           .where((p) => p['category']?.toLowerCase() != 'store')
           .toList();
+    } else if (_currentFilter == 'Stores') {
+      temp = temp
+          .where((p) => p['category']?.toLowerCase() == 'store')
+          .toList();
     }
-    // For 'Stores', we don't filter products - the UI will show stores list instead
 
-    // Apply store filter
     if (storeFilterEnabled && selectedStoreId != null) {
       temp = temp.where((p) => p['store_id'] == selectedStoreId).toList();
     }
@@ -406,7 +385,6 @@ class SearchPageViewModel extends ChangeNotifier {
       final userId = actor.actorId;
       final userEmail = actor.email;
 
-      // Find the product in all lists
       final productIndex = _allProducts.indexWhere((p) => p['id'] == productId);
       if (productIndex == -1) return;
 
@@ -414,7 +392,6 @@ class SearchPageViewModel extends ChangeNotifier {
       final newFavoriteStatus = !currentFavoriteStatus;
 
       if (newFavoriteStatus) {
-        // Add to favorites
         await http.post(
           Uri.parse('$baseUrl/favorite-products'),
           headers: {'Content-Type': 'application/json'},
@@ -425,16 +402,13 @@ class SearchPageViewModel extends ChangeNotifier {
           }),
         );
       } else {
-        // Remove from favorites
         await http.delete(
           Uri.parse('$baseUrl/favorite-products/$userId/$productId'),
         );
       }
 
-      // Update local state
       _allProducts[productIndex]['isFavorite'] = newFavoriteStatus;
 
-      // Update filtered products if it contains this product
       final filteredIndex = filteredProducts.indexWhere((p) => p['id'] == productId);
       if (filteredIndex != -1) {
         filteredProducts[filteredIndex]['isFavorite'] = newFavoriteStatus;
@@ -442,7 +416,7 @@ class SearchPageViewModel extends ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      log('❌ Error toggling favorite: $e');
+      log('Error toggling favorite: $e');
     }
   }
 
@@ -458,7 +432,6 @@ class SearchPageViewModel extends ChangeNotifier {
   }
 
   double _parseRating(Map product) {
-    // Try to get rating from various possible fields
     if (product['rating'] != null) {
       if (product['rating'] is double) return product['rating'];
       if (product['rating'] is int) return (product['rating'] as int).toDouble();
@@ -466,6 +439,6 @@ class SearchPageViewModel extends ChangeNotifier {
         return double.tryParse(product['rating']) ?? 5.0;
       }
     }
-    return 5.0; // Default rating
+    return 5.0;
   }
 }
