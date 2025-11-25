@@ -20,57 +20,88 @@ class CreateQrMenuPage extends StatelessWidget {
       child: Consumer<CreateQrMenuViewModel>(
         builder: (context, vm, _) {
           return Scaffold(
-            backgroundColor: AppColors.background,
+            backgroundColor: Colors.white,
             appBar: const HeaderCommercant(),
-            body: Padding(
-              padding: const EdgeInsets.only(top: 24.0, left: 16.0, right: 16.0),
+            body: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Encadré avec le nom du commerce
+                  const SizedBox(height: 8),
+
+                  // Nom du magasin avec icône
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: AppRadius.card,
-                      border: AppBorders.card,
-                      boxShadow: AppShadows.card,
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    child: Text(
-                      vm.isLoading ? '...' : (vm.storeName ?? '—'),
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.store,
+                            size: 48,
+                            color: Colors.grey[800],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          vm.isLoading ? '...' : (vm.storeName ?? '—'),
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.title.copyWith(fontSize: 24),
+                        ),
+                      ],
                     ),
                   ),
 
-                  const SizedBox(height: 80),
+                  const SizedBox(height: 32),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          style: AppButtonStyles.primary, // ✅ vert Dime
-                          onPressed: () => vm.goToCreateItem(context),
-                          child: const Text(
-                            'Create Item',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: AppButtonStyles.primary, // ✅ vert Dime
-                          onPressed: () => vm.goToCreateShelf(context),
-                          child: const Text(
-                            'Create shelf',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                      ),
-                    ],
+                  // Titre de section
+                  Text(
+                    'Gestion du magasin',
+                    style: AppTextStyles.title.copyWith(fontSize: 18),
                   ),
+
+                  const SizedBox(height: 16),
+
+                  // Bouton Create Item
+                  _ActionCard(
+                    icon: Icons.add_shopping_cart,
+                    title: 'Créer un article',
+                    subtitle: 'Ajouter un nouvel article au magasin',
+                    color: Colors.blue[50]!,
+                    iconColor: Colors.blue[700]!,
+                    onTap: () => vm.goToCreateItem(context),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Bouton Create Shelf
+                  _ActionCard(
+                    icon: Icons.grid_view_rounded,
+                    title: 'Créer une étagère',
+                    subtitle: 'Organiser les articles par étagère',
+                    color: Colors.green[50]!,
+                    iconColor: Colors.green[700]!,
+                    onTap: () => vm.goToCreateShelf(context),
+                  ),
+
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -82,14 +113,12 @@ class CreateQrMenuPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(builder: (_) => const ScanCommercantPage()),
                   );
-
-                }
-                else if (i == 1) {
+                } else if (i == 1) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const ManageTeamPage()),
                   );
-                }else if (i == 4) {
+                } else if (i == 4) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const SearchPageCommercant()),
@@ -99,6 +128,77 @@ class CreateQrMenuPage extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/* ──────────── ACTION CARD ──────────── */
+class _ActionCard extends StatelessWidget {
+  const _ActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.iconColor,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final Color iconColor;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Colors.grey[100],
+      elevation: 0,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, size: 32, color: iconColor),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: 18, color: Colors.grey[400]),
+            ],
+          ),
+        ),
       ),
     );
   }

@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -32,12 +33,15 @@ class ItemCommercantVM extends ChangeNotifier {
   String? currency;
   double? price;
   String? qrDataUrl;
+  String? imageUrl;
 
   List<ItemShelfRef> shelves = [];
 
   String? errorMessage;
   bool _loading = false;
   bool get isLoading => _loading;
+  XFile? _selectedImage;
+  XFile? get selectedImage => _selectedImage;
 
   Future<void> init() async {
     _loading = true;
@@ -52,6 +56,7 @@ class ItemCommercantVM extends ChangeNotifier {
           productName = (product['name'] as String?)?.trim();
           description = product['description'] as String?;
           qrDataUrl = product['qr_code'] as String?;
+          imageUrl = product['image_url'] as String?;
         }
       }
 
@@ -107,6 +112,46 @@ class ItemCommercantVM extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  void setImage(XFile? image) {
+    _selectedImage = image;
+    notifyListeners();
+  }
+
+  Future<void> updateImage() async {
+    if (_selectedImage == null) return;
+
+    try {
+      final uri = Uri.parse('$apiBaseUrl/products/$productId/image');
+      final request = http.MultipartRequest('PUT', uri);
+
+      final bytes = await _selectedImage!.readAsBytes();
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: _selectedImage!.name,
+        ),
+      );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        imageUrl = json['image_url'];
+        _selectedImage = null;
+        errorMessage = null;
+      } else {
+        errorMessage = 'Erreur lors de la mise à jour de l\'image';
+      }
+    } catch (e) {
+      errorMessage = 'Erreur : $e';
+    }
+    notifyListeners();
+  }
+
+
 
   Future<void> updateName(String newName) async {
     final name = newName.trim();
@@ -209,8 +254,7 @@ class ItemCommercantVM extends ChangeNotifier {
     }
     notifyListeners();
   }
-  
-  /// Supprime l’item de CE magasin : efface son prix et le retire des étagères du store.
+
   Future<bool> removeFromCurrentStore() async {
     final storeId = await CurrentStoreService.getCurrentStoreId();
     if (storeId == null) {

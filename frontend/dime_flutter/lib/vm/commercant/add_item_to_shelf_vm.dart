@@ -74,6 +74,7 @@ class AddItemToShelfVM extends ChangeNotifier {
 
   /* ─────────── INIT ─────────── */
   Future<void> init() async {
+    selected.clear();
     _storeId = await CurrentStoreService.getCurrentStoreId();
     await _loadShelfExisting();
     notifyListeners();
@@ -255,7 +256,7 @@ class AddItemToShelfVM extends ChangeNotifier {
       }
 
       alreadyOnShelf.addAll(selected.keys);
-      selected.clear();
+
 
       saving = false;
       notifyListeners();

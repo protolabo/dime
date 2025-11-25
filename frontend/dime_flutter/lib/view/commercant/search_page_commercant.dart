@@ -172,6 +172,7 @@ class _ProductTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Colors.grey[50],
       margin: EdgeInsets.only(bottom: AppSpacing.sm),
       child: ListTile(
         leading: p.imageUrl != null && p.imageUrl!.isNotEmpty
@@ -211,6 +212,7 @@ class _ShelfTile extends StatelessWidget {
         : Text('Location: ${s.location}', style: AppTextStyles.secondary);
 
     return Card(
+      color: Colors.grey[50],
       margin: EdgeInsets.only(bottom: AppSpacing.sm),
       child: ListTile(
         leading: const Icon(Icons.qr_code_2),
@@ -222,7 +224,7 @@ class _ShelfTile extends StatelessWidget {
             MaterialPageRoute(
               builder: (_) => ShelfPageCommercant(
                 shelfId: s.shelfId,
-                shelfName: s.name, // <- requis par ton ShelfPage
+                shelfName: s.name,
               ),
             ),
           );

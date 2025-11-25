@@ -1,13 +1,10 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/view/components/header_commercant.dart';
-
 import 'package:dime_flutter/vm/commercant/add_item_to_shelf_vm.dart';
-
 import '../../auth_viewmodel.dart';
 
 class AddItemToShelfPage extends StatelessWidget {
@@ -23,14 +20,18 @@ class AddItemToShelfPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AddItemToShelfVM(shelfId: shelfId, shelfName: shelfName,auth: context.read<AuthViewModel>())..init(),
+      create: (_) => AddItemToShelfVM(
+        shelfId: shelfId,
+        shelfName: shelfName,
+        auth: context.read<AuthViewModel>(),
+      )..init(),
       child: const _AddItemToShelfBody(),
     );
   }
 }
 
 class _AddItemToShelfBody extends StatelessWidget {
-  const _AddItemToShelfBody({super.key});
+  const _AddItemToShelfBody();
 
   @override
   Widget build(BuildContext context) {
@@ -38,73 +39,268 @@ class _AddItemToShelfBody extends StatelessWidget {
     final media = MediaQuery.of(context);
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: const HeaderCommercant(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: AppPadding.h,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Add items', style: AppTextStyles.title),
-                  const SizedBox(height: 4),
-                  Text('Shelf: ${vm.shelfName}', style: AppTextStyles.muted),
-                  const SizedBox(height: 12),
+      body: Column(
+        children: [
+          /* En-tête */
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                /* Back Button + Title */
+                Row(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        shape: BoxShape.circle,
+                      ),
+                      child: IconButton(
+                        icon: const Icon(Icons.arrow_back, size: 20),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Ajouter des articles',
+                            style: AppTextStyles.title.copyWith(fontSize: 22),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            vm.shelfName,
+                            style: AppTextStyles.body.copyWith(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
 
-                  // Mode switch
-                  Row(
+                const SizedBox(height: 16),
+
+                /* Mode Toggle */
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
                     children: [
-                      ChoiceChip(
-                        label: const Text('Search'),
-                        selected: vm.mode == AddItemMode.search,
-                        onSelected: (_) => vm.setMode(AddItemMode.search),
+                      Expanded(
+                        child: _ModeButton(
+                          label: 'Rechercher',
+                          icon: Icons.search,
+                          active: vm.mode == AddItemMode.search,
+                          onTap: () => vm.setMode(AddItemMode.search),
+                        ),
                       ),
                       const SizedBox(width: 8),
-                      ChoiceChip(
-                        label: const Text('Scan'),
-                        selected: vm.mode == AddItemMode.scan,
-                        onSelected: (_) => vm.setMode(AddItemMode.scan),
+                      Expanded(
+                        child: _ModeButton(
+                          label: 'Scanner',
+                          icon: Icons.qr_code_scanner,
+                          active: vm.mode == AddItemMode.scan,
+                          onTap: () => vm.setMode(AddItemMode.scan),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          /* Content Area */
+          Expanded(
+            child: vm.mode == AddItemMode.search
+                ? const _SearchArea()
+                : _ScanArea(mediaPadding: media.padding),
+          ),
+
+          /* Footer avec articles sélectionnés */
+          if (vm.selected.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  /* Articles sélectionnés */
+                  Row(
+                    children: [
+                      Text(
+                        'Articles sélectionnés',
+                        style: AppTextStyles.body.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B7B8F).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${vm.selected.length}',
+                          style: AppTextStyles.body.copyWith(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF8B7B8F),
+                          ),
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
 
-                  // Selected chips
-                  if (vm.selected.isNotEmpty) _SelectedChips(vm: vm),
+                  /* Bouton Confirmer */
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8B7B8F),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        elevation: 0,
+                      ),
+                      onPressed: vm.saving
+                          ? null
+                          : () async {
+                        final ok = await vm.confirmInsert();
+                        if (!context.mounted) return;
+                        if (ok) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                '${vm.selected.length} article(s) ajouté(s)',
+                              ),
+                              backgroundColor: Colors.green[600],
+                            ),
+                          );
+                          Navigator.of(context).pop(true);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                vm.lastMessage ?? 'Erreur',
+                              ),
+                              backgroundColor: Colors.red[600],
+                            ),
+                          );
+                        }
+                      },
+                      child: vm.saving
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                          : Text(
+                        'Ajouter ${vm.selected.length} article(s)',
+                        style: AppTextStyles.body.copyWith(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
 
-            // Body area
-            Expanded(
-              child: vm.mode == AddItemMode.search
-                  ? const _SearchArea()
-                  : _ScanArea(mediaPadding: media.padding),
+/* ─────────── MODE BUTTON ─────────── */
+class _ModeButton extends StatelessWidget {
+  const _ModeButton({
+    required this.label,
+    required this.icon,
+    required this.active,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: active ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: active
+              ? [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
             ),
-
-            // Confirm button
-            Padding(
-              padding: AppPadding.all,
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: vm.selected.isEmpty || vm.saving ? null : () async {
-                    final ok = await vm.confirmInsert();
-                    if (!context.mounted) return;
-                    if (ok) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Items added to shelf.')),
-                      );
-                      Navigator.pop(context, true);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(vm.lastMessage ?? 'Insert failed')),
-                      );
-                    }
-                  },
-                  child: Text(vm.saving ? 'Saving…' : 'Confirm (${vm.selected.length})'),
-                ),
+          ]
+              : null,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: active ? const Color(0xFF8B7B8F) : Colors.grey[600],
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTextStyles.body.copyWith(
+                fontSize: 14,
+                fontWeight: active ? FontWeight.w600 : FontWeight.normal,
+                color: active ? Colors.black : Colors.grey[600],
               ),
             ),
           ],
@@ -124,53 +320,172 @@ class _SearchArea extends StatelessWidget {
 
     return Column(
       children: [
-        Padding(
-          padding: AppPadding.h,
+        /* Barre de recherche */
+        Container(
+          padding: const EdgeInsets.all(16),
           child: TextField(
             controller: vm.searchCtrl,
             onChanged: vm.onQueryChanged,
+            style: AppTextStyles.body.copyWith(fontSize: 15),
             decoration: InputDecoration(
-              hintText: 'Search a product in this store…',
-              prefixIcon: const Icon(Icons.search),
-              border: AppBorders.input,
+              hintText: 'Rechercher un article...',
+              hintStyle: AppTextStyles.body.copyWith(
+                fontSize: 14,
+                color: Colors.grey[400],
+              ),
+              prefixIcon: Icon(Icons.search, color: Colors.grey[400]),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Colors.black, width: 2),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 14,
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 8),
+
+        /* Résultats */
         Expanded(
           child: vm.searching
               ? const Center(child: CircularProgressIndicator())
-              : ListView.builder(
+              : vm.results.isEmpty
+              ? Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.search_off,
+                  size: 48,
+                  color: Colors.grey[400],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Aucun résultat',
+                  style: AppTextStyles.body.copyWith(
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          )
+              : ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: vm.results.length,
-            itemBuilder: (contextItem, i) {
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, i) {
               final r = vm.results[i];
-              final already = vm.alreadyOnShelf.contains(r.productId);
-              final chosen  = vm.selected.containsKey(r.productId);
+              final isSelected = vm.selected.containsKey(r.productId);
+              final isOnShelf = vm.alreadyOnShelf.contains(r.productId);
 
-              return ListTile(
-                title: Text(r.name, overflow: TextOverflow.ellipsis),
-                subtitle: already ? const Text('Already on this shelf') : null,
-                trailing: IconButton(
-                  icon: Icon(chosen ? Icons.check : Icons.add),
-                  onPressed: already
+              return Container(
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? const Color(0xFF8B7B8F).withOpacity(0.05)
+                      : Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF8B7B8F)
+                        : Colors.grey[200]!,
+                    width: isSelected ? 2 : 1,
+                  ),
+                ),
+                child: InkWell(
+                  onTap: isOnShelf
                       ? null
                       : () async {
-                    final res = await vm.addProduct(r.productId, r.name);
-
-                    // Si ta version de Flutter ne supporte pas context.mounted,
-                    // tu peux supprimer ce guard.
-                    if (!contextItem.mounted) return;
-
-                    if (res.added) {
-                      ScaffoldMessenger.of(contextItem).showSnackBar(
-                        SnackBar(content: Text('Added: ${r.name}')),
+                    if (isSelected) {
+                      vm.removeSelected(r.productId);
+                    } else {
+                      final res = await vm.addProduct(
+                        r.productId,
+                        r.name,
                       );
-                    } else if (res.reason != null) {
-                      ScaffoldMessenger.of(contextItem).showSnackBar(
-                        SnackBar(content: Text(res.reason!)),
-                      );
+                      if (!context.mounted) return;
+                      if (!res.added) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              res.reason ?? 'Erreur',
+                            ),
+                            backgroundColor: Colors.orange[600],
+                          ),
+                        );
+                      }
                     }
                   },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            r.name,
+                            style: AppTextStyles.body.copyWith(
+                              fontSize: 15,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (isOnShelf)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              'Déjà ajouté',
+                              style: AppTextStyles.body.copyWith(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          )
+                        else
+                          Icon(
+                            isSelected
+                                ? Icons.check_circle
+                                : Icons.add_circle_outline,
+                            color: isSelected
+                                ? const Color(0xFF8B7B8F)
+                                : Colors.grey[400],
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               );
             },
@@ -192,34 +507,55 @@ class _ScanArea extends StatelessWidget {
 
     return Stack(
       children: [
-        // Camera
-        LayoutBuilder(
-          builder: (ctx, constraints) {
-            final previewSize = constraints.biggest;
-            const fit = BoxFit.cover;
-            return MobileScanner(
-              fit: fit,
-              controller: vm.scanner,
-              onDetect: (cap) => vm.onDetect(
-                cap,
-                ctx,
-                previewSize: previewSize,
-                boxFit: fit,
-              ),
+        /* Scanner */
+        MobileScanner(
+          controller: vm.scanner,
+          onDetect: (capture) {
+            final size = MediaQuery.of(context).size;
+            vm.onDetect(
+              capture,
+              context,
+              previewSize: size,
+              boxFit: BoxFit.cover,
             );
           },
         ),
 
-        // Overlay when a product is detected
-        if (vm.overlayProduct != null)
+
+        /* Overlay produit scanné */
+        if (vm.overlayProduct != null && vm.qrRect != null)
           Positioned(
-            top: vm.qrRect != null
-                ? _clampTop(mediaPadding, vm.qrRect!.bottom + 12, MediaQuery.of(context).size.height)
-                : null,
             left: 16,
             right: 16,
-            bottom: vm.qrRect == null ? 32 : null,
+            top: _clampTop(
+              mediaPadding,
+              vm.qrRect!.bottom + 12,
+              MediaQuery.of(context).size.height,
+            ),
             child: _ProductOverlay(vm: vm),
+          ),
+
+        /* Instructions */
+        if (vm.overlayProduct == null)
+          Positioned(
+            bottom: mediaPadding.bottom + 24,
+            left: 16,
+            right: 16,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                'Scannez le code d\'un article',
+                style: AppTextStyles.body.copyWith(
+                  color: Colors.white,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
       ],
     );
@@ -239,64 +575,109 @@ class _ProductOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = vm.overlayProduct!;
-    final already = vm.alreadyOnShelf.contains(p.id) || vm.selected.containsKey(p.id);
+    final already = vm.alreadyOnShelf.contains(p.id) ||
+        vm.selected.containsKey(p.id);
 
     return Container(
-      padding: AppPadding.all,
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.78),
-        borderRadius: AppRadius.border,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              p.name ?? 'Unknown item',
-              style: AppTextStyles.subtitle.copyWith(color: Colors.white),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          IconButton(
-            tooltip: 'Add',
-            icon: const Icon(Icons.add, color: Colors.white),
-            onPressed: already
-                ? null
-                : () async {
-              final res = await vm.addProduct(p.id, p.name ?? 'Item');
-              if (!context.mounted) return;
-              final msg = res.added
-                  ? 'Added: ${p.name ?? p.id}'
-                  : (res.reason ?? 'Not added');
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-            },
-          ),
-          IconButton(
-            tooltip: 'Close',
-            icon: const Icon(Icons.close, color: Colors.white),
-            onPressed: vm.clearOverlay,
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-    );
-  }
-}
-
-/* ─────────── Selected chips ─────────── */
-class _SelectedChips extends StatelessWidget {
-  const _SelectedChips({required this.vm});
-  final AddItemToShelfVM vm;
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: vm.selected.entries.map((e) {
-        return Chip(
-          label: Text(e.value, overflow: TextOverflow.ellipsis),
-          onDeleted: () => vm.removeSelected(e.key),
-        );
-      }).toList(),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Icon(
+              Icons.shopping_bag_outlined,
+              size: 24,
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  p.name ?? 'Article inconnu',
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  already ? 'Déjà ajouté' : 'Appuyez pour ajouter',
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 13,
+                    color: already ? Colors.orange[600] : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Row(
+            children: [
+              if (!already)
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B7B8F),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    tooltip: 'Ajouter',
+                    onPressed: () async {
+                      final res = await vm.addProduct(
+                        p.id,
+                        p.name ?? 'Item',
+                      );
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            res.added
+                                ? 'Ajouté : ${p.name ?? p.id}'
+                                : (res.reason ?? 'Non ajouté'),
+                          ),
+                          backgroundColor: res.added
+                              ? Colors.green[600]
+                              : Colors.orange[600],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.close, size: 20),
+                  tooltip: 'Fermer',
+                  onPressed: vm.clearOverlay,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

@@ -40,289 +40,394 @@ class ShelfPageCommercant extends StatelessWidget {
 
 class _ShelfPageBody extends StatefulWidget {
   const _ShelfPageBody();
+
   @override
   State<_ShelfPageBody> createState() => _ShelfPageBodyState();
 }
 
 class _ShelfPageBodyState extends State<_ShelfPageBody> {
-  bool _expanded = true;
-
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<ShelfPageVM>();
 
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: const HeaderCommercant(),
       bottomNavigationBar: navbar_commercant(
         currentIndex: 0,
         onTap: (index) {
           if (index == 0) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
-          }else if (index == 1) {
+          } else if (index == 1) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageTeamPage()));
-          }
-          else if (index == 2) {
+          } else if (index == 2) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const ScanCommercantPage()));
-          }
-          else if (index == 4) {
+          } else if (index == 4) {
             Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
           }
         },
       ),
-      body: SafeArea(
-        child: vm.loading
-            ? const Center(child: CircularProgressIndicator())
-            : vm.error != null
-            ? _ErrorView(error: vm.error!)
-            : _Content(
-          vm: vm,
-          expanded: _expanded,
-          onToggleExpanded: () => setState(() => _expanded = !_expanded),
-        ),
-      ),
+      body: vm.loading
+          ? const Center(child: CircularProgressIndicator())
+          : vm.error != null
+          ? _ErrorView(error: vm.error!)
+          : _Content(vm: vm),
     );
   }
-
-
 }
 
 class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.error});
   final String error;
+
   @override
-  Widget build(BuildContext context) =>
-      Center(child: Text('Erreur: $error', style: AppTextStyles.body));
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: Colors.red[400]),
+          const SizedBox(height: 16),
+          Text(
+            'Erreur: $error',
+            style: AppTextStyles.body.copyWith(color: Colors.red[700]),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _Content extends StatelessWidget {
-  const _Content({
-    required this.vm,
-    required this.expanded,
-    required this.onToggleExpanded,
-  });
+  const _Content({required this.vm});
 
   final ShelfPageVM vm;
-  final bool expanded;
-  final VoidCallback onToggleExpanded;
 
   @override
   Widget build(BuildContext context) {
     final name = vm.shelfName ?? vm.initialShelfName;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(16),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          /* Back Button + Title + Delete */
           Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back),
-                tooltip: 'Go Back',
-                onPressed: () => Navigator.of(context).maybePop(),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.grey[100],
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.arrow_back, size: 20),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
               ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.delete_outline),
-                tooltip: 'Delete / Edit shelf (Ã  venir)',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Ã‰dition Ã©tagÃ¨re Ã  venir')),
-                  );
-                },
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  name,
+                  style: AppTextStyles.title.copyWith(fontSize: 22),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.red[50],
+                  shape: BoxShape.circle,
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.delete_outline, size: 20, color: Colors.red[600]),
+                  tooltip: 'Supprimer l\'étagère',
+                  onPressed: () => _showDeleteDialog(context, vm),
+                ),
               ),
             ],
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Text(name, textAlign: TextAlign.center, style: AppTextStyles.title),
+          const SizedBox(height: 24),
+
+          /* Section Articles */
+          Row(
+            children: [
+              Text(
+                'Articles',
+                style: AppTextStyles.title.copyWith(fontSize: 18),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8B7B8F).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${vm.items.length}',
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF8B7B8F),
+                  ),
+                ),
+              ),
+            ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
-          Text('All items', style: AppTextStyles.subtitle),
-          const SizedBox(height: 8),
-
-          Container(
+          /* Liste des articles */
+          vm.items.isEmpty
+              ? Container(
+            padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: AppColors.searchBg,
-              borderRadius: AppRadius.border,
-              border: Border.all(color: AppColors.border),
-              boxShadow: const [BoxShadow(blurRadius: 6, spreadRadius: 0.5, color: Colors.black12)],
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
             ),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Name',
-                          style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+            child: Center(
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.inventory_2_outlined,
+                    size: 48,
+                    color: Colors.grey[400],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Aucun article dans cette étagère',
+                    style: AppTextStyles.body.copyWith(
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+              : Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: vm.items.length,
+              separatorBuilder: (_, __) => Divider(
+                height: 1,
+                color: Colors.grey[200],
+              ),
+              itemBuilder: (context, index) {
+                final item = vm.items[index];
+                return InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ItemCommercantPage(
+                          productId: item.productId,
+                          productName: item.name,
                         ),
                       ),
-                      SizedBox(
-                        width: 110,
-                        child: Text(
-                          'Price',
-                          textAlign: TextAlign.right,
-                          style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                    );
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Icon(
+                            Icons.shopping_bag_outlined,
+                            size: 20,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.name,
+                                style: AppTextStyles.body.copyWith(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (item.price != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${item.price!.toStringAsFixed(2)} ${item.currency ?? 'CAD'}',
+                                  style: AppTextStyles.body.copyWith(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey[400],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const Divider(height: 1),
-
-                ..._rows(context, vm, expanded),
-
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: onToggleExpanded,
-                    child: Text(expanded ? 'Less items' : 'More items', style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600)),
-                  ),
-                ),
-              ],
+                );
+              },
             ),
           ),
 
           const SizedBox(height: 24),
 
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton(
+          /* Bouton Ajouter un article */
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.add, size: 20,color: Colors.white),
+              label: Text(
+                'Ajouter un article',
+                style: AppTextStyles.body.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF8B7B8F),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                elevation: 0,
+              ),
               onPressed: () async {
-                // vm est déjà dispo dans ton build (Option A)
                 final int? id = vm.shelfId;
                 final String? rawName = vm.shelfName;
 
                 if (id == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Shelf not loaded yet')),
+                    const SnackBar(content: Text('ID d\'étagère manquant')),
                   );
                   return;
                 }
 
-                final String name =
-                (rawName == null || rawName.trim().isEmpty) ? 'Shelf #$id' : rawName.trim();
+                final String name = rawName ?? vm.initialShelfName;
 
                 await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => AddItemToShelfPage(
-                      shelfId: id,           // int (non-null ici)
-                      shelfName: name,       // String (non-null ici)
+                      shelfId: id,
+                      shelfName: name,
                     ),
                   ),
                 );
 
-                // Optionnel: rafraîchir la page d'étagère au retour
                 if (context.mounted) vm.reload();
               },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: AppRadius.button),
-                backgroundColor: AppColors.accent,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Add an item'),
             ),
           ),
 
           const SizedBox(height: 16),
 
-          Center(
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  await vm.downloadQrPdf();
-                  if (!context.mounted) return;
+          /* Bouton Télécharger QR Code */
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.qr_code, size: 20, color: Colors.white),
+              label: Text(
+                'Télécharger le QR Code',
+                style: AppTextStyles.body.copyWith(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: const Color(0xFF2D2D2D),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
+                await vm.downloadQrPdf();
+                if (!context.mounted) return;
 
-                  // même feedback que sur la page d'item
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('QR Code téléchargé avec succès'),
-                      backgroundColor: AppColors.accent,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(borderRadius: AppRadius.border),
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('QR Code téléchargé'),
+                    backgroundColor: Colors.green[600],
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                  );
-                },
-                icon: const Icon(Icons.qr_code, size: 20),
-                label: const Text(
-                  'Download QR Code',
-                  style: TextStyle(fontWeight: FontWeight.w600),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSpacing.xl,
-                    vertical: AppSpacing.md,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  elevation: 2,
-                ),
-              )
+                );
+              },
+            ),
           ),
+
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  List<Widget> _rows(BuildContext context, ShelfPageVM vm, bool expanded) {
-    final all = vm.items;
-    final list = expanded ? all : (all.length <= 8 ? all : all.take(8).toList());
-
-    return list
-        .map((it) => Column(
-      children: [
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ItemCommercantPage(
-                        productId: it.productId,
-                        productName: it.name,
-                      ),
-                    ),
-                  );
-                },
-                child: Text(
-                  it.name,
-                  style: AppTextStyles.body.copyWith(
-                    decoration: TextDecoration.underline,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-            SizedBox(
-              width: 110,
-              child: Text(
-                it.price != null
-                    ? '${it.price!.toStringAsFixed(2)} ${it.currency ?? ''}'
-                    : '—',
-                textAlign: TextAlign.right,
-                style: AppTextStyles.body,
-              ),
-            ),
-          ],
+  Future<void> _showDeleteDialog(BuildContext context, ShelfPageVM vm) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Supprimer cette étagère ?'),
+        titleTextStyle: AppTextStyles.title.copyWith(fontSize: 18),
+        content: const Text(
+          'Cette action supprimera définitivement l\'étagère et retirera tous les articles associés. Cette action est irréversible.',
         ),
-        const SizedBox(height: 10),
-        const Divider(height: 1),
-      ],
-    ))
-        .toList();
+        contentTextStyle: AppTextStyles.body.copyWith(fontSize: 14),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Annuler',
+              style: AppTextStyles.body.copyWith(color: Colors.grey[700]),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true && context.mounted) {
+      // Appeler la méthode de suppression du VM (à implémenter)
+      // await vm.deleteShelf();
+      Navigator.of(context).pop(true);
+    }
   }
 }

@@ -218,7 +218,7 @@ class ScanPageVM extends ChangeNotifier {
         final List<dynamic> prices = priceData['pricedProducts'] ?? [];
         if (prices.isNotEmpty) priceRow = prices.first;
       }
-
+      if (priceRow == null) return;
       _currentKey = key;
       _overlays[key] = {
         'kind': 'product',
@@ -256,7 +256,7 @@ class ScanPageVM extends ChangeNotifier {
         final List<dynamic> prices = priceData['pricedProducts'] ?? [];
         if (prices.isNotEmpty) priceRow = prices.first;
       }
-
+      if (priceRow == null) return;
       _currentKey = 'product:$id';
       _overlays[key] = {
         'kind': 'product',
@@ -317,6 +317,18 @@ class ScanPageVM extends ChangeNotifier {
         for (final row in priceRows) row['product_id'] as int: row as Map<String, dynamic>
       };
 
+      // Ne garder que les produits qui ont un prix dans ce magasin
+      final List<dynamic> productsInStore = products
+          .where((p) => priceByPid.containsKey(p['product_id'] as int))
+          .toList();
+
+      if (productsInStore.isEmpty) {
+        _overlays[key] = {'kind': 'shelf', 'shelfName': shelfName, 'items': <ShelfItemVM>[]};
+        if (!_stackKeys.contains(key)) _stackKeys.add(key);
+        notifyListeners();
+        return;
+      }
+
       final promoIds = priceRows
           .map((e) => e['promotion_id'])
           .where((e) => e != null)
@@ -339,7 +351,7 @@ class ScanPageVM extends ChangeNotifier {
 
       final now = DateTime.now();
 
-      final shelfItems = products.map((p) {
+      final shelfItems = productsInStore.map((p) {
         final pid = p['product_id'] as int;
         final name = p['name'] as String? ?? 'Item $pid';
         final priceRow = priceByPid[pid];
@@ -413,3 +425,4 @@ class ScanPageVM extends ChangeNotifier {
     super.dispose();
   }
 }
+
