@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -54,6 +55,11 @@ class ShelfPageVM extends ChangeNotifier {
   String? qrData;
 
   List<ShelfItem> items = [];
+
+  XFile? _selectedImage;
+  XFile? get selectedImage => _selectedImage;
+  String? imageUrl;
+
 
   Future<void> init() async {
     loading = true;
@@ -143,7 +149,7 @@ class ShelfPageVM extends ChangeNotifier {
       shelfName = (shelfRow['name'] as String?) ?? initialShelfName;
       storeId = shelfRow['store_id'] as int?;
       qrData = (shelfRow['qr_code'] as String?) ?? initialQrData;
-
+      imageUrl = shelfRow['image_url'] as String?;
       if (storeId == null) {
         error = 'Shelf sans store associé.';
         loading = false;
@@ -232,6 +238,46 @@ class ShelfPageVM extends ChangeNotifier {
       loading = false;
       notifyListeners();
     }
+  }
+
+
+
+  void setImage(XFile? image) {
+    _selectedImage = image;
+    notifyListeners();
+  }
+
+  Future<void> updateImage() async {
+    if (_selectedImage == null) return;
+
+    try {
+      final uri = Uri.parse('$apiBaseUrl/shelves/$shelfId/image');
+      final request = http.MultipartRequest('PUT', uri);
+
+      final bytes = await _selectedImage!.readAsBytes();
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: _selectedImage!.name,
+        ),
+      );
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        imageUrl = json['image_url'];
+        _selectedImage = null;
+        error = null;
+      } else {
+        error = 'Erreur lors de la mise à jour de l\'image';
+      }
+    } catch (e) {
+      error = 'Erreur : $e';
+    }
+    notifyListeners();
   }
 
   /// Génère un PDF en réutilisant **exactement** l'image DataURL stockée en BD.
@@ -365,3 +411,5 @@ class ShelfPageVM extends ChangeNotifier {
     return base64Decode(b64);
   }
 }
+
+

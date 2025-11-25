@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dime_flutter/view/components/header_commercant.dart';
@@ -68,7 +71,7 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
 
                   const SizedBox(height: 24),
 
-                  /* Icon Section */
+                /* Image Section */
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -78,44 +81,89 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                     ),
                     child: Column(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
+                        if (vm.selectedImage != null)
+                          FutureBuilder<Uint8List>(
+                            future: vm.selectedImage!.readAsBytes(),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Image.memory(
+                                    snapshot.data!,
+                                    height: 180,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                );
+                              }
+                              return const CircularProgressIndicator();
+                            },
+                          )
+                        else
+                          Container(
+                            height: 180,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[200],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.add_photo_alternate_outlined,
+                                    size: 48,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Aucune image',
+                                    style: AppTextStyles.body.copyWith(
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
-                          child: Icon(
-                            Icons.grid_view_rounded,
-                            size: 48,
-                            color: Colors.black,
-                          ),
-                        ),
                         const SizedBox(height: 16),
-                        Text(
-                          'Nouvelle étagère',
-                          style: AppTextStyles.title.copyWith(fontSize: 18),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Organisez vos articles par étagère',
-                          style: AppTextStyles.body.copyWith(
-                            fontSize: 14,
-                            color: Colors.grey[600],
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: Icon(
+                              vm.selectedImage == null
+                                  ? Icons.add_photo_alternate
+                                  : Icons.edit,
+                              size: 20,
+                            ),
+                            label: Text(
+                              vm.selectedImage == null
+                                  ? 'Ajouter une photo'
+                                  : 'Changer la photo',
+                              style: AppTextStyles.body.copyWith(fontSize: 15),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              side: BorderSide(color: Colors.grey[300]!),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () async {
+                              final picker = ImagePicker();
+                              final image = await picker.pickImage(
+                                source: ImageSource.gallery,
+                              );
+                              if (image != null) {
+                                vm.setImage(image);
+                              }
+                            },
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 24),
 
                   /* Form Section */
                   Text(

@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:dime_flutter/view/commercant/myTeam.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import 'package:dime_flutter/view/styles.dart';
@@ -149,7 +152,151 @@ class _Content extends StatelessWidget {
             ],
           ),
 
+          /* Image Section */
           const SizedBox(height: 24),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.image_outlined, size: 20, color: Colors.grey[600]),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Photo de l\'étagère',
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                if (vm.selectedImage != null)
+                  FutureBuilder<Uint8List>(
+                    future: vm.selectedImage!.readAsBytes(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        return ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.memory(
+                            snapshot.data!,
+                            height: 180,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        );
+                      }
+                      return const CircularProgressIndicator();
+                    },
+                  )
+                else if (vm.imageUrl != null && vm.imageUrl!.isNotEmpty)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.network(
+                      vm.imageUrl!,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return _buildPlaceholder();
+                      },
+                    ),
+                  )
+                else
+                  _buildPlaceholder(),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        icon: Icon(
+                          vm.selectedImage == null
+                              ? (vm.imageUrl == null || vm.imageUrl!.isEmpty
+                              ? Icons.add_photo_alternate
+                              : Icons.edit)
+                              : Icons.edit,
+                          size: 20,
+                        ),
+                        label: Text(
+                          vm.selectedImage == null
+                              ? (vm.imageUrl == null || vm.imageUrl!.isEmpty
+                              ? 'Ajouter une photo'
+                              : 'Changer la photo')
+                              : 'Changer la photo',
+                          style: AppTextStyles.body.copyWith(fontSize: 15),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Colors.grey[300]!),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: () async {
+                          final picker = ImagePicker();
+                          final image = await picker.pickImage(
+                            source: ImageSource.gallery,
+                          );
+                          if (image != null) {
+                            vm.setImage(image);
+                          }
+                        },
+                      ),
+                    ),
+                    if (vm.selectedImage != null) ...[
+                      const SizedBox(width: 12),
+                      ElevatedButton(
+                        onPressed: () async {
+                          await vm.updateImage();
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                vm.error ?? 'Image mise à jour',
+                              ),
+                              backgroundColor: vm.error != null
+                                  ? Colors.red[600]
+                                  : Colors.green[600],
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color(0xFF8B7B8F),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                            horizontal: 24,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: Text(
+                          'Enregistrer',
+                          style: AppTextStyles.body.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
 
           /* Section Articles */
           Row(
@@ -430,4 +577,33 @@ class _Content extends StatelessWidget {
       Navigator.of(context).pop(true);
     }
   }
+  Widget _buildPlaceholder() {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add_photo_alternate_outlined,
+              size: 48,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Aucune image',
+              style: AppTextStyles.body.copyWith(
+                color: Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 }
