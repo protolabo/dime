@@ -137,7 +137,7 @@ class FavoriteMenuVM extends ChangeNotifier {
           favoriteProducts.add({
             'id': productId,
             'name': productInfo?['name'] ?? 'Unknown Product',
-            'price': priceInfo?['amount'] ?? 0.0,
+            'price': priceInfo?['amount'] ?? null,
             'currency': priceInfo?['currency'] ?? 'CAD',
             'store_id': priceInfo?['store_id'],
             'rating': 5.0,

@@ -464,7 +464,7 @@ class _ProductCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '\$${product['price']?.toStringAsFixed(2) ?? '0.00'}',
+                        '\$${product['price']?.toStringAsFixed(2) ?? 'Not available'}',
                         style: AppTextStyles.body.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
