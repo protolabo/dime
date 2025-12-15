@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:dime_flutter/view/components/header_commercant.dart';
@@ -7,13 +9,11 @@ import 'package:dime_flutter/view/components/nav_bar_commercant.dart';
 import 'package:dime_flutter/view/styles.dart';
 import 'package:dime_flutter/vm/commercant/create_item_vm.dart';
 import 'package:dime_flutter/vm/components/barcode_scanner_vm.dart';
-
 import '../../auth_viewmodel.dart';
 import 'create_qr_menu.dart';
 import 'myTeam.dart';
 import 'scan_page_commercant.dart';
 import 'search_page_commercant.dart';
-
 class CreateItemPage extends StatefulWidget {
   const CreateItemPage({super.key});
 
@@ -69,7 +69,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Ajouter un produit',
+                        'Add a new product',
                         style: AppTextStyles.title.copyWith(fontSize: 22),
                       ),
                     ),
@@ -124,7 +124,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  'Aucune image',
+                                  'No image',
                                   style: AppTextStyles.body.copyWith(
                                     color: Colors.grey[600],
                                   ),
@@ -145,8 +145,8 @@ class _CreateItemPageState extends State<CreateItemPage> {
                           ),
                           label: Text(
                             vm.selectedImage == null
-                                ? 'Ajouter une photo'
-                                : 'Changer la photo',
+                                ? 'Add a photo'
+                                : 'Change the photo',
                             style: AppTextStyles.body.copyWith(fontSize: 15),
                           ),
                           style: OutlinedButton.styleFrom(
@@ -161,7 +161,8 @@ class _CreateItemPageState extends State<CreateItemPage> {
                             final image = await picker.pickImage(
                               source: ImageSource.gallery,
                             );
-                            if (image != null) {
+                            if (image != null)
+                            {
                               vm.setImage(image);
                             }
                           },
@@ -175,19 +176,19 @@ class _CreateItemPageState extends State<CreateItemPage> {
 
                 /* Form Section */
                 Text(
-                  'Informations du produit',
+                  'Product Details',
                   style: AppTextStyles.title.copyWith(fontSize: 18),
                 ),
 
                 const SizedBox(height: 16),
 
-                _InputField(label: 'Nom du produit', controller: _nameC),
+                _InputField(label: 'Prodcut Name', controller: _nameC),
                 const SizedBox(height: 16),
 
                 BarcodeField(
                   controller: _barCodeC,
-                  label: 'Code-barres',
-                  hint: 'Scannez ou entrez le code',
+                  label: 'Barcode',
+                  hint: 'Scan or enter the barcode',
                   onScan: (barcode) async {
                     _nameC.text = '';
                     _descriptionC.text = '';
@@ -201,7 +202,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text('Produit trouvé sur Open Food Facts'),
+                            content: const Text('Product found on Open Food Facts'),
                             backgroundColor: Colors.green[600],
                           ),
                         );
@@ -210,7 +211,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: const Text('Produit introuvable sur Open Food Facts'),
+                            content: const Text('Product not found on Open Food Facts'),
                             backgroundColor: Colors.orange[600],
                           ),
                         );
@@ -222,7 +223,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                 const SizedBox(height: 16),
 
                 _InputField(
-                  label: 'Prix (\$)',
+                  label: 'Price (\$)',
                   controller: _priceC,
                   keyboardType: const TextInputType.numberWithOptions(
                     decimal: true,
@@ -276,7 +277,7 @@ class _CreateItemPageState extends State<CreateItemPage> {
                       ),
                     )
                         : Text(
-                      'Enregistrer le produit',
+                      'Save the product',
                       style: AppTextStyles.body.copyWith(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -412,7 +413,7 @@ class _BarcodeFieldState extends State<BarcodeField> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('Code scanné'),
+            content: const Text('Code scanned successfully'),
             backgroundColor: Colors.green[600],
           ),
         );
@@ -463,7 +464,7 @@ class _BarcodeFieldState extends State<BarcodeField> {
           ),
           child: IconButton(
             icon: const Icon(Icons.qr_code_scanner, color: Colors.white),
-            tooltip: 'Scanner un code',
+            tooltip: 'Scann Code',
             onPressed: _openScanner,
           ),
         ),

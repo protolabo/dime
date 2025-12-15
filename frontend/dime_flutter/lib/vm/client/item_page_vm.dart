@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:dime_flutter/vm/current_store.dart';
 import 'package:http/http.dart' as http;
@@ -12,7 +13,7 @@ class ItemPageViewModel extends ChangeNotifier {
   ItemPageViewModel({required this.productId, required this.auth}) {
     _init();
   }
-  static const _baseUrl = 'http://localhost:3001';
+  static final _baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
   /* ──────────── fields ──────────── */
   final int productId;
 

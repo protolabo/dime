@@ -69,7 +69,7 @@ class _StorePickerPageState extends State<StorePickerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Choisir un magasin')),
+      appBar: AppBar(title: const Text('Find a Store')),
       body: ListView.separated(
         itemCount: _stores.length,
         separatorBuilder: (_, __) => const Divider(height: 0),

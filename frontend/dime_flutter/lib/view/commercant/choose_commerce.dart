@@ -23,7 +23,7 @@ class ChooseCommercePage extends StatelessWidget {
 
           if (vm.error != null) {
             return Scaffold(
-              body: Center(child: Text('Erreur : ${vm.error}')),
+              body: Center(child: Text('Error : ${vm.error}')),
             );
           }
 

@@ -57,11 +57,11 @@ class CurrentActorService {
     try {
       final id = auth.actorId;
       if (id == null) {
-        throw Exception('Aucun utilisateur connecté (actor_id absent).');
+        throw Exception('No users logged in (actor_id absent).');
       }
       return id;
     } catch (e) {
-      throw Exception('Impossible d\'extraire actorId depuis le service d\'authentification: $e');
+      throw Exception('Unable to extract actorId from the authentication service: $e');
     }
   }
 
@@ -78,7 +78,7 @@ class CurrentActorService {
         .eq('actor_id', actorId)
         .maybeSingle();
     if (response == null) {
-      throw Exception('Aucun acteur trouvé pour ID $actorId');
+      throw Exception('No actor found for ID $actorId');
     }
     final actor = Client(
       actorId: response['actor_id'] as int,
@@ -90,7 +90,7 @@ class CurrentActorService {
     print(actor.role);
     if (expectedRole.contains(actor.role) == false) {
       throw Exception(
-        'Accès refusé : rôle \\« ${actor.role} \\», attendu \\« $roleLabel \\».',
+        'Access refused : role \\« ${actor.role} \\», expected \\« $roleLabel \\».',
       );
     }
 

@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:http/http.dart' as http;
 import '../../auth_viewmodel.dart';
 import '../current_store.dart';
 import '../current_connected_account_vm.dart';
-
+final String apiBaseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 enum AddItemMode { search, scan }
 
 class ProductLite {
@@ -18,7 +19,8 @@ class ProductLite {
 class SearchResult {
   final int productId;
   final String name;
-  const SearchResult({required this.productId, required this.name});
+  final String imageUrl ;
+  const SearchResult({required this.productId, required this.name, required this.imageUrl});
 }
 
 class AddOutcome {
@@ -83,7 +85,7 @@ class AddItemToShelfVM extends ChangeNotifier {
 
 
   Future<void> _loadShelfExisting() async {
-    final url = Uri.parse('http://localhost:3001/shelf-places?shelf_id=$shelfId');
+    final url = Uri.parse('$apiBaseUrl/shelf-places?shelf_id=$shelfId');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -119,7 +121,7 @@ class AddItemToShelfVM extends ChangeNotifier {
   Future<List<SearchResult>> _search(String q) async {
     if (_storeId == null) return const [];
     // 1) Tous les product_id vendus par ce store
-    final url = Uri.parse('http://localhost:3001/priced-products?store_id=$_storeId');
+    final url = Uri.parse('$apiBaseUrl/priced-products?store_id=$_storeId');
     var response = await http.get(url);
     print(response.body);
     print(response.statusCode);
@@ -169,6 +171,7 @@ class AddItemToShelfVM extends ChangeNotifier {
       return SearchResult(
         productId: e['product_id'] as int,
         name: (e['name'] as String?) ?? 'Item ${e['product_id']}',
+        imageUrl: (e['image_url'] as String?) ?? '',
       );
     }).toList();
   }
@@ -188,7 +191,7 @@ class AddItemToShelfVM extends ChangeNotifier {
       return const AddOutcome.fail('No store selected');
     }
 
-    final url = Uri.parse('http://localhost:3001/priced-products?store_id=$_storeId&product_id=$productId');
+    final url = Uri.parse('$apiBaseUrl/priced-products?store_id=$_storeId&product_id=$productId');
     final response = await http.get(url);
     Map<String, dynamic>? row;
     if (response.statusCode == 200) {
@@ -241,7 +244,7 @@ class AddItemToShelfVM extends ChangeNotifier {
         };
       }).toList();
 
-      final url = Uri.parse('http://localhost:3001/shelf-places');
+      final url = Uri.parse('$apiBaseUrl/shelf-places');
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
@@ -252,7 +255,7 @@ class AddItemToShelfVM extends ChangeNotifier {
       print(response.body);
       print(response.statusCode);
       if (response.statusCode != 201) {
-        throw Exception('Erreur lors de l\'insertion: ${response.body}');
+        throw Exception('Error While Inserting: ${response.body}');
       }
 
       alreadyOnShelf.addAll(selected.keys);
@@ -320,7 +323,6 @@ class AddItemToShelfVM extends ChangeNotifier {
       }) async {
     if (_busy) return;
 
-    // position overlay
     if (capture.barcodes.isNotEmpty) {
       final b = capture.barcodes.first;
       final rr = _rawRectFromBarcode(b);
@@ -334,7 +336,6 @@ class AddItemToShelfVM extends ChangeNotifier {
       final raw = code.rawValue;
       if (raw == null) continue;
 
-      // throttle
       final now = DateTime.now();
       if (raw == _lastRaw && now.difference(_lastTime) < const Duration(milliseconds: 500)) {
         continue;
@@ -351,8 +352,7 @@ class AddItemToShelfVM extends ChangeNotifier {
 
         _busy = true;
 
-        // fetch name for overlay
-        final url = Uri.parse('http://localhost:3001/products?product_id=$pid');
+        final url = Uri.parse('$apiBaseUrl/products?product_id=$pid');
         final response = await http.get(url);
         Map<String, dynamic>? p;
         if (response.statusCode == 200) {

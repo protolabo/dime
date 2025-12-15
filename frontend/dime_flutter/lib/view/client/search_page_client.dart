@@ -455,10 +455,21 @@ class _SearchResults extends StatelessWidget {
         final isProd = item['type'] == 'product';
 
         return ListTile(
-          leading: Icon(
-            isProd ? Icons.shopping_bag : Icons.store,
-            color: isProd ? Colors.blue[700] : Colors.green[700],
-          ),
+          leading: Container(
+              width: 70,
+              height: 70,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey[50] ,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: item['image_url']  != null && item['image_url'] !.isNotEmpty
+                  ? Image.network(item['image_url'] !, width: 70, height: 70, fit: BoxFit.contain)
+                  : Icon(
+          isProd ? Icons.shopping_bag : Icons.store,
+           color: isProd ? Colors.blue[700] : Colors.green[700],
+              ),
+              ),
           title: Text(
             item['title'],
             style: AppTextStyles.body.copyWith(
@@ -670,7 +681,7 @@ class _ProductCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '\$${product['price']?.toStringAsFixed(2) ?? '0.00'}',
+                        product['price']?.toStringAsFixed(2) != null ? '\$${product['price']?.toStringAsFixed(2)}' : 'Unavailable',
                         style: AppTextStyles.body.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

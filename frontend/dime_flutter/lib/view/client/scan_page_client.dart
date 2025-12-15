@@ -64,12 +64,14 @@ class _ScanClientPageBody extends StatelessWidget {
       ),
       bottomNavigationBar: navbar_client(
         currentIndex: 1,
-        onTap: (index) {
+        onTap: (index) async {
+          await vm.pauseCamera();
           if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteMenuPage()));
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoriteMenuPage()));
           } else if (index == 3) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPage()));
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPage()));
           }
+          await vm.resumeCamera();
         },
       ),
     );

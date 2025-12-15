@@ -37,33 +37,166 @@ class _NavBarView extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<NavBarCommercantVM>();
 
-    return BottomNavigationBar(
-      currentIndex: vm.currentIndex,
-      onTap: (i) {
-        vm.setIndex(i);
-        onTap(i);
-      },
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(35),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _NavItem(
+              icon: Icons.storefront,
+              label: 'Commerce',
+              isSelected: vm.currentIndex == 0,
+              onTap: () {
+                vm.setIndex(0);
+                onTap(0);
+              },
+            ),
+            _NavItem(
+              icon: Icons.person_outlined,
+              label: 'Team',
+              isSelected: vm.currentIndex == 1,
+              onTap: () {
+                vm.setIndex(1);
+                onTap(1);
+              },
+            ),
+            _NavItem(
+              icon: Icons.qr_code_scanner,
+              label: 'Scan',
+              isSelected: vm.currentIndex == 2,
+              hasNotification: false,
+              onTap: () {
+                vm.setIndex(2);
+                onTap(2);
+              },
+            ),
+            _NavItem(
+              icon: Icons.local_offer_outlined,
+              label: 'Promotions',
+              isSelected: vm.currentIndex == 3,
+              onTap: () {
+                vm.setIndex(3);
+                onTap(3);
+              },
+            ),
+            _NavItem(
+              icon: Icons.search,
+              label: 'Search',
+              isSelected: vm.currentIndex == 4,
+              onTap: () {
+                vm.setIndex(4);
+                onTap(4);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-      // Apparence alignée au client + couleurs de styles.dart
-      type: BottomNavigationBarType.fixed,
-      backgroundColor: AppColors.searchBg,
-      selectedItemColor: Colors.black,
-      unselectedItemColor: Colors.black54,
-      showSelectedLabels: true,
-      showUnselectedLabels: true,
-      selectedIconTheme: const IconThemeData(size: 45),
-      selectedLabelStyle:
-      AppTextStyles.body.copyWith(fontWeight: FontWeight.bold),
-      unselectedLabelStyle: AppTextStyles.body,
+/*───────────────────────────────────────────*/
 
-      // Items (ordre et libellés du prototype)
-      items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.storefront), label: 'My Commerce'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'My Team'),
-        BottomNavigationBarItem(icon: Icon(Icons.qr_code_scanner), label: 'Scan'),
-        BottomNavigationBarItem(icon: Icon(Icons.local_offer), label: 'Promotions'),
-        BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-      ],
+class _NavItem extends StatefulWidget {
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.hasNotification = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final bool hasNotification;
+
+  @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem> {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: EdgeInsets.symmetric(
+          horizontal: widget.isSelected ? 16 : 12,
+          vertical: 8,
+        ),
+        decoration: BoxDecoration(
+          color: widget.isSelected
+              ? Colors.white.withOpacity(0.0)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(
+                  widget.icon,
+                  color: Colors.white,
+                  size: 28,
+                ),
+                if (widget.hasNotification)
+                  Positioned(
+                    right: -4,
+                    top: -4,
+                    child: Container(
+                      width: 12,
+                      height: 12,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF4B6E),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF2D2D2D),
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              child: widget.isSelected
+                  ? Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  widget.label,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

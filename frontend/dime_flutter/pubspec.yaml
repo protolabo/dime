@@ -46,6 +46,7 @@ dependencies:
   geolocator: ^11.0.0
   image_picker: ^0.8.7+4
   path: any
+  flutter_google_places_sdk: ^0.3.9
 
 dev_dependencies:
   flutter_test:

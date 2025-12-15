@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:flutter/foundation.dart';
@@ -11,20 +12,21 @@ import 'package:printing/printing.dart';
 import 'package:dime_flutter/vm/current_store.dart';
 
 // Constante pour l'URL de base de l'API
-const String apiBaseUrl = 'http://localhost:3001';
-
+  final String apiBaseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 /// Représente un item (produit) présent sur l'étagère
 class ShelfItem {
   final int productId;
   final String name;
   final double? price;
   final String? currency;
+  final String? imageUrl;
 
   ShelfItem({
     required this.productId,
     required this.name,
     required this.price,
     required this.currency,
+    required this.imageUrl
   });
 }
 
@@ -121,7 +123,7 @@ class ShelfPageVM extends ChangeNotifier {
         // c) Recherche par (store_id, name) si on vient d'un clic interne
         final currentStoreId = await CurrentStoreService.getCurrentStoreId();
         if (currentStoreId == null) {
-          error = 'Store non sélectionné.';
+          error = 'Store Not selected.';
           loading = false;
           notifyListeners();
           return;
@@ -139,7 +141,7 @@ class ShelfPageVM extends ChangeNotifier {
       }
 
       if (shelfRow == null) {
-        error = 'Shelf introuvable.';
+        error = 'Shelf not found.';
         loading = false;
         notifyListeners();
         return;
@@ -151,7 +153,7 @@ class ShelfPageVM extends ChangeNotifier {
       qrData = (shelfRow['qr_code'] as String?) ?? initialQrData;
       imageUrl = shelfRow['image_url'] as String?;
       if (storeId == null) {
-        error = 'Shelf sans store associé.';
+        error = 'Shelf with no associated store.';
         loading = false;
         notifyListeners();
         return;
@@ -180,6 +182,7 @@ class ShelfPageVM extends ChangeNotifier {
 
       // ── 3) Noms des produits
       final nameById = <int, String>{};
+      final imageById = <int, String?>{};
       for (final pid in productIds) {
         final productResponse = await http.get(
           Uri.parse('$apiBaseUrl/products?product_id=$pid'),
@@ -190,6 +193,7 @@ class ShelfPageVM extends ChangeNotifier {
           final products = data['reviews'] as List;  // Contrôleur renvoie 'reviews'
           if (products.isNotEmpty) {
             nameById[pid] = (products.first['name'] as String?) ?? 'Unnamed';
+            imageById[pid]= (products.first['image_url'] as String?) ;
           }
         }
       }
@@ -218,6 +222,7 @@ class ShelfPageVM extends ChangeNotifier {
       items = productIds
           .map((pid) {
         final name = nameById[pid] ?? 'Product $pid';
+        final image=imageById[pid];
         final priceMap = priceById[pid];
         final amount = (priceMap?['amount'] as num?)?.toDouble();
         final currency = priceMap?['currency'] as String?;
@@ -226,6 +231,7 @@ class ShelfPageVM extends ChangeNotifier {
           name: name,
           price: amount,
           currency: currency,
+          imageUrl: image
         );
       })
           .toList()
@@ -272,10 +278,10 @@ class ShelfPageVM extends ChangeNotifier {
         _selectedImage = null;
         error = null;
       } else {
-        error = 'Erreur lors de la mise à jour de l\'image';
+        error = 'Error while updating store image';
       }
     } catch (e) {
-      error = 'Erreur : $e';
+      error = 'Error : $e';
     }
     notifyListeners();
   }
@@ -289,42 +295,46 @@ class ShelfPageVM extends ChangeNotifier {
     pw.Widget qrWidget;
     final dataUrl = qrData;
 
-    if (dataUrl != null && dataUrl.startsWith('data:image')) {
-      final bytes = _dataUrlToBytes(dataUrl);
-      final img = pw.MemoryImage(bytes);
-      qrWidget = pw.Image(img, width: 240, height: 240);
-    } else {
-      // Fallback (rare) : QR à partir d'un payload stable
-      final payload = 'shelf:${shelfId ?? title}';
-      qrWidget = pw.BarcodeWidget(
-        barcode: pw.Barcode.qrCode(),
-        data: payload,
-        width: 240,
-        height: 240,
-      );
-    }
+    try {
+      if (dataUrl != null) {
+        final bytes = await _getQrBytes(dataUrl);
+        final img = pw.MemoryImage(bytes);
+        qrWidget = pw.Image(img, width: 240, height: 240);
+      } else {
+        final payload = 'shelf:${shelfId ?? title}';
+        qrWidget = pw.BarcodeWidget(
+          barcode: pw.Barcode.qrCode(),
+          data: payload,
+          width: 240,
+          height: 240,
+        );
+      }
 
-    doc.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (ctx) => pw.Center(
-          child: pw.Column(
-            mainAxisSize: pw.MainAxisSize.min,
-            children: [
-              pw.Text(title, style: const pw.TextStyle(fontSize: 24)),
-              pw.SizedBox(height: 20),
-              qrWidget,
-            ],
+      doc.addPage(
+        pw.Page(
+          pageFormat: PdfPageFormat.a4,
+          build: (ctx) => pw.Center(
+            child: pw.Column(
+              mainAxisSize: pw.MainAxisSize.min,
+              children: [
+                pw.Text(title, style: const pw.TextStyle(fontSize: 24)),
+                pw.SizedBox(height: 20),
+                qrWidget,
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    final bytes = await doc.save();
-    await Printing.sharePdf(
-      bytes: bytes,
-      filename: 'shelf_${shelfId ?? title}_qr.pdf',
-    );
+      final bytes = await doc.save();
+      await Printing.sharePdf(
+        bytes: bytes,
+        filename: 'shelf_${shelfId ?? title}_qr.pdf',
+      );
+    } catch (e) {
+      error = 'Error generating QR PDF: $e';
+      notifyListeners();
+    }
   }
 
   /// Refresh l'étagère après l'ajout d'éléments.
@@ -354,6 +364,7 @@ class ShelfPageVM extends ChangeNotifier {
 
       // Récupérer les noms des produits
       final nameById = <int, String>{};
+      final imageById = <int, String?>{};
       for (final pid in productIds) {
         final productResponse = await http.get(
           Uri.parse('$apiBaseUrl/products?product_id=$pid'),
@@ -364,6 +375,7 @@ class ShelfPageVM extends ChangeNotifier {
           final products = data['reviews'] as List;
           if (products.isNotEmpty) {
             nameById[pid] = (products.first['name'] as String?) ?? 'Unnamed';
+            imageById[pid]= (products.first['image_url'] as String?) ?? null;
           }
         }
       }
@@ -393,6 +405,7 @@ class ShelfPageVM extends ChangeNotifier {
         name: nameById[pid] ?? 'Product $pid',
         price: (priceById[pid]?['amount'] as num?)?.toDouble(),
         currency: priceById[pid]?['currency'] as String?,
+        imageUrl: imageById[pid] ?? null
       ))
           .toList()
         ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
@@ -403,13 +416,103 @@ class ShelfPageVM extends ChangeNotifier {
       notifyListeners();
     }
   }
+  /// Retire un produit de l'étagère
+  Future<void> removeItemFromShelf(int productId) async {
+    if (shelfId == null) {
+      error = 'Shelf id messing';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      error = null;
+
+      final response = await http.delete(
+        Uri.parse('$apiBaseUrl/shelf-places'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'shelf_id': shelfId,
+          'product_id': productId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        items.removeWhere((item) => item.productId == productId);
+        notifyListeners();
+      } else {
+        final data = jsonDecode(response.body);
+        error = data['error'] ?? 'Error While deleting the product';
+        notifyListeners();
+      }
+    } catch (e) {
+      error = 'Error : $e';
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteShelf() async {
+    if (shelfId == null) {
+      error = 'Shelf id missing';
+      notifyListeners();
+      return;
+    }
+
+    try {
+      error = null;
+
+      final response = await http.delete(
+        Uri.parse('$apiBaseUrl/shelves/$shelfId'),
+      );
+
+      if (response.statusCode != 200) {
+        final data = jsonDecode(response.body);
+        error = data['error'] ?? 'Error while deleting the shelf';
+        notifyListeners();
+      }
+    } catch (e) {
+      error = 'Error : $e';
+      notifyListeners();
+    }
+  }
+
 
   // Helpers
+
+  /// Convertit une DataURL (data:*;base64,XXXXX) en bytes
   Uint8List _dataUrlToBytes(String dataUrl) {
     final idx = dataUrl.indexOf(',');
     final b64 = idx >= 0 ? dataUrl.substring(idx + 1) : dataUrl;
     return base64Decode(b64);
   }
+
+  /// Récupère les bytes soit depuis une DataURL, soit depuis une URL HTTP(S)
+  Future<Uint8List> _getQrBytes(String dataUrlOrUrl) async {
+    if (dataUrlOrUrl.trim().isEmpty) {
+      throw Exception('QR data empty');
+    }
+
+    // Data URL détectée
+    if (dataUrlOrUrl.startsWith('data:')) {
+      return _dataUrlToBytes(dataUrlOrUrl);
+    }
+
+    // URL HTTP(S) détectée -> fetch
+    if (dataUrlOrUrl.startsWith('http://') || dataUrlOrUrl.startsWith('https://')) {
+      final resp = await http.get(Uri.parse(dataUrlOrUrl));
+      if (resp.statusCode == 200) {
+        return resp.bodyBytes;
+      }
+      throw Exception('Failed to fetch QR image: ${resp.statusCode}');
+    }
+
+    // Fallback : tenter de décoder comme base64 pur
+    try {
+      return base64Decode(dataUrlOrUrl);
+    } catch (_) {
+      throw Exception('Unsupported QR data format');
+    }
+  }
+
 }
 
 

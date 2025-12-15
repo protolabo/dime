@@ -39,6 +39,7 @@ class _ScanCommercantPageBody extends StatelessWidget {
     return Scaffold(
       appBar: const HeaderCommercant(),
       body: Stack(
+
         children: [
           Container(color: Colors.white),
           LayoutBuilder(
@@ -64,14 +65,16 @@ class _ScanCommercantPageBody extends StatelessWidget {
       ),
       bottomNavigationBar: navbar_commercant(
         currentIndex: 2,
-        onTap: (index) {
+        onTap: (index) async {
+          await vm.pauseCamera();
           if (index == 0) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateQrMenuPage()));
           } else if (index == 1) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageTeamPage()));
-          }else if (index == 4) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const ManageTeamPage()));
+          } else if (index == 4) {
+            await Navigator.push(context, MaterialPageRoute(builder: (_) => const SearchPageCommercant()));
           }
+          await vm.resumeCamera();
         },
       ),
     );
@@ -214,7 +217,7 @@ class _ScanCommercantPageBody extends StatelessWidget {
                     }
                   },
                   child: Text(
-                    data['name'] ?? 'Item inconnu',
+                    data['name'] ?? 'Unknown Product',
                     style: AppTextStyles.subtitle.copyWith(color: Colors.white),
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -235,7 +238,7 @@ class _ScanCommercantPageBody extends StatelessWidget {
                   ),
                 ] else ...[
                   Text(
-                    amount != null ? '${amount.toStringAsFixed(2)} $currency' : 'Prix —',
+                    amount != null ? '${amount.toStringAsFixed(2)} $currency' : 'Price —',
                     style: AppTextStyles.body.copyWith(color: Colors.white70, fontSize: 16),
                   ),
                 ]
@@ -311,7 +314,7 @@ class _ScanCommercantPageBody extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Text(
-                  '+${items.length - list.length} autres items — appuie pour agrandir',
+                  '+${items.length - list.length} other items — click to enlarge',
                   style: AppTextStyles.body.copyWith(color: Colors.white60, fontSize: 12),
                 ),
               ),

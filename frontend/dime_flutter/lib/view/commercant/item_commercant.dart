@@ -132,7 +132,7 @@ class _ItemBodyState extends State<_ItemBody> {
                   child: IconButton(
                     icon: Icon(Icons.delete_outline, size: 20, color: Colors.red[700]),
                     onPressed: () => _showDeleteDialog(context, vm),
-                    tooltip: 'Retirer du magasin',
+                    tooltip: 'Remover Item from Store',
                   ),
                 ),
               ],
@@ -156,7 +156,7 @@ class _ItemBodyState extends State<_ItemBody> {
                       Icon(Icons.image_outlined, size: 20, color: Colors.grey[600]),
                       const SizedBox(width: 8),
                       Text(
-                        'Photo du produit',
+                        'Product Image',
                         style: AppTextStyles.body.copyWith(
                           fontSize: 14,
                           color: Colors.grey[600],
@@ -210,7 +210,7 @@ class _ItemBodyState extends State<_ItemBody> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Image non disponible',
+                                    'Image not available',
                                     style: AppTextStyles.body.copyWith(
                                       color: Colors.grey[600],
                                     ),
@@ -240,7 +240,7 @@ class _ItemBodyState extends State<_ItemBody> {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'Aucune image',
+                              'No image',
                               style: AppTextStyles.body.copyWith(
                                 color: Colors.grey[600],
                               ),
@@ -265,9 +265,9 @@ class _ItemBodyState extends State<_ItemBody> {
                           label: Text(
                             vm.selectedImage == null
                                 ? (vm.imageUrl == null || vm.imageUrl!.isEmpty
-                                ? 'Ajouter une photo'
-                                : 'Changer la photo')
-                                : 'Changer la photo',
+                                ? 'Add a photo'
+                                : 'Change the photo')
+                                : 'Change the photo',
                             style: AppTextStyles.body.copyWith(fontSize: 15),
                           ),
                           style: OutlinedButton.styleFrom(
@@ -296,7 +296,7 @@ class _ItemBodyState extends State<_ItemBody> {
                             if (!context.mounted) return;
                             _showSnackBar(
                               context,
-                              vm.errorMessage ?? 'Image mise à jour',
+                              vm.errorMessage ?? 'Image Updated',
                               isError: vm.errorMessage != null,
                             );
                           },
@@ -309,7 +309,7 @@ class _ItemBodyState extends State<_ItemBody> {
                             elevation: 0,
                           ),
                           child: Text(
-                            'Enregistrer',
+                            'Save',
                             style: AppTextStyles.body.copyWith(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
@@ -328,7 +328,7 @@ class _ItemBodyState extends State<_ItemBody> {
 
             /* Informations du produit */
             Text(
-              'Informations du produit',
+              'Product Details',
               style: AppTextStyles.title.copyWith(fontSize: 18),
             ),
 
@@ -336,7 +336,7 @@ class _ItemBodyState extends State<_ItemBody> {
 
             /* Nom du produit éditable */
             _buildEditableField(
-              label: 'Nom du produit',
+              label: 'Product Name',
               controller: _nameCtrl,
               isEditing: _isEditingName,
               icon: Icons.label_outline,
@@ -349,7 +349,7 @@ class _ItemBodyState extends State<_ItemBody> {
                 await vm.updateName(_nameCtrl.text);
                 setState(() => _isEditingName = false);
                 if (!context.mounted) return;
-                _showSnackBar(context, vm.errorMessage ?? 'Nom mis à jour');
+                _showSnackBar(context, vm.errorMessage ?? 'Name Updated');
               },
             ),
 
@@ -357,7 +357,7 @@ class _ItemBodyState extends State<_ItemBody> {
 
             /* Prix éditable */
             _buildEditableField(
-              label: 'Prix régulier (\$)',
+              label: 'Regular Price (\$)',
               controller: _priceCtrl,
               isEditing: _isEditingPrice,
               icon: Icons.attach_money,
@@ -373,13 +373,13 @@ class _ItemBodyState extends State<_ItemBody> {
               onSave: () async {
                 final amt = double.tryParse(_priceCtrl.text);
                 if (amt == null) {
-                  _showSnackBar(context, 'Prix invalide', isError: true);
+                  _showSnackBar(context, 'Invalid Price', isError: true);
                   return;
                 }
                 await vm.updatePrice(amt, currencyCode: vm.currency ?? 'CAD');
                 setState(() => _isEditingPrice = false);
                 if (!context.mounted) return;
-                _showSnackBar(context, vm.errorMessage ?? 'Prix mis à jour');
+                _showSnackBar(context, vm.errorMessage ?? 'Price Updated');
               },
             ),
 
@@ -398,11 +398,9 @@ class _ItemBodyState extends State<_ItemBody> {
                 _descriptionCtrl.text = vm.description ?? '';
               },
               onSave: () async {
-                // TODO: Appeler la méthode du VM pour mettre à jour la description
-                // await vm.updateDescription(_descriptionCtrl.text);
+                await vm.updateDescription(_descriptionCtrl.text);
                 setState(() => _isEditingDescription = false);
                 if (!context.mounted) return;
-                _showSnackBar(context, 'Fonctionnalité à implémenter');
               },
             ),
 
@@ -410,7 +408,7 @@ class _ItemBodyState extends State<_ItemBody> {
 
             /* Étagères */
             Text(
-              'Étagères (${vm.shelves.length})',
+              'Shelf (${vm.shelves.length})',
               style: AppTextStyles.title.copyWith(fontSize: 18),
             ),
 
@@ -433,7 +431,7 @@ class _ItemBodyState extends State<_ItemBody> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      'Aucune étagère avec cet article',
+                      'No shelves contain this item.',
                       style: AppTextStyles.body.copyWith(
                         color: Colors.grey[600],
                       ),
@@ -509,7 +507,7 @@ class _ItemBodyState extends State<_ItemBody> {
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.qr_code, size: 20,color: Colors.white),
                 label: Text(
-                  'Télécharger le QR Code',
+                  'Download QR Code',
                   style: AppTextStyles.body.copyWith(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -530,7 +528,7 @@ class _ItemBodyState extends State<_ItemBody> {
                   if (vm.errorMessage != null) {
                     _showSnackBar(context, vm.errorMessage!, isError: true);
                   } else {
-                    _showSnackBar(context, 'QR Code téléchargé avec succès');
+                    _showSnackBar(context, 'QR Code Added with success');
                   }
                 },
               ),
@@ -640,7 +638,7 @@ class _ItemBodyState extends State<_ItemBody> {
                       ),
                     ),
                     child: Text(
-                      'Annuler',
+                      'Cancel',
                       style: AppTextStyles.body.copyWith(
                         color: Colors.grey[700],
                       ),
@@ -660,7 +658,7 @@ class _ItemBodyState extends State<_ItemBody> {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Enregistrer',
+                      'Save',
                       style: AppTextStyles.body.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.w600,
@@ -672,7 +670,7 @@ class _ItemBodyState extends State<_ItemBody> {
             ),
           ] else
             Text(
-              controller.text.isEmpty ? 'Non renseigné' : controller.text,
+              controller.text.isEmpty ? 'Not specified' : controller.text,
               style: AppTextStyles.body.copyWith(
                 fontSize: 15,
                 color: controller.text.isEmpty ? Colors.grey[500] : null,
@@ -689,17 +687,17 @@ class _ItemBodyState extends State<_ItemBody> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Retirer l\'article du magasin ?'),
+        title: const Text('Remove Product(s) from store ?'),
         titleTextStyle: AppTextStyles.title.copyWith(fontSize: 18),
         content: const Text(
-          'Cette action supprimera son prix dans ce magasin et le retirera de toutes les étagères de ce magasin. Le produit lui-même ne sera pas supprimé du catalogue global.',
+          'This action will remove its price from this store and take it off all shelves in this store. The product itself will not be removed from the global catalog.',
         ),
         contentTextStyle: AppTextStyles.body.copyWith(fontSize: 14),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              'Annuler',
+              'Cancel',
               style: AppTextStyles.body.copyWith(color: Colors.grey[700]),
             ),
           ),
@@ -725,8 +723,8 @@ class _ItemBodyState extends State<_ItemBody> {
       _showSnackBar(
         context,
         success
-            ? 'Article retiré de ce magasin.'
-            : (vm.errorMessage ?? 'Échec de la suppression de l\'article.'),
+            ? 'Product Removed from store.'
+            : (vm.errorMessage ?? 'Error deleting the product.'),
         isError: !success,
       );
       if (success) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 /// Modèle Produit (id + nom)
@@ -7,10 +8,9 @@ class Product {
   final String name;
   Product(this.id, this.name);
 }
-
+final String _baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 /// Service qui charge les produits favoris pour un acteur donné via une API.
 class FavoriteProductService {
-  static const _baseUrl = 'http://localhost:3001';
   /// Récupère la liste des Product (id + name) depuis l'API
   static Future<List<Product>> fetchFavorites(int actorId) async {
     final url = Uri.parse('$_baseUrl/favorite-products?actor_id=$actorId');

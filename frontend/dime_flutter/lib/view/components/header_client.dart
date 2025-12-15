@@ -49,14 +49,19 @@ class _HeaderView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   /* ─────────── icône adresse ─────────── */
-                  SvgPicture.asset(
-                    'assets/icons/address-icon.svg',
-                    height: 26,
-                    colorFilter: const ColorFilter.mode(
-                      Colors.black,
-                      BlendMode.srcIn,
+                  Container(
+                    padding: const EdgeInsets.only(top: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: const Icon(
+                      Icons.location_on_rounded,
+                      size: 26,
+                      color: Colors.black87,
                     ),
                   ),
+
                   const SizedBox(width: 8),
 
                   /* ────── bloc “Currently at / nom” ────── */
@@ -105,20 +110,28 @@ class _HeaderView extends StatelessWidget {
                   ),
 
                   /* ─────────── Logout ─────────── */
-                  IconButton(
-                    splashRadius: 22,
-                    onPressed: () {
-                      Navigator.of(context).pushAndRemoveUntil(
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () => Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(builder: (_) => const MyApp()),
                             (_) => false,
-                      );
-                    },
-                    icon: SvgPicture.asset(
-                      'assets/icons/logout.svg',
-                      height: 26,
-                      colorFilter: const ColorFilter.mode(
-                        Colors.black,
-                        BlendMode.srcIn,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade50,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: SvgPicture.asset(
+                          'assets/icons/logout.svg',
+                          height: 20,
+                          colorFilter: ColorFilter.mode(
+                            Colors.red.shade600,
+                            BlendMode.srcIn,
+                          ),
+                        ),
                       ),
                     ),
                   ),

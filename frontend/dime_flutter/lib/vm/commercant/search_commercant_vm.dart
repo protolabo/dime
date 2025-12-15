@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:dime_flutter/vm/current_store.dart';
@@ -38,7 +39,7 @@ class ShelfResult {
 }
 
 class SearchCommercantVM extends ChangeNotifier {
-  static const String apiBaseUrl = 'http://localhost:3001';
+  static final String apiBaseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 
   final TextEditingController searchController = TextEditingController();
 
@@ -61,6 +62,7 @@ class SearchCommercantVM extends ChangeNotifier {
 
   Future<void> bootstrap() async {
     _storeId = await CurrentStoreService.getCurrentStoreId();
+    search('');
     notifyListeners();
   }
 
@@ -72,6 +74,8 @@ class SearchCommercantVM extends ChangeNotifier {
   }
 
   Future<void> search(String query) async {
+    late http.Response shelfResponse;
+    late http.Response prodResponse;
     _lastQuery = query;
 
     final sid = _storeId;
@@ -83,12 +87,6 @@ class SearchCommercantVM extends ChangeNotifier {
     }
 
     final q = query.trim();
-    if (q.isEmpty) {
-      _products = [];
-      _shelves = [];
-      notifyListeners();
-      return;
-    }
 
     _isLoading = true;
     notifyListeners();
@@ -96,12 +94,22 @@ class SearchCommercantVM extends ChangeNotifier {
     try {
       // 1) Recherche produits (par nom ou code-barres)
       //print('🔍 Recherche produits pour "$q" dans store $sid');
-      final prodResponse = await http.get(
-        Uri.parse('$apiBaseUrl/products?queryCommercant=${Uri.encodeComponent(q)}')
-      );
+
+      if (q.isEmpty) {
+        prodResponse = await http.get(
+            Uri.parse('$apiBaseUrl/products')
+        );
+
+      }
+      else{
+        prodResponse = await http.get(
+            Uri.parse('$apiBaseUrl/products?queryCommercant=${Uri.encodeComponent(q)}')
+        );
+      }
+
 
       if (prodResponse.statusCode != 200) {
-        throw Exception('Erreur produits: ${prodResponse.statusCode}');
+        throw Exception('Error products: ${prodResponse.statusCode}');
       }
 
       final prodData = jsonDecode(prodResponse.body);
@@ -151,11 +159,17 @@ class SearchCommercantVM extends ChangeNotifier {
         );
       }
 
-      // 3) Recherche étagères (par nom ou location)
-      final shelfResponse = await http.get(
-        Uri.parse('$apiBaseUrl/shelves?store_id=$sid&queryCommercant=${Uri.encodeComponent(q)}')
-      );
-
+      if (q.isEmpty) {
+        shelfResponse = await http.get(
+            Uri.parse('$apiBaseUrl/shelves?store_id=$sid')
+        );
+      }
+      else{
+        // 3) Recherche étagères (par nom ou location)
+        shelfResponse = await http.get(
+            Uri.parse('$apiBaseUrl/shelves?store_id=$sid&queryCommercant=${Uri.encodeComponent(q)}')
+        );
+      }
       List<ShelfResult> shelfResults = [];
       if (shelfResponse.statusCode == 200) {
         final shelfData = jsonDecode(shelfResponse.body);

@@ -77,7 +77,7 @@ class _AddItemToShelfBody extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Ajouter des articles',
+                            'Add Products',
                             style: AppTextStyles.title.copyWith(fontSize: 22),
                           ),
                           const SizedBox(height: 2),
@@ -107,7 +107,7 @@ class _AddItemToShelfBody extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _ModeButton(
-                          label: 'Rechercher',
+                          label: 'Find',
                           icon: Icons.search,
                           active: vm.mode == AddItemMode.search,
                           onTap: () => vm.setMode(AddItemMode.search),
@@ -116,7 +116,7 @@ class _AddItemToShelfBody extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _ModeButton(
-                          label: 'Scanner',
+                          label: 'Scan',
                           icon: Icons.qr_code_scanner,
                           active: vm.mode == AddItemMode.scan,
                           onTap: () => vm.setMode(AddItemMode.scan),
@@ -157,7 +157,7 @@ class _AddItemToShelfBody extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        'Articles sélectionnés',
+                        'Selected Products',
                         style: AppTextStyles.body.copyWith(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -207,7 +207,7 @@ class _AddItemToShelfBody extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                '${vm.selected.length} article(s) ajouté(s)',
+                                '${vm.selected.length} Product(s) added successfully!',
                               ),
                               backgroundColor: Colors.green[600],
                             ),
@@ -217,7 +217,7 @@ class _AddItemToShelfBody extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                vm.lastMessage ?? 'Erreur',
+                                vm.lastMessage ?? 'Error',
                               ),
                               backgroundColor: Colors.red[600],
                             ),
@@ -234,7 +234,7 @@ class _AddItemToShelfBody extends StatelessWidget {
                         ),
                       )
                           : Text(
-                        'Ajouter ${vm.selected.length} article(s)',
+                        'Add ${vm.selected.length} product(s)',
                         style: AppTextStyles.body.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
@@ -328,7 +328,7 @@ class _SearchArea extends StatelessWidget {
             onChanged: vm.onQueryChanged,
             style: AppTextStyles.body.copyWith(fontSize: 15),
             decoration: InputDecoration(
-              hintText: 'Rechercher un article...',
+              hintText: 'Find a product...',
               hintStyle: AppTextStyles.body.copyWith(
                 fontSize: 14,
                 color: Colors.grey[400],
@@ -372,7 +372,7 @@ class _SearchArea extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Aucun résultat',
+                  'No results',
                   style: AppTextStyles.body.copyWith(
                     color: Colors.grey[600],
                   ),
@@ -418,7 +418,7 @@ class _SearchArea extends StatelessWidget {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              res.reason ?? 'Erreur',
+                              res.reason ?? 'Error',
                             ),
                             backgroundColor: Colors.orange[600],
                           ),
@@ -437,7 +437,9 @@ class _SearchArea extends StatelessWidget {
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: Icon(
+                          child: r.imageUrl  != null && r.imageUrl !.isNotEmpty
+                              ? Image.network(r.imageUrl !, width: 70, height: 70, fit: BoxFit.contain)
+                              : Icon(
                             Icons.shopping_bag_outlined,
                             size: 20,
                             color: Colors.grey[600],
@@ -467,7 +469,7 @@ class _SearchArea extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'Déjà ajouté',
+                              'Already added',
                               style: AppTextStyles.body.copyWith(
                                 fontSize: 12,
                                 color: Colors.grey[600],
@@ -548,7 +550,7 @@ class _ScanArea extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                'Scannez le code d\'un article',
+                'Scan a product',
                 style: AppTextStyles.body.copyWith(
                   color: Colors.white,
                   fontSize: 14,
@@ -611,7 +613,7 @@ class _ProductOverlay extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  p.name ?? 'Article inconnu',
+                  p.name ?? 'Unknown Product',
                   style: AppTextStyles.body.copyWith(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
@@ -620,7 +622,7 @@ class _ProductOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  already ? 'Déjà ajouté' : 'Appuyez pour ajouter',
+                  already ? 'Already Added' : 'Tap to Add',
                   style: AppTextStyles.body.copyWith(
                     fontSize: 13,
                     color: already ? Colors.orange[600] : Colors.grey[600],
@@ -640,7 +642,7 @@ class _ProductOverlay extends StatelessWidget {
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.add, color: Colors.white),
-                    tooltip: 'Ajouter',
+                    tooltip: 'Add',
                     onPressed: () async {
                       final res = await vm.addProduct(
                         p.id,
@@ -651,8 +653,8 @@ class _ProductOverlay extends StatelessWidget {
                         SnackBar(
                           content: Text(
                             res.added
-                                ? 'Ajouté : ${p.name ?? p.id}'
-                                : (res.reason ?? 'Non ajouté'),
+                                ? 'Added : ${p.name ?? p.id}'
+                                : (res.reason ?? 'Not Added'),
                           ),
                           backgroundColor: res.added
                               ? Colors.green[600]
@@ -670,7 +672,7 @@ class _ProductOverlay extends StatelessWidget {
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.close, size: 20),
-                  tooltip: 'Fermer',
+                  tooltip: 'Close',
                   onPressed: vm.clearOverlay,
                 ),
               ),

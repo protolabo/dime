@@ -98,6 +98,7 @@ class _ViewTeamMembersPageState extends State<ViewTeamMembersPage> {
             final isVisible = _visibleCodes.contains(actorId);
 
             return Card(
+                color: Colors.grey[200],
               margin: const EdgeInsets.only(bottom: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -133,13 +134,13 @@ class _ViewTeamMembersPageState extends State<ViewTeamMembersPage> {
                                   color: Colors.black,
                                 ),
                               ),
-                              Text(
-                                employee['email'] as String,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF666666),
-                                ),
-                              ),
+                              // Text(
+                              //   employee['email'] as String,
+                              //   style: const TextStyle(
+                              //     fontSize: 12,
+                              //     color: Color(0xFF666666),
+                              //   ),
+                              // ),
                             ],
                           ),
                         ),

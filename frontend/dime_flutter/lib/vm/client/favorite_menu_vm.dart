@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import '../../auth_viewmodel.dart';
 import '../current_connected_account_vm.dart';
@@ -9,7 +10,7 @@ import '../current_connected_account_vm.dart';
 /// View-Model pour la page `FavoriteMenuPage`
 class FavoriteMenuVM extends ChangeNotifier {
   final AuthViewModel auth;
-  final baseUrl = 'http://localhost:3001';
+  final baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 
   FavoriteMenuVM({required this.auth});
 
@@ -90,7 +91,8 @@ class FavoriteMenuVM extends ChangeNotifier {
             'address': store['address'],
             'city': store['city'],
             'country': store['country'],
-            'postal_code': store['postal_code']
+            'postal_code': store['postal_code'],
+            'logo': store['logo_url']
           };
         }
       }
@@ -165,6 +167,7 @@ class FavoriteMenuVM extends ChangeNotifier {
             'country': storeInfo?['country'] ?? '',
             'postal_code': storeInfo?['postal_code'] ?? '',
             'isFavorite': true,
+            'logo': storeInfo?['logo'] ?? '',
           });
 
           favoriteStoreStates[storeId] = true;

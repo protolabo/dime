@@ -90,17 +90,29 @@ class _HeaderCommercantView extends StatelessWidget {
               const SizedBox(width: 4),
 
               // ── Bouton logout
-              IconButton(
-                splashRadius: 22,
-                onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const MyApp()),
-                      (_) => false,
-                ),
-                icon: SvgPicture.asset(
-                  'assets/icons/logout.svg',
-                  height: 22,
-                  colorFilter:
-                  const ColorFilter.mode(Colors.black, BlendMode.srcIn),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () => Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const MyApp()),
+                        (_) => false,
+                  ),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: SvgPicture.asset(
+                      'assets/icons/logout.svg',
+                      height: 20,
+                      colorFilter: ColorFilter.mode(
+                        Colors.red.shade600,
+                        BlendMode.srcIn,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],

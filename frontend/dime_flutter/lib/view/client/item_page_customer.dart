@@ -595,7 +595,7 @@ class _SimilarItemsSection extends StatelessWidget {
           itemCount: similarItems.length,
           itemBuilder: (_, i) {
             final item = similarItems[i];
-            return _SimilarItemCard(product: item);
+            return _SimilarItemCard(product: item,vm: vm);
           },
         );
       },
@@ -606,10 +606,10 @@ class _SimilarItemsSection extends StatelessWidget {
 
 /* ──────────── SIMILAR ITEM CARD ──────────── */
 class _SimilarItemCard extends StatelessWidget {
-  const _SimilarItemCard({required this.product});
+  const _SimilarItemCard({required this.product,required this.vm});
 
   final Map<String, dynamic> product;
-
+  final SearchPageViewModel vm;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -665,6 +665,10 @@ class _SimilarItemCard extends StatelessWidget {
                   Positioned(
                     top: 8,
                     right: 8,
+                    child: GestureDetector(
+                      onTap: () {
+                        vm.toggleFavorite(product['id']);
+                      },
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
@@ -688,7 +692,7 @@ class _SimilarItemCard extends StatelessWidget {
                             : Colors.black,
                       ),
                     ),
-                  ),
+                  )),
                 ],
               ),
             ),

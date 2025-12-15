@@ -1,7 +1,9 @@
+// frontend/dime_flutter/lib/vm/commercant/create_item_vm.dart
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:dime_flutter/vm/current_store.dart';
@@ -11,9 +13,10 @@ import 'package:image_picker/image_picker.dart';
 import '../../auth_viewmodel.dart';
 
 /// ViewModel utilisé par `CreateItemPage`.
-/// – Enregistre l’article dans le backend Express (/item/new)
-/// – Récupère l’image QR au format data-URL renvoyée par l’EJS du backend
+/// – Enregistre l’article dans le backend Express
+/// – Récupère l’image QR au format data-URL
 class CreateItemViewModel extends ChangeNotifier {
+  final String apiBaseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
   /* ─────────────── Public state ─────────────── */
   String? qrDataUrl;
   String? errorMessage;
@@ -55,11 +58,11 @@ class CreateItemViewModel extends ChangeNotifier {
       final merchant = await CurrentActorService.getCurrentMerchant(auth: auth);
 
       if (storeId == null) {
-        errorMessage = 'Aucun commerce sélectionné.';
+        errorMessage = 'No Commerce Selected.';
         return;
       }
 
-      final uri = Uri.parse('http://localhost:3001/products');
+      final uri = Uri.parse('$apiBaseUrl/products');
       final request = http.MultipartRequest('POST', uri);
 
       request.fields['name'] = name;
@@ -88,14 +91,28 @@ class CreateItemViewModel extends ChangeNotifier {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Produit enregistré ✔')),
+            const SnackBar(content: Text('Product saved ✔')),
+          );
+        }
+      } else if (response.statusCode == 409) {
+        String message = 'Product already available in this store.';
+        try {
+          final body = jsonDecode(response.body);
+          if (body is Map && body['error'] != null) {
+            message = body['error'].toString();
+          }
+        } catch (_) {}
+        errorMessage = message;
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: Colors.orange[600]),
           );
         }
       } else {
-        errorMessage = 'Erreur serveur (${response.statusCode})';
+        errorMessage = 'server error (${response.statusCode})';
       }
     } catch (e) {
-      errorMessage = 'Erreur : $e';
+      errorMessage = 'Error : $e';
     } finally {
       _isSaving = false;
       notifyListeners();
@@ -103,4 +120,3 @@ class CreateItemViewModel extends ChangeNotifier {
   }
 
 }
-

@@ -244,9 +244,8 @@ class _FavoriteStoresList extends StatelessWidget {
       itemCount: vm.favoriteStores.length,
       itemBuilder: (ctx, i) {
         final store = vm.favoriteStores[i];
-
         return Card(
-          color: Colors.grey.shade100,
+          color: Colors.grey[50],
           margin: const EdgeInsets.only(bottom: 12),
           child: ListTile(
             contentPadding: const EdgeInsets.symmetric(
@@ -254,16 +253,18 @@ class _FavoriteStoresList extends StatelessWidget {
               vertical: 8,
             ),
             leading: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.blue[50],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.store,
-                color: Colors.blue[700],
-              ),
+              width: 70,
+              height: 70,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+            color: Colors.grey[100] ,
+            borderRadius: BorderRadius.circular(8),
             ),
+            child: store['logo'] != null && store['logo']!.isNotEmpty
+                ? Image.network(store['logo']!, width: 70, height: 70, fit: BoxFit.contain)
+                : Icon(
+                Icons.store,
+                color: Colors.green[700])),
             title: Text(
               store['name'] ?? 'Unknown Store',
               style: AppTextStyles.body.copyWith(
@@ -464,7 +465,7 @@ class _ProductCard extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                        '\$${product['price']?.toStringAsFixed(2) ?? 'Not available'}',
+                        product['price']?.toStringAsFixed(2) != null ? '\$${product['price']?.toStringAsFixed(2)}' : 'Unavailable',
                         style: AppTextStyles.body.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:dime_flutter/vm/current_store.dart';
@@ -7,6 +8,7 @@ import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import '../../auth_viewmodel.dart';
 
 class CreateShelfViewModel extends ChangeNotifier {
+  static final String apiBaseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
   final AuthViewModel auth;
   String? qrDataUrl;
   String? errorMessage;
@@ -30,7 +32,7 @@ class CreateShelfViewModel extends ChangeNotifier {
   }) async {
     if (shelfName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Veuillez entrer un nom d\'étagère.')),
+        const SnackBar(content: Text('You need to enter a name for the shelf.')),
       );
       return;
     }
@@ -42,9 +44,9 @@ class CreateShelfViewModel extends ChangeNotifier {
     try {
       final storeId = await CurrentStoreService.getCurrentStoreId();
       if (storeId == null) {
-        errorMessage = 'Aucun commerce sélectionné.';
+        errorMessage = 'No commerce selected.';
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sélectionnez un commerce d\'abord.')),
+          const SnackBar(content: Text('Select a Store first.')),
         );
         _isSaving = false;
         notifyListeners();
@@ -55,7 +57,7 @@ class CreateShelfViewModel extends ChangeNotifier {
       final createdBy = merchant.email;
 
       // Création de l'étagère
-      final uri = Uri.parse('http://localhost:3001/shelves');
+      final uri = Uri.parse('$apiBaseUrl/shelves');
       final response = await http.post(
         uri,
         headers: {'Content-Type': 'application/json'},
@@ -81,14 +83,14 @@ class CreateShelfViewModel extends ChangeNotifier {
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Étagère créée ✔')),
+            const SnackBar(content: Text('Shelf Created ✔')),
           );
         }
       } else {
-        errorMessage = 'Erreur serveur (${response.statusCode})';
+        errorMessage = 'server error (${response.statusCode})';
       }
     } catch (e) {
-      errorMessage = 'Erreur : $e';
+      errorMessage = 'Error : $e';
     } finally {
       _isSaving = false;
       notifyListeners();
@@ -99,7 +101,7 @@ class CreateShelfViewModel extends ChangeNotifier {
     if (_selectedImage == null) return;
 
     try {
-      final uri = Uri.parse('http://localhost:3001/shelves/$shelfId/image');
+      final uri = Uri.parse('$apiBaseUrl/shelves/$shelfId/image');
       final request = http.MultipartRequest('PUT', uri);
 
       final bytes = await _selectedImage!.readAsBytes();
@@ -115,10 +117,10 @@ class CreateShelfViewModel extends ChangeNotifier {
       final response = await http.Response.fromStream(streamedResponse);
 
       if (response.statusCode != 200) {
-        errorMessage = 'Erreur lors de l\'upload de l\'image';
+        errorMessage = 'Error while uploading image';
       }
     } catch (e) {
-      errorMessage = 'Erreur upload : $e';
+      errorMessage = 'Error upload : $e';
     }
   }
 }

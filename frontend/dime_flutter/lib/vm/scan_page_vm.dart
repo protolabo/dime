@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_scanner/mobile_scanner.dart';
 
@@ -38,7 +39,8 @@ class ScanPageVM extends ChangeNotifier {
       BarcodeFormat.code39,
     ],
   );
-  static const _baseUrl = 'http://localhost:3001';
+
+  final String _baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 
   // multi overlays: key -> data
   final Map<String, Map<String, dynamic>> _overlays = {};
@@ -122,7 +124,6 @@ class ScanPageVM extends ChangeNotifier {
       if (_busyKeys.contains(newKey)) continue;
 
       if (_busyKeys.length >= 3) continue;
-
       _busyKeys.add(newKey);
       _processCode(newKey, raw, pid, sid);
     }
@@ -274,8 +275,8 @@ class ScanPageVM extends ChangeNotifier {
 
   Future<void> _handleShelf(int shelfId, String key) async {
     final int? storeId = await CurrentStoreService.getCurrentStoreId();
+    print('Handling shelf $shelfId for store $storeId');
     if (storeId == null) return;
-
     try {
       final shelfResponse = await http.get(Uri.parse('$_baseUrl/shelves?shelf_id=$shelfId'));
       if (shelfResponse.statusCode != 200) return;
@@ -400,6 +401,30 @@ class ScanPageVM extends ChangeNotifier {
     } catch (_) {}
   }
 
+
+  bool _cameraRunning = true;
+
+  Future<void> pauseCamera() async {
+    try {
+      if (_cameraRunning) {
+        await scanner.stop();
+        _cameraRunning = false;
+      }
+    } catch (_) {
+      _cameraRunning = false;
+    }
+  }
+
+  Future<void> resumeCamera() async {
+    try {
+      if (!_cameraRunning) {
+        await scanner.start();
+        _cameraRunning = true;
+      }
+    } catch (_) {
+      _cameraRunning = true;
+    }
+  }
   /* ─────────── HELPERS ─────────── */
   void clearOverlay([String? key]) {
     if (key == null) {
@@ -415,7 +440,8 @@ class ScanPageVM extends ChangeNotifier {
       _stackKeys.remove(key);
       if (_currentKey == key) _currentKey = null;
     }
-    scanner.start(); // relance la cam si besoin
+    // utiliser la méthode safe
+    resumeCamera();
     notifyListeners();
   }
 

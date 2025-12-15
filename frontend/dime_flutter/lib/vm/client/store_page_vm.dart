@@ -2,6 +2,7 @@
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
@@ -9,7 +10,7 @@ import '../../auth_viewmodel.dart';
 
 class StorePageVM extends ChangeNotifier {
   final AuthViewModel auth;
-  final baseUrl = 'http://localhost:3001';
+  final baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
   /* ───────── infos magasin ───────── */
   String? storeName;
   String? address;
@@ -20,9 +21,11 @@ class StorePageVM extends ChangeNotifier {
   /* ───────── état UI ───────── */
   bool   isLoading = true;
   String? error;
-
+  String storeLogoUrl = '';
   /* ───────── recommandations ───────── */
   List<Map<String, dynamic>> recos = [];
+
+  get logoUrl => storeLogoUrl;
 
   /// Charge toutes les données nécessaires à l’écran.
   Future<void> load(int storeId) async {
@@ -47,7 +50,7 @@ class StorePageVM extends ChangeNotifier {
         notifyListeners();
         return;
       }
-
+      storeLogoUrl = s['logo_url'] as String? ?? '';
       storeName = s['name'] as String?;
       address = [
         if ((s['address'] ?? '').toString().isNotEmpty) s['address'],
@@ -163,8 +166,6 @@ class StorePageVM extends ChangeNotifier {
   Future<void> toggleFavorite(int storeId) async {
     final actor = await CurrentActorService.getCurrentActor(auth: auth);
     final userId = actor.actorId;
-    final userEmail = actor.email ?? '${actor.firstName} ${actor.lastName}';
-
     if (isStoreFavorite) {
       // ➖ RETIRER
       final res = await http.delete(
@@ -176,7 +177,6 @@ class StorePageVM extends ChangeNotifier {
         error = 'Erreur lors du retrait des favoris';
       }
     } else {
-      // ➕ AJOUTER
       final res = await http.post(
         Uri.parse('$baseUrl/favorite-stores'),
         headers: {'Content-Type': 'application/json'},
@@ -194,6 +194,49 @@ class StorePageVM extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  Future<void> toggleProductFavorite(int productId) async {
+    try {
+      final actor = await CurrentActorService.getCurrentActor(auth: auth);
+      final userId = actor.actorId;
+      final userEmail = actor.email;
+      final idx = recos.indexWhere((r) => r['id'] == productId);
+      final currentlyFav = idx != -1 ? (recos[idx]['isFav'] == true) : false;
+      final nowFav = !currentlyFav;
+
+      if (nowFav) {
+        final res = await http.post(
+          Uri.parse('$baseUrl/favorite-products'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'actor_id': userId,
+            'product_id': productId,
+            'created_by': userEmail,
+          }),
+        );
+        if (res.statusCode == 201 || res.statusCode == 200) {
+          if (idx != -1) recos[idx]['isFav'] = true;
+        } else {
+          error = 'Erreur lors de l\'ajout aux favoris';
+        }
+      } else {
+        final res = await http.delete(
+          Uri.parse('$baseUrl/favorite-products/$userId/$productId'),
+        );
+        if (res.statusCode == 200) {
+          if (idx != -1) recos[idx]['isFav'] = false;
+        } else {
+          error = 'Erreur lors du retrait des favoris';
+        }
+      }
+
+      notifyListeners();
+    } catch (e) {
+      error = e.toString();
+      notifyListeners();
+    }
+  }
+
 
   /* ──────────── HELPERS ──────────── */
   double _parsePrice(dynamic price) {

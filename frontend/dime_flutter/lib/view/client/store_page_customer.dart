@@ -148,16 +148,35 @@ class _StoreHeader extends StatelessWidget {
         children: [
           /* Store Icon */
           Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              color: Colors.blue[50],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.store,
-              size: 48,
-              color: Colors.blue[700],
+            width: 140,
+            height: 140,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+            child: ClipOval(
+              child: vm.logoUrl != null
+                  ? Image.network(
+                vm.logoUrl,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => Icon(
+                  Icons.store,
+                  size: 60,
+                  color: Colors.blue[700],
+                ),
+              )
+                  : Icon(
+                Icons.store,
+                size: 60,
+                color: Colors.blue[700],
+              ),
             ),
           ),
 
@@ -254,7 +273,7 @@ class _RecommendationsGrid extends StatelessWidget {
       itemCount: vm.recos.length,
       itemBuilder: (_, i) {
         final product = vm.recos[i];
-        return _ProductCard(product: product);
+        return _ProductCard(product: product,vm: vm);
       },
     );
   }
@@ -262,10 +281,10 @@ class _RecommendationsGrid extends StatelessWidget {
 
 /* ──────────── PRODUCT CARD ──────────── */
 class _ProductCard extends StatelessWidget {
-  const _ProductCard({required this.product});
+  const _ProductCard({required this.product, required this.vm});
 
   final Map<String, dynamic> product;
-
+  final StorePageVM vm;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -323,7 +342,7 @@ class _ProductCard extends StatelessWidget {
                     right: 8,
                     child: GestureDetector(
                       onTap: () {
-                        // vm.toggleProductFavorite(product['id']);
+                        vm.toggleProductFavorite(product['id']);
                       },
                       child: Container(
                         padding: const EdgeInsets.all(6),

@@ -292,3 +292,5 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+/backend/dime-express/node_modules/
+/backend/dime-express/node_modules

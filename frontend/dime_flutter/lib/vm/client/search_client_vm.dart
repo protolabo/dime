@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import '../../auth_viewmodel.dart';
 import '../current_connected_account_vm.dart';
 
 class SearchPageViewModel extends ChangeNotifier {
-  final baseUrl = 'http://localhost:3001';
+  final baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
   final AuthViewModel auth;
 
   List<Map<String, dynamic>> _allProducts = [];
@@ -102,9 +103,10 @@ class SearchPageViewModel extends ChangeNotifier {
             'type': 'product',
             'id': productId,
             'title': p['name'],
-            'subtitle': p['category'] ?? p['bar_code'] ?? '',
+            'subtitle': "barcode : " +p['bar_code'] ?? '',
             'isFav': favProdIds.contains(productId),
             'store_id': productStoreMap[productId],
+            "image_url": p['image_url'] ?? '',
           };
         }),
         ...storeList.map((s) => {
@@ -113,6 +115,7 @@ class SearchPageViewModel extends ChangeNotifier {
           'title': s['name'],
           'subtitle': '${s['city'] ?? ''} ${s['postal_code'] ?? ''} ${s['country'] ?? ''}',
           'isFav': favStoreIds.contains(s['store_id']),
+          "image_url": s['logo_url'] ?? '',
         }),
       ];
 
@@ -322,7 +325,7 @@ class SearchPageViewModel extends ChangeNotifier {
           _allProducts.add({
             'id': productId,
             'name': product['name'] ?? 'Unknown Product',
-            'price': priceInfo?['amount'] ?? 0.0,
+            'price': priceInfo?['amount'] ?? null,
             'currency': priceInfo?['currency'] ?? 'CAD',
             'store_id': priceInfo?['store_id'],
             'rating': _parseRating(product),

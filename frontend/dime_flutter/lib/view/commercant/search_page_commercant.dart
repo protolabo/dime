@@ -66,8 +66,8 @@ class _SearchCommercantBody extends StatelessWidget {
               onChanged: vm.onQueryChanged,
               enabled: vm.storeId != null,
               hintText: vm.storeId == null
-                  ? "Sélectionne d'abord un commerce…"
-                  : "Rechercher un produit ou une étagère…",
+                  ? "First, select a store…"
+                  : "Search for a product or a shelf…",
             ),
             SizedBox(height: AppSpacing.lg),
             if (vm.isLoading)
@@ -129,7 +129,7 @@ class _ResultsList extends StatelessWidget {
 
     if (!hasAny) {
       return Center(
-        child: Text("Aucun résultat", style: AppTextStyles.muted),
+        child: Text("No Results", style: AppTextStyles.muted),
       );
     }
 
@@ -138,7 +138,7 @@ class _ResultsList extends StatelessWidget {
         if (vm.products.isNotEmpty) ...[
           Padding(
             padding: EdgeInsets.only(bottom: AppSpacing.sm),
-            child: Text("Produits", style: AppTextStyles.sectionTitle),
+            child: Text("Products", style: AppTextStyles.sectionTitle),
           ),
           ...vm.products.map((p) => _ProductTile(p)),
           SizedBox(height: AppSpacing.lg),
@@ -146,7 +146,7 @@ class _ResultsList extends StatelessWidget {
         if (vm.shelves.isNotEmpty) ...[
           Padding(
             padding: EdgeInsets.only(bottom: AppSpacing.sm),
-            child: Text("Étagères", style: AppTextStyles.sectionTitle),
+            child: Text("Shelves", style: AppTextStyles.sectionTitle),
           ),
           ...vm.shelves.map((s) => _ShelfTile(s)),
         ],
@@ -181,7 +181,7 @@ class _ProductTile extends StatelessWidget {
         title: Text(p.name, style: AppTextStyles.itemTitle),
         subtitle: (p.barCode == null || p.barCode!.isEmpty)
             ? null
-            : Text('Code-barres: ${p.barCode}', style: AppTextStyles.secondary),
+            : Text('BarCodes: ${p.barCode}', style: AppTextStyles.secondary),
         trailing: Text(_priceText(), style: AppTextStyles.price),
         onTap: () async {
           final result = await Navigator.push(

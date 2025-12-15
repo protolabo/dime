@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import '../../auth_viewmodel.dart';
 import '../current_connected_account_vm.dart';
@@ -9,6 +10,7 @@ import '../../view/commercant/create_qr_menu.dart';
 
 /// VM pour la page de choix de commerce (commerçant)
 class ChooseCommerceViewModel extends ChangeNotifier {
+  final String apiBaseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
   bool   isLoading = true;
   String? error;
   List<Map<String, dynamic>> stores = []; // [{store_id, name}]
@@ -22,14 +24,14 @@ class ChooseCommerceViewModel extends ChangeNotifier {
     try {
 
       final int actorId = actor.actorId; // A CHANGER
-      final uri = Uri.parse('http://localhost:3001/stores?actor_id=$actorId');
+      final uri = Uri.parse('$apiBaseUrl/stores?actor_id=$actorId');
       final response = await http.get(uri);
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         stores = List<Map<String, dynamic>>.from(data['favorites']);
       } else {
-        error = 'Erreur serveur (${response.statusCode}) : ${response.body}';
+        error = 'server error (${response.statusCode}) : ${response.body}';
       }
     } catch (e) {
       error = e.toString();
@@ -54,7 +56,7 @@ class ChooseCommerceViewModel extends ChangeNotifier {
       debugPrint('❌ selectStore error: $e');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
-          SnackBar(content: Text('Erreur : $e')),
+          SnackBar(content: Text('Error : $e')),
         );
       }
     }

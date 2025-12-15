@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
@@ -6,7 +7,7 @@ import 'package:flutter/foundation.dart';
 class CurrentStoreService {
   /* ───────────── constantes ───────────── */
   static const _prefsKey = 'current_store_id';
-  static const _baseUrl = 'http://localhost:3001';
+  static final String _baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 
   /* ─────────── getters / setters ─────────── */
 

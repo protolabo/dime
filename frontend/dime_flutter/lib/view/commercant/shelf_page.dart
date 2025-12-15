@@ -92,7 +92,7 @@ class _ErrorView extends StatelessWidget {
           Icon(Icons.error_outline, size: 48, color: Colors.red[400]),
           const SizedBox(height: 16),
           Text(
-            'Erreur: $error',
+            'Error: $error',
             style: AppTextStyles.body.copyWith(color: Colors.red[700]),
             textAlign: TextAlign.center,
           ),
@@ -145,7 +145,7 @@ class _Content extends StatelessWidget {
                 ),
                 child: IconButton(
                   icon: Icon(Icons.delete_outline, size: 20, color: Colors.red[600]),
-                  tooltip: 'Supprimer l\'étagère',
+                  tooltip: 'Delete Shelf',
                   onPressed: () => _showDeleteDialog(context, vm),
                 ),
               ),
@@ -170,7 +170,7 @@ class _Content extends StatelessWidget {
                     Icon(Icons.image_outlined, size: 20, color: Colors.grey[600]),
                     const SizedBox(width: 8),
                     Text(
-                      'Photo de l\'étagère',
+                      'Shelf Image',
                       style: AppTextStyles.body.copyWith(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -229,9 +229,9 @@ class _Content extends StatelessWidget {
                         label: Text(
                           vm.selectedImage == null
                               ? (vm.imageUrl == null || vm.imageUrl!.isEmpty
-                              ? 'Ajouter une photo'
-                              : 'Changer la photo')
-                              : 'Changer la photo',
+                              ? 'Add a photo'
+                              : 'Change the photo')
+                              : 'Change the photo',
                           style: AppTextStyles.body.copyWith(fontSize: 15),
                         ),
                         style: OutlinedButton.styleFrom(
@@ -261,7 +261,7 @@ class _Content extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                vm.error ?? 'Image mise à jour',
+                                vm.error ?? 'Image updated successfully',
                               ),
                               backgroundColor: vm.error != null
                                   ? Colors.red[600]
@@ -281,7 +281,7 @@ class _Content extends StatelessWidget {
                           elevation: 0,
                         ),
                         child: Text(
-                          'Enregistrer',
+                          'Save',
                           style: AppTextStyles.body.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -302,7 +302,7 @@ class _Content extends StatelessWidget {
           Row(
             children: [
               Text(
-                'Articles',
+                'Products',
                 style: AppTextStyles.title.copyWith(fontSize: 18),
               ),
               const SizedBox(width: 8),
@@ -345,7 +345,7 @@ class _Content extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Aucun article dans cette étagère',
+                    'No products in this shelf yet.',
                     style: AppTextStyles.body.copyWith(
                       color: Colors.grey[600],
                     ),
@@ -395,7 +395,9 @@ class _Content extends StatelessWidget {
                             color: Colors.grey[100],
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Icon(
+                          child: item.imageUrl  != null && item.imageUrl !.isNotEmpty
+                              ? Image.network(item.imageUrl !, width: 70, height: 70, fit: BoxFit.contain)
+                              : Icon(
                             Icons.shopping_bag_outlined,
                             size: 20,
                             color: Colors.grey[600],
@@ -427,6 +429,14 @@ class _Content extends StatelessWidget {
                             ],
                           ),
                         ),
+                        IconButton(
+                          icon: Icon(
+                            Icons.delete_outline,
+                            color: Colors.red[400],
+                            size: 20,
+                          ),
+                          onPressed: () => _showDeleteItemDialog(context, vm, item),
+                        ),
                         Icon(
                           Icons.chevron_right,
                           color: Colors.grey[400],
@@ -447,7 +457,7 @@ class _Content extends StatelessWidget {
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add, size: 20,color: Colors.white),
               label: Text(
-                'Ajouter un article',
+                'Add a product',
                 style: AppTextStyles.body.copyWith(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -468,14 +478,14 @@ class _Content extends StatelessWidget {
 
                 if (id == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ID d\'étagère manquant')),
+                    const SnackBar(content: Text('Shelf ID missing')),
                   );
                   return;
                 }
 
                 final String name = rawName ?? vm.initialShelfName;
 
-                await Navigator.push(
+                final result =await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => AddItemToShelfPage(
@@ -498,7 +508,7 @@ class _Content extends StatelessWidget {
             child: OutlinedButton.icon(
               icon: const Icon(Icons.qr_code, size: 20, color: Colors.white),
               label: Text(
-                'Télécharger le QR Code',
+                'Download QR Code',
                 style: AppTextStyles.body.copyWith(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -518,7 +528,7 @@ class _Content extends StatelessWidget {
 
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('QR Code téléchargé'),
+                    content: const Text('Qr code downloaded'),
                     backgroundColor: Colors.green[600],
                     behavior: SnackBarBehavior.floating,
                     shape: RoundedRectangleBorder(
@@ -541,17 +551,17 @@ class _Content extends StatelessWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Supprimer cette étagère ?'),
+        title: const Text('Delete This Shelf ?'),
         titleTextStyle: AppTextStyles.title.copyWith(fontSize: 18),
         content: const Text(
-          'Cette action supprimera définitivement l\'étagère et retirera tous les articles associés. Cette action est irréversible.',
+          'This action will permanently delete the shelf and remove all associated items. This action is irreversible.',
         ),
         contentTextStyle: AppTextStyles.body.copyWith(fontSize: 14),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
             child: Text(
-              'Annuler',
+              'Cancel',
               style: AppTextStyles.body.copyWith(color: Colors.grey[700]),
             ),
           ),
@@ -565,18 +575,35 @@ class _Content extends StatelessWidget {
               ),
               elevation: 0,
             ),
-            child: const Text('Supprimer'),
+            child: const Text('Delete'),
           ),
         ],
       ),
     );
 
     if (ok == true && context.mounted) {
-      // Appeler la méthode de suppression du VM (à implémenter)
-      // await vm.deleteShelf();
-      Navigator.of(context).pop(true);
+      await vm.deleteShelf();
+      if (context.mounted) {
+        if (vm.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(vm.error!),
+              backgroundColor: Colors.red[600],
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Shelf Deleted'),
+              backgroundColor: Colors.green[600],
+            ),
+          );
+          Navigator.of(context).pop(true);
+        }
+      }
     }
   }
+
   Widget _buildPlaceholder() {
     return Container(
       height: 180,
@@ -595,7 +622,7 @@ class _Content extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Aucune image',
+              'No image',
               style: AppTextStyles.body.copyWith(
                 color: Colors.grey[600],
               ),
@@ -604,6 +631,59 @@ class _Content extends StatelessWidget {
         ),
       ),
     );
+  }
+  Future<void> _showDeleteItemDialog(
+      BuildContext context,
+      ShelfPageVM vm,
+      ShelfItem item,
+      ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete this product ?'),
+        titleTextStyle: AppTextStyles.title.copyWith(fontSize: 18),
+        content: Text(
+          'Wanna Delete "${item.name}"from the shelf ?',
+        ),
+        contentTextStyle: AppTextStyles.body.copyWith(fontSize: 14),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              'Cancel',
+              style: AppTextStyles.body.copyWith(color: Colors.grey[700]),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red[600],
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (ok == true && context.mounted) {
+      await vm.removeItemFromShelf(item.productId);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              vm.error ?? 'Product removed from shelf successfully',
+            ),
+            backgroundColor: vm.error != null ? Colors.red[600] : Colors.green[600],
+          ),
+        );
+      }
+    }
   }
 
 }

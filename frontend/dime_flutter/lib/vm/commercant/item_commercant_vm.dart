@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:dime_flutter/vm/current_connected_account_vm.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -22,7 +23,7 @@ class ItemShelfRef {
 class ItemCommercantVM extends ChangeNotifier {
   final AuthViewModel auth;
   ItemCommercantVM({required this.productId, required this.initialProductName,required this.auth});
-  static const String apiBaseUrl = 'http://localhost:3001';
+  static final String apiBaseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 
   final int productId;
   final String initialProductName;
@@ -143,10 +144,10 @@ class ItemCommercantVM extends ChangeNotifier {
         _selectedImage = null;
         errorMessage = null;
       } else {
-        errorMessage = 'Erreur lors de la mise à jour de l\'image';
+        errorMessage = 'Error : cant update the image';
       }
     } catch (e) {
-      errorMessage = 'Erreur : $e';
+      errorMessage = 'Error : $e';
     }
     notifyListeners();
   }
@@ -175,7 +176,7 @@ class ItemCommercantVM extends ChangeNotifier {
         errorMessage = data['error'] ?? '';
       }
     } catch (e) {
-      errorMessage = 'Impossible de mettre à jour le nom: $e';
+      errorMessage = 'cant delete the name: $e';
     }
     notifyListeners();
   }
@@ -184,7 +185,7 @@ class ItemCommercantVM extends ChangeNotifier {
   Future<void> updatePrice(double newAmount, {String currencyCode = 'CAD'}) async {
     final storeId = await CurrentStoreService.getCurrentStoreId();
     if (storeId == null) {
-      errorMessage = 'Aucun magasin sélectionné.';
+      errorMessage = 'No store selected.';
       notifyListeners();
       return;
     }
@@ -217,7 +218,7 @@ class ItemCommercantVM extends ChangeNotifier {
           );
           if (updateResponse.statusCode != 200) {
             final error = jsonDecode(updateResponse.body);
-            errorMessage = error['error'] ?? 'Erreur lors de la mise à jour du prix';
+            errorMessage = error['error'] ?? 'Error while updating the product price';
             notifyListeners();
             return;
           }
@@ -237,7 +238,7 @@ class ItemCommercantVM extends ChangeNotifier {
           );
           if (insertResponse.statusCode != 201) {
             final error = jsonDecode(insertResponse.body);
-            errorMessage = error['error'] ?? 'Erreur lors de la création du prix';
+            errorMessage = error['error'] ?? 'Error while creating the product';
             notifyListeners();
             return;
           }
@@ -247,10 +248,10 @@ class ItemCommercantVM extends ChangeNotifier {
         currency = currencyCode;
         errorMessage = null;
       } else {
-        errorMessage = 'Erreur lors de la vérification du prix';
+        errorMessage = 'Error while validating price' ;
       }
     } catch (e) {
-      errorMessage = 'Impossible de mettre à jour le prix: $e';
+      errorMessage = 'Impossible to update price: $e';
     }
     notifyListeners();
   }
@@ -258,7 +259,7 @@ class ItemCommercantVM extends ChangeNotifier {
   Future<bool> removeFromCurrentStore() async {
     final storeId = await CurrentStoreService.getCurrentStoreId();
     if (storeId == null) {
-      errorMessage = 'Aucun magasin sélectionné.';
+      errorMessage = 'No store found.';
       notifyListeners();
       return false;
     }
@@ -276,7 +277,7 @@ class ItemCommercantVM extends ChangeNotifier {
       //print('price delete response: ${priceResponse.statusCode} - ${priceResponse.body}');
       if (priceResponse.statusCode != 200) {
         final error = jsonDecode(priceResponse.body);
-        errorMessage = error['error'] ?? 'Erreur lors de la suppression du prix';
+        errorMessage = error['error'] ?? 'Error while deleting price';
         notifyListeners();
         return false;
       }
@@ -288,7 +289,7 @@ class ItemCommercantVM extends ChangeNotifier {
       //print('shelf fetch response: ${shelfResponse.statusCode} - ${shelfResponse.body}');
       if (shelfResponse.statusCode != 200) {
         final error = jsonDecode(shelfResponse.body);
-        errorMessage = error['error'] ?? 'Erreur lors de la récupération des étagères';
+        errorMessage = error['error'] ?? 'Error While getting shelves';
         notifyListeners();
         return false;
       }
@@ -310,7 +311,7 @@ class ItemCommercantVM extends ChangeNotifier {
         //print('shelf_place delete response for shelf $shelfId: ${deleteResponse.statusCode} - ${deleteResponse.body}');
         if (deleteResponse.statusCode != 200 && deleteResponse.statusCode != 404) {
           final error = jsonDecode(deleteResponse.body);
-          errorMessage = error['error'] ?? 'Erreur lors de la suppression de shelf_place';
+          errorMessage = error['error'] ?? 'Error while deleting fromshelf_place';
           notifyListeners();
           return false;
         }
@@ -319,7 +320,7 @@ class ItemCommercantVM extends ChangeNotifier {
       shelves = [];
       return true;
     } catch (e) {
-      errorMessage = 'Suppression impossible: $e';
+      errorMessage = 'Delete failed $e';
       notifyListeners();
       return false;
     }
@@ -330,7 +331,7 @@ class ItemCommercantVM extends ChangeNotifier {
     final dataUrl = qrDataUrl;
     final name = (productName ?? initialProductName).trim();
     if (dataUrl == null || dataUrl.isEmpty) {
-      errorMessage = 'QR Code indisponible pour cet item.';
+      errorMessage = 'QR Code Not found.';
       notifyListeners();
       return;
     }
@@ -371,5 +372,33 @@ class ItemCommercantVM extends ChangeNotifier {
       filename: 'item_${productId}_${name.isEmpty ? "qr" : name}.pdf',
     );
   }
+
+  Future<void> updateDescription(String text) async {
+    final newtext = text.trim();
+    if (newtext.isEmpty) return;
+
+    try {
+      final response = await http.put(
+        Uri.parse('$apiBaseUrl/products/$productId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'description': newtext,
+          'last_updated_by': DateTime.now().toIso8601String(),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        description = newtext;
+        errorMessage = null;
+      } else {
+        final data = jsonDecode(response.body);
+        errorMessage = data['error'] ?? '';
+      }
+    } catch (e) {
+      errorMessage = 'Failed To update Description: $e';
+    }
+    notifyListeners();
+  }
+
 
 }

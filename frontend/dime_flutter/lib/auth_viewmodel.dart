@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  static const String baseUrl = 'http://localhost:3001/api'; // Change for production
+  final String baseUrl = dotenv.env['BACKEND_API_URL'] ?? '';
 
   String? _token;
   Map<String, dynamic>? _currentUser;
@@ -132,7 +133,6 @@ class AuthViewModel extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/client/signin'),
@@ -142,7 +142,6 @@ class AuthViewModel extends ChangeNotifier {
           'password': password,
         }),
       );
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         _token = data['session']['access_token'];

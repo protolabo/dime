@@ -62,7 +62,7 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          'Créer une étagère',
+                          'Create a Shelf',
                           style: AppTextStyles.title.copyWith(fontSize: 22),
                         ),
                       ),
@@ -117,7 +117,7 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    'Aucune image',
+                                    'No Image',
                                     style: AppTextStyles.body.copyWith(
                                       color: Colors.grey[600],
                                     ),
@@ -138,8 +138,8 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                             ),
                             label: Text(
                               vm.selectedImage == null
-                                  ? 'Ajouter une photo'
-                                  : 'Changer la photo',
+                                  ? 'Add a Photo'
+                                  : 'Change the photo',
                               style: AppTextStyles.body.copyWith(fontSize: 15),
                             ),
                             style: OutlinedButton.styleFrom(
@@ -167,7 +167,7 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
 
                   /* Form Section */
                   Text(
-                    'Informations de l\'étagère',
+                    'Shelf Details',
                     style: AppTextStyles.title.copyWith(fontSize: 18),
                   ),
 
@@ -178,8 +178,8 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                     controller: _nameC,
                     style: AppTextStyles.body.copyWith(fontSize: 15),
                     decoration: InputDecoration(
-                      labelText: 'Nom de l\'étagère',
-                      hintText: 'Ex: Fruits et légumes',
+                      labelText: 'Shelf Name',
+                      hintText: 'Ex: Fruits and Vegetables',
                       labelStyle: AppTextStyles.body.copyWith(
                         fontSize: 14,
                         color: Colors.grey[600],
@@ -239,7 +239,7 @@ class _CreateShelfPageState extends State<CreateShelfPage> {
                         ),
                       )
                           : Text(
-                        'Créer l\'étagère',
+                        'Create Shelf',
                         style: AppTextStyles.body.copyWith(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
