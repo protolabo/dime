@@ -1,9 +1,4 @@
 # dime-express
-
-Ce répertoire contient le générateur de codes QR. Il a été développé avec **Express.js** et **JavaScript**.
-
----
-
 ## Compiler et lancer le générateur de codes QR
 
 ### 1️⃣ Se placer dans le répertoire du backend
@@ -23,25 +18,117 @@ npm start
 
 ---
 
-## Organisation du code
+## Organisation du code - Backend `dime-express`
 
-Le projet étant encore en phase de développement, certains fichiers sont inutilisés et pourront être supprimés à l’avenir.  
-Ces fichiers sont marqués d’un **\***.
-
-**⚠️ Le fichier `.env` contenant les informations liées à la base de données (non inclus dans le dépôt GitHub) doit être ajouté à la racine du répertoire [`dime-express`](dime-express) pour que le projet fonctionne correctement.**
+Ce backend est développé en **Node.js / Express.js**. Il expose une API REST utilisée par les autres parties du projet (apps mobiles, web, etc.).
 
 ---
 
-- [database](dime-express/database)*
-- [QR-CODE-GENERATOR](dime-express/QR-CODE-GENERATOR) : Répertoire contenant les fichiers principaux du générateur de codes QR. Son organisation est détaillée dans la section suivante.
-- [index.js](dime-express/index.js)*
-- [package.json](dime-express/package.json) : Fichier de configuration Node.js.
-- [package-lock.json](dime-express/package-lock.json) : Fichier de verrouillage des dépendances Node.js.
-- [supabaseClient.js](dime-express/supabaseClient.js) : Gère la connexion avec la base de données (utilise le fichier `.env`).
+## Arborescence
+
+```text
+backend/
+└─ dime-express/
+   ├─ index.js
+   ├─ package.json
+   ├─ supabaseClient.js
+   ├─ controllers/
+   ├─ routes/
+   └─ services/
+```
+
+### `index.js`
+
+Point d’entrée du serveur Express :
+
+- Initialise l’application Express.  
+- Monte les différentes routes (`routes/*`).  
+- Configure les middlewares globaux (JSON, CORS, etc.).  
+- Lance l’écoute sur le port défini dans les variables d’environnement.
 
 ---
 
-### Répertoire `QR-CODE-GENERATOR`
+## Dossier `controllers/`
 
-- [public/qr](dime-express/QR-CODE-GENERATOR/public/qr) : Contient tous les codes QR des étagères et items de la base de données, organisés par commerce. Les nouveaux codes QR sont générés à la [racine de ce répertoire](dime-express/QR-CODE-GENERATOR/public/qr).
-- [QR_Code.js](dime-express/QR-CODE-GENERATOR/QR_Code.js) : Contient tout le code nécessaire pour la communication avec l’application [Flutter](../frontend/dime_flutter) et la génération des nouveaux codes QR.
+Contient la logique métier de chaque ressource.  
+Chaque contrôleur reçoit les requêtes depuis les routes, interagit avec la base de données (via `supabaseClient.js` ou des services) et renvoie une réponse HTTP.
+
+- `alertController.js` : gestion des alertes.  
+- `authController.js` : inscription, connexion, gestion des tokens.  
+- `favoriteProductController.js` : produits favoris d’un utilisateur.  
+- `favoriteStoreController.js` : commerces favoris d’un utilisateur.  
+- `pricedProductController.js` : produits avec prix, promotions, etc.  
+- `productController.js` : gestion des produits.  
+- `promotionController.js` : gestion des promotions.  
+- `reviewController.js` : avis / notes sur les produits ou magasins.  
+- `shelfController.js` : gestion des étagères en magasin.  
+- `shelfPlaceController.js` : emplacements précis sur une étagère.  
+- `storeController.js` : gestion des magasins.
+
+**Convention** :  
+- Un fichier par ressource REST.  
+- Fonctions exportées nommées `create*`, `get*`, `update*`, `delete*` lorsque pertinent.
+
+---
+
+## Dossier `routes/`
+
+Mappe les URLs de l’API sur les fonctions des contrôleurs.
+
+- `alertRoutes.js`  
+- `authRoutes.js`  
+- `favoriteProductRoutes.js`  
+- `favoriteStoreRoutes.js`  
+- `pricedProductRoutes.js`  
+- `productRoutes.js`  
+- `promotionRoutes.js`  
+- `reviewRoutes.js`  
+- `shelfRoutes.js`  
+- `shelfPlaceRoutes.js`  
+- `storeRoutes.js`
+
+**Convention** :  
+- Utiliser un `express.Router()`.  
+- Monter les routes dans `index.js` (ex. `/api/products`, `/api/stores`, etc.).  
+- Ne pas mettre de logique métier dans les routes : uniquement déléguer au contrôleur.
+
+---
+
+## Dossier `services/`
+
+Contient les services transverses (utilisés par plusieurs contrôleurs).
+
+- `cloudflareImageService.js` : gestion des images via l’API Cloudflare (upload, URLs, suppression, etc.).  
+- `qrCode.js` : logique de génération de QR codes (appel au générateur, création des fichiers, etc.).
+
+**Convention** :  
+- Fonctions pures autant que possible.  
+- Pas de gestion de requêtes HTTP directement (réservé aux contrôleurs).
+
+---
+
+## `supabaseClient.js`
+
+Centralise la connexion à la base de données Supabase.
+
+- Charge la configuration depuis le fichier `.env`.  
+- Exporte un client unique réutilisable dans les contrôleurs / services.
+
+---
+
+## Variables d’environnement
+
+Un fichier `.env` doit être placé à la racine de `dime-express` avec au minimum :
+
+- `SUPABASE_URL`  
+- `SUPABASE_KEY`  
+- `PORT` (optionnel, sinon valeur par défaut dans `index.js`)
+
+---
+
+## Bonnes pratiques
+
+- Créer un nouveau fichier dans `controllers/` et `routes/` pour chaque nouvelle ressource d’API.  
+- Mettre la logique de communication externe (Cloudflare, QR, etc.) dans `services/`.  
+- N’utiliser `supabaseClient.js` que dans les contrôleurs et services, jamais directement dans `routes/`.  
+- Garder les contrôleurs fins : validation d’entrée, appel à un service, formatage de la réponse.

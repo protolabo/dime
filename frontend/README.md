@@ -10,7 +10,7 @@ Dans notre cas, il est utilisé pour créer **une application mobile** compatibl
 
 ### 1️⃣ Se placer dans le répertoire Flutter
 ```bash
-cd frontend\dime_flutter
+cd frontend-dime_flutter
 ```
 
 ### 2️⃣ Télécharger les [dépendances](#dépendances-flutter-utilisées-pour-le-projet)
@@ -49,62 +49,119 @@ Voici la liste et leur utilité :
 
 ---
 
-## Organisation du code
+## Organisation du code - Frontend `dime_flutter`
 
-Comme tout projet Flutter, le code source se trouve dans le répertoire [lib](dime_flutter/lib).  
-L’architecture utilisée est **[MVVM](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93viewmodel)**, recommandée dans la [documentation officielle Flutter](https://docs.flutter.dev/app-architecture/guide).
-
-
-**⚠️ Le fichier `.env` contenant les informations liées à la base de données (non inclus dans le dépôt GitHub) doit être ajouté à la racine du répertoire [`dime_flutter`](dime_flutter) pour que le projet fonctionne correctement.**
----
-
-### 📂 [Répertoire _view_](dime_flutter/lib/view)
-
-- **[styles.dart](dime_flutter/lib/view/styles.dart)** : Contient la majorité des paramètres de style (couleurs, marges, tailles de police, etc.).
-
-Sous-répertoires :
-- **[client](dime_flutter/lib/view/client)** : Pages et composants pour les utilisateurs clients.
-  - `favorite_menu.dart` : Produits et commerces favoris du client connecté.
-  - `item_page_customer.dart` : Template de la page d’un produit.
-  - `scan_page_client.dart`* : Scanner de code QR.
-  - `search_page.dart` : Recherche de produits et commerces.
-  - `store_page_customer.dart` : Page d’un commerce côté client.
-
-- **[commercant](dime_flutter/lib/view/commercant)** : Pages et composants pour les commerçants.
-  - `add_item_to_shelf.dart` : Permet de rajouter un item sur une étagère.
-  - `choose_commerce.dart` : Sélection du commerce actif (si plusieurs).
-  - `create_item_page.dart` : Création d’un produit et génération de son QR code.
-  - `create_qr_menu.dart` : Menu pour choisir entre la création d’un nouvel item ou d’une nouvelle étagère.
-  - `create_shelf.dart` : Création d’une étagère et génération de son QR code.
-  - `item_commercant.dart` : Page d’un item permettant d’y apporter des modifications.
-  - `scan_page_commercant.dart`* : Scanner de code QR.
-  - `search_page_commercant.dart` : Recherche de produits et d’étagères.
-  - `shelf_page.dart` : Page d’une étagère permettant d’y apporter des modifications.
-
-\* : Ces fichiers possèdent le même fichier `.vm` (voir la [section suivante](#répertoire-vm)). Le fichier [`.vm` correspondant](dime_flutter/lib/vm/scan_page_vm.dart) se trouve à la racine du répertoire [vm](dime_flutter/lib/vm).
-
-- **[components](dime_flutter/lib/view/components)** : En-têtes et barres de navigation.
-  - `header_client.dart`
-  - `header_commercant.dart`
-  - `nav_bar_client.dart`
-  - `nav_bar_commercant.dart`
-
-- **[fenetre](dime_flutter/lib/view/fenetre)** : Encadrés et widgets réutilisables.
-  - `fav_commerce_fenetre.dart`
-  - `fav_item_fenetre.dart`
+Le frontend est une application **Flutter** située dans le dossier `frontend/dime_flutter`.  
+L’architecture choisie est **MVVM** (Model/View/ViewModel).
 
 ---
 
-### 📂 [Répertoire _vm_](dime_flutter/lib/vm) — *ViewModel*
+### Arborescence générale
 
-Chaque fichier du répertoire [view](dime_flutter/lib/view) possède un fichier correspondant dans ce répertoire (relation **1-to-1**, sauf pour les fichiers `scan*`).
+```text
+frontend/
+└─ dime_flutter/
+   ├─ lib/
+   │  ├─ main.dart
+   │  ├─ auth_viewmodel.dart
+   │  ├─ view/
+   │  └─ vm/
+   ├─ assets/
+   ├─ android/
+   ├─ ios/
+   ├─ web/
+   ├─ macos/
+   ├─ linux/
+   ├─ windows/
+   ├─ pubspec.yaml
+   └─ test/
+```
 
-Fichiers supplémentaires dans la racine :
-- **`current_connected_account_vm.dart`** : Simule la connexion d’un compte (client ou commerçant).
-- **`current_store.dart`** : Simule la présence d’un client dans un commerce.
-- **`favorite_product_vm.dart`** : Récupère les produits favoris du client connecté.
-- **`favorite_store_vm.dart`** : Récupère les commerces favoris du client connecté.
-- **`store_picker.dart`** : Change le commerce actif côté client (outil temporaire pour le développement).
-- **`scan_page_vm.dart`** : Gère la logique selon le type de code QR scanné (identique pour client et commerçant).
+---
 
+### `lib/main.dart`
+
+Point d’entrée de l’application Flutter :
+
+- Initialisation de l’app (`runApp`).  
+- Configuration du thème global et des styles principaux.  
+- Définition des routes/pages de haut niveau.
+
+---
+
+### Architecture MVVM
+
+L’architecture est organisée en **3 couches principales** :
+
+1. **View (`lib/view`)** :  
+   Widgets, pages et composants visibles par l’utilisateur.  
+   - Aucune logique métier lourde.  
+   - Interaction uniquement via les ViewModels (fichiers du dossier `vm`).
+
+2. **ViewModel (`lib/vm`)** :  
+   Logique métier et gestion d’état.  
+   - Appelle les services (API, Supabase, etc.).  
+   - Expose des données réactives à la vue (via `provider`).
+
+3. **Model** (objets de données) :  
+   - Représentation des entités métier (produits, commerces, étagères, etc.).  
+   - Souvent définis dans les ViewModels ou dans des fichiers dédiés (si besoin de factorisation).
+
+---
+
+### 📂 Dossier `lib/view` - *Views*
+
+Contient toutes les pages et composants graphiques.
+
+- `styles.dart` : centralise les styles communs - couleurs, marges, typographies, etc.
+
+Sous-dossiers :
+
+- `view/client` :  
+Pages destinées aux **clients** : favoris, recherche, page produit, page commerce, scanner QR, etc.
+
+- `view/commercant` :  
+Pages destinées aux **commerçants** : création d’items, création d’étagères, gestion des produits/étagères, scanner QR, etc.
+
+- `view/components` :  
+Composants réutilisables (headers, barres de navigation, etc.).
+
+**Convention :**
+
+- Une vue par fichier.  
+- Pas d’appels directs au backend dans les vues.  
+- Toute la logique métier passe par un ViewModel situé dans `lib/vm`.
+
+---
+
+### 📂 Dossier `lib/vm` - *ViewModels*
+
+Contient la logique métier et de présentation.
+
+- Relation **1-to-1** avec les fichiers du dossier `view` (même nom, suffixé par `_vm`), sauf quelques exceptions (comme les pages de scan QR qui partagent `scan_page_vm.dart`).
+
+Exemples de fichiers notables :
+
+- `current_connected_account_vm.dart` : simule la connexion d’un compte (client ou commerçant).  
+- `current_store.dart` : simule la présence d’un client dans un commerce.  
+- `favorite_product_vm.dart` : gère les produits favoris.  
+- `favorite_store_vm.dart` : gère les commerces favoris.  
+- `store_picker.dart` : change le commerce actif côté client (outil de dev).  
+- `scan_page_vm.dart` : logique commune de scan de QR code (client et commerçant).
+
+**Convention :**
+
+- Un ViewModel par vue (quand nécessaire).  
+- Toute la logique de récupération de données (Supabase, backend QR, etc.) va dans les ViewModels ou des services dédiés.  
+- Les ViewModels exposent uniquement les données et méthodes nécessaires aux vues.
+
+---
+
+### 📂 Ressources et configuration
+
+- `assets/` :  
+Contient notamment les icônes (dont l’icône principale `dime.png`), déclarées dans `pubspec.yaml`.
+
+- `.env` :  
+Un fichier `.env` doit être ajouté **à la racine de `dime_flutter`** pour configurer les accès Supabase et backend (non versionné dans Git).
 
