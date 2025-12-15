@@ -1,4 +1,4 @@
-const supabase = require('../../supabaseClient');
+const supabase = require('../supabaseClient');
 
 const getFavorites = async (req, res) => {
   try {

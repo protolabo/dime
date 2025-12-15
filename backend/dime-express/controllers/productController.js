@@ -1,7 +1,7 @@
-const supabase = require('../../supabaseClient');
-const {generateAndSaveQRToCloudflare,type} = require("../qrCode");
+const supabase = require('../supabaseClient');
+const {generateAndSaveQRToCloudflare,type} = require("../services/qrCode");
 const multer = require('multer');
-const { uploadImageToCloudflare } = require('../cloudflareImageService');
+const { uploadImageToCloudflare } = require('../services/cloudflareImageService');
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 } // 10 MB max
@@ -74,6 +74,38 @@ const createProduct = async (req, res) => {
     'condition complete': price != null && storeId != null,
   });
   let image_url = null;
+
+  if (storeId != null) {
+    try {
+      const { data: pricedRows, error: pricedErr } = await supabase
+          .from('priced_product')
+          .select('product_id')
+          .eq('store_id', storeId);
+
+      if (pricedErr) {
+        console.error('Erreur récupération priced_product:', pricedErr);
+      } else {
+        const productIds = (pricedRows || []).map(r => r.product_id).filter(Boolean);
+        if (productIds.length > 0) {
+          const { data: existing, error: existingErr } = await supabase
+              .from('product')
+              .select('product_id, bar_code')
+              .in('product_id', productIds)
+              .eq('bar_code', barcode);
+
+          if (existingErr) {
+            console.error('Erreur recherche produit existant:', existingErr);
+          } else if (existing && existing.length > 0) {
+            return res.status(409).json({ ok: false, error: 'Produit déjà présent dans ce commerce.' });
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Erreur vérification produit existant:', err);
+    }
+    }
+
+
 
   // Upload de l'image si présente
   if (req.file) {

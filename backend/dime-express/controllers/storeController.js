@@ -1,5 +1,9 @@
-const supabase = require('../../supabaseClient');
-
+const supabase = require('../supabaseClient');
+const multer = require("multer");
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10 MB max
+});
 // GET /stores (avec ou sans store_id)
 const getStores = async (req, res) => {
     try {
@@ -89,10 +93,57 @@ const deleteStore = async (req, res) => {
     }
 };
 
+// PUT /stores/:store_id/logo
+const updateStoreLogo = async (req, res) => {
+    const { store_id } = req.params;
+console.log('Mise à jour du logo pour le store_id:', store_id);
+    if (!req.file) {
+        return res.status(400).json({ error: 'Aucune image fournie' });
+    }
+
+    try {
+        const { uploadImageToCloudflare } = require('../services/cloudflareImageService');
+
+        const logo_url = await uploadImageToCloudflare(
+            req.file.buffer,
+            `store-${store_id}-${Date.now()}-${req.file.originalname}`
+        );
+
+        const { data, error } = await supabase
+            .from('store')
+            .update({ logo_url })
+            .eq('store_id', store_id)
+            .select('store_id, logo_url')
+            .single();
+
+        if (error) {
+            console.log('Erreur mise à jour logo dans la BDD:', error);
+            return res.status(500).json({ error: error.message });
+        }
+
+        if (!data) {
+            console.log('Magasin non trouvé pour la mise à jour du logo');
+            return res.status(404).json({ error: 'Magasin introuvable' });
+        }
+
+        res.status(200).json({
+            success: true,
+            logo_url: data.logo_url
+        });
+
+    } catch (error) {
+        console.log('Erreur lors de l\'upload du logo:', error);
+        console.error('Erreur upload logo:', error);
+        res.status(500).json({ error: 'Échec de la mise à jour du logo' });
+    }
+};
+
 module.exports = {
     getStores,
     createStores,
     updateStore,
     deleteStore,
+    updateStoreLogo,
+    upload
 };
 

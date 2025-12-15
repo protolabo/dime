@@ -1,4 +1,4 @@
-const supabase = require('../../supabaseClient');
+const supabase = require('../supabaseClient');
 
 // GET /priced-products
 const getPricedProducts = async (req, res) => {

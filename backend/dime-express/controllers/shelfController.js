@@ -1,5 +1,5 @@
-const supabase = require('../../supabaseClient');
-const {generateAndSaveQRToCloudflare,type} = require("../qrCode");
+const supabase = require('../supabaseClient');
+const {generateAndSaveQRToCloudflare,type} = require("../services/qrCode");
 // GET /shelves
 const getShelves = async (_req, res) => {
     try {
@@ -102,10 +102,9 @@ const deleteShelf = async (req, res) => {
     const { data, error } = await supabase
         .from('shelf')
         .delete()
-        .eq('shelf_id', shelf_id);
+        .eq('shelf_id', shelf_id)
 
     if (error) return res.status(500).json({ error: error.message });
-    if (!data.length) return res.status(404).json({ error: 'Shelf not found' });
 
     res.status(200).json({ success: true, message: 'Shelf deleted successfully' });
 };
@@ -118,7 +117,7 @@ const updateShelfImage = async (req, res) => {
     }
 
     try {
-        const { uploadImageToCloudflare } = require('../cloudflareImageService');
+        const { uploadImageToCloudflare } = require('../services/cloudflareImageService');
 
         // Upload vers Cloudflare
         const image_url = await uploadImageToCloudflare(

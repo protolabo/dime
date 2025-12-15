@@ -9,7 +9,6 @@ const type = {
     SHELF: 'shelf'
 }
 
-
 async function getStoreName(store_id) {
     const url = `http://localhost:3001/stores/?store_id=${store_id}`;
     const { data } = await axios.get(url);
@@ -17,29 +16,6 @@ async function getStoreName(store_id) {
     if (!store || !store.name) throw new Error('Nom du magasin introuvable');
     return store.name;
 }
-
-// async function generateAndSaveQR(type, id, store_id) {
-//     const rawStoreName = await getStoreName(store_id);
-//     // Pour enelver les accents des noms de magasins
-//     const storeName = rawStoreName
-//         .normalize('NFD')
-//         .replace(/[\u0300-\u036f]/g, '');
-//     const storeQrDir = path.join(qrBaseDir, storeName);
-//     if (!fs.existsSync(storeQrDir)) {
-//         fs.mkdirSync(storeQrDir, { recursive: true });
-//     }
-//
-//     const qrPayload = JSON.stringify({ type, [`${type}_id`]: id });
-//     const fileName = `${type}-${id}.png`;
-//     const filePath = path.join(storeQrDir, fileName);
-//
-//     await QRCode.toFile(filePath, qrPayload);
-//     const dataUrl = await QRCode.toDataURL(qrPayload);
-//
-//     return { dataUrl, fileName, relativePath: `/qr/${storeName}/${fileName}` };
-// }
-
-
 
 async function generateAndSaveQRToCloudflare(type, id, store_id) {
     const rawStoreName = await getStoreName(store_id);
